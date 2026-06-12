@@ -79,6 +79,7 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [addError, setAddError] = useState("");
   const [localFiles, setLocalFiles] = useState<Version[]>(versions);
 
   const meta = DEPT_META[activeDept] ?? { icon: null, accent: "#6B7280", bg: "transparent" };
@@ -88,16 +89,28 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
     e.preventDefault();
     if (!title.trim()) return;
     setLoading(true);
+    setAddError("");
     const res = await fetch(`/api/projects/${project.id}/versions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: title.trim(), department: activeDept, drive_url: url.trim() || null, body: notes.trim() || null }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      setLocalFiles(prev => [data, ...prev]);
+    const data = await res.json();
+    if (!res.ok) {
+      setAddError(data.error || "Failed to add file");
+      setLoading(false);
+      return;
     }
-    setTitle(""); setUrl(""); setNotes("");
+    const newFile: Version = {
+      id: data.id,
+      title: data.title ?? title.trim(),
+      department: data.department ?? activeDept,
+      drive_url: data.drive_url ?? null,
+      body: data.body ?? null,
+      created_at: data.created_at ?? new Date().toISOString(),
+    };
+    setLocalFiles(prev => [newFile, ...prev]);
+    setTitle(""); setUrl(""); setNotes(""); setAddError("");
     setLoading(false);
     setAddingFile(false);
   }
@@ -192,12 +205,13 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
                 className="bg-transparent border-b border-white/10 pb-2 text-sm text-white placeholder-white/20 outline-none focus:border-white/25 transition-colors w-full"
               />
             </div>
+            {addError && <p className="text-red-400/80 text-xs">{addError}</p>}
             <div className="flex items-center gap-3 pt-1">
               <button type="submit" disabled={loading || !title.trim()}
                 className="bg-white text-black text-xs font-medium px-4 py-2 rounded-lg hover:bg-white/90 disabled:opacity-40 transition-all">
                 {loading ? "Adding…" : "Add file"}
               </button>
-              <button type="button" onClick={() => setAddingFile(false)}
+              <button type="button" onClick={() => { setAddingFile(false); setAddError(""); }}
                 className="text-white/25 hover:text-white/50 text-xs transition-colors">Cancel</button>
             </div>
           </form>
