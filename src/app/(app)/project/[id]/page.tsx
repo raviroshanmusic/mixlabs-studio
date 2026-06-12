@@ -48,7 +48,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <ProjectClient
-      project={{ ...project, departments: project.departments ?? [] }}
+      project={{ ...project, departments: project.departments ?? [], owner_id: project.owner_id }}
       versions={versions ?? []}
       members={members ?? []}
       milestones={milestones ?? []}
