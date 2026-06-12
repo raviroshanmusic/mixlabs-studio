@@ -1,9 +1,9 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   ArrowLeft, ChevronDown, Send, Play, ExternalLink,
   MessageSquare, Clock, Plus, Volume2, Music, Palette,
-  Scissors, Wand2, Zap, FileText,
+  Scissors, Wand2, Zap, FileText, ChevronUp,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -50,6 +50,135 @@ function timeAgo(dateStr: string): string {
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   return `${Math.floor(h / 24)}d ago`;
+}
+
+// ─── Timecode Roller ──────────────────────────────────────────────────────────
+
+function RollerColumn({
+  value, max, onChange, label,
+}: { value: number; max: number; onChange: (v: number) => void; label: string }) {
+  const wrap = (v: number) => ((v % (max + 1)) + (max + 1)) % (max + 1);
+
+  function onWheel(e: React.WheelEvent) {
+    e.preventDefault();
+    onChange(wrap(value + (e.deltaY > 0 ? 1 : -1)));
+  }
+
+  const prev = wrap(value - 1);
+  const next = wrap(value + 1);
+
+  return (
+    <div className="flex flex-col items-center gap-0 select-none">
+      <span className="text-[9px] tracking-widest uppercase text-white/20 mb-2">{label}</span>
+
+      {/* Up arrow */}
+      <button type="button" onClick={() => onChange(wrap(value - 1))}
+        className="w-full flex justify-center py-1.5 text-white/20 hover:text-white/50 transition-colors">
+        <ChevronUp size={14} />
+      </button>
+
+      {/* Roller drum */}
+      <div onWheel={onWheel} className="flex flex-col items-center cursor-ns-resize">
+        {/* Previous */}
+        <div className="text-white/15 text-xl font-light tabular-nums py-0.5 transition-all">
+          {String(prev).padStart(2, "0")}
+        </div>
+        {/* Current — highlighted */}
+        <div className="text-white text-3xl font-light tabular-nums py-1 leading-none">
+          {String(value).padStart(2, "0")}
+        </div>
+        {/* Next */}
+        <div className="text-white/15 text-xl font-light tabular-nums py-0.5 transition-all">
+          {String(next).padStart(2, "0")}
+        </div>
+      </div>
+
+      {/* Down arrow */}
+      <button type="button" onClick={() => onChange(wrap(value + 1))}
+        className="w-full flex justify-center py-1.5 text-white/20 hover:text-white/50 transition-colors">
+        <ChevronDown size={14} />
+      </button>
+    </div>
+  );
+}
+
+function TimecodeRoller({
+  value, onChange,
+}: { value: string; onChange: (val: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  // Parse current value into mins/secs
+  const parsed = parseTimecode(value);
+  const mins = parsed != null ? Math.floor(parsed / 60) : 0;
+  const secs = parsed != null ? Math.floor(parsed % 60) : 0;
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  function setMins(m: number) { onChange(`${m}:${String(secs).padStart(2, "0")}`); }
+  function setSecs(s: number) { onChange(`${mins}:${String(s).padStart(2, "0")}`); }
+
+  function handleClear() { onChange(""); setOpen(false); }
+
+  const display = parsed != null ? fmtTimecode(parsed) : null;
+
+  return (
+    <div ref={ref} className="relative">
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={() => setOpen(p => !p)}
+        className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-xs font-mono ${
+          display
+            ? "bg-white/8 border-white/15 text-white"
+            : "bg-white/[0.03] border-white/8 text-white/25 hover:border-white/15 hover:text-white/40"
+        }`}
+      >
+        <Clock size={11} className={display ? "text-white/50" : "text-white/20"} />
+        {display ?? "Set timecode"}
+        {display && (
+          <span
+            onClick={e => { e.stopPropagation(); handleClear(); }}
+            className="ml-1 text-white/30 hover:text-white/70 cursor-pointer"
+          >×</span>
+        )}
+      </button>
+
+      {/* Roller popover */}
+      {open && (
+        <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-5 w-52">
+          {/* Header */}
+          <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase text-center mb-4">Timecode</p>
+
+          {/* Columns */}
+          <div className="flex items-center justify-center gap-2">
+            <RollerColumn value={mins} max={99} onChange={setMins} label="min" />
+
+            {/* Colon separator */}
+            <div className="text-white/30 text-2xl font-light pb-1 mt-6">:</div>
+
+            <RollerColumn value={secs} max={59} onChange={setSecs} label="sec" />
+          </div>
+
+          {/* Confirm */}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="mt-5 w-full py-2 rounded-xl bg-white/8 hover:bg-white/12 text-white/60 hover:text-white text-xs tracking-widest uppercase transition-all"
+          >
+            Done
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function getEmbedUrl(url: string): string | null {
@@ -255,7 +384,8 @@ export default function ReviewClient({ project, versions, comments: initialComme
 
   function handleTimecodeClick(sec: number) {
     setTimecodeInput(fmtTimecode(sec));
-    textareaRef.current?.focus();
+    // focus textarea so user can type note right away
+    setTimeout(() => textareaRef.current?.focus(), 50);
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -364,16 +494,8 @@ export default function ReviewClient({ project, versions, comments: initialComme
           <div className="shrink-0 border-t border-white/[0.07] p-4">
             <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
 
-              {/* Timecode input */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] border border-white/8 rounded-lg">
-                <Clock size={11} className="text-white/20 shrink-0" />
-                <input
-                  placeholder="Timecode  e.g. 1:32"
-                  value={timecodeInput}
-                  onChange={e => setTimecodeInput(e.target.value)}
-                  className="bg-transparent text-xs text-white/60 placeholder-white/20 outline-none w-full font-mono"
-                />
-              </div>
+              {/* Timecode roller */}
+              <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
 
               {/* Comment textarea */}
               <div className="relative">
