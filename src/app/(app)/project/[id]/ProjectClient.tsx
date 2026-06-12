@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, ExternalLink, ChevronDown, Music, Palette, Scissors, Wand2, Zap, Volume2, FileText } from "lucide-react";
+import { ArrowLeft, Plus, ExternalLink, ChevronDown, Music, Palette, Scissors, Wand2, Zap, Volume2, X } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 
 const STATUS_OPTIONS = ["active", "in review", "ready", "paused", "delivered"];
@@ -13,32 +13,112 @@ const STATUS_STYLES: Record<string, string> = {
   delivered: "text-purple-400 bg-purple-400/10 border-purple-400/20",
 };
 
-const DEPT_META: Record<string, { icon: React.ReactNode; accent: string; tab: string }> = {
-  Sound:     { icon: <Volume2 size={13} />,  accent: "text-amber-400",  tab: "border-amber-400/30 bg-amber-400/5" },
-  Score:     { icon: <Music size={13} />,    accent: "text-purple-400", tab: "border-purple-400/30 bg-purple-400/5" },
-  Color:     { icon: <Palette size={13} />,  accent: "text-pink-400",   tab: "border-pink-400/30 bg-pink-400/5" },
-  Edit:      { icon: <Scissors size={13} />, accent: "text-blue-400",   tab: "border-blue-400/30 bg-blue-400/5" },
-  Animation: { icon: <Wand2 size={13} />,    accent: "text-green-400",  tab: "border-green-400/30 bg-green-400/5" },
-  VFX:       { icon: <Zap size={13} />,      accent: "text-orange-400", tab: "border-orange-400/30 bg-orange-400/5" },
+const DEPT_META: Record<string, { icon: React.ReactNode; color: string }> = {
+  Sound:     { icon: <Volume2 size={16} />,  color: "#F59E0B" },
+  Score:     { icon: <Music size={16} />,    color: "#A855F7" },
+  Color:     { icon: <Palette size={16} />,  color: "#EC4899" },
+  Edit:      { icon: <Scissors size={16} />, color: "#3B82F6" },
+  Animation: { icon: <Wand2 size={16} />,    color: "#22C55E" },
+  VFX:       { icon: <Zap size={16} />,      color: "#F97316" },
 };
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[] };
 type Version = { id: string; title: string; department: string | null; drive_url: string | null; body: string | null; created_at: string };
 type Member = { id: string; role: string | null; profiles: { id: string; full_name: string | null; email: string | null } | null };
 
-function DepartmentFolder({ dept, files, projectId, onFileAdded }: {
-  dept: string;
-  files: Version[];
-  projectId: string;
-  onFileAdded: () => void;
+function FolderCard({ dept, files, onClick }: { dept: string; files: Version[]; onClick: () => void }) {
+  const meta = DEPT_META[dept] ?? { icon: null, color: "#6B7280" };
+  const count = files.length;
+
+  return (
+    <button onClick={onClick} className="group text-left w-full focus:outline-none">
+      {/* Folder shape */}
+      <div className="relative w-full" style={{ paddingBottom: "80%" }}>
+        <div className="absolute inset-0">
+
+          {/* Papers peeking out of top */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55%] h-full flex items-start justify-center">
+            {/* Paper 1 - back, rotated left */}
+            <div
+              className="absolute w-[48%] bg-white/10 border border-white/15 rounded-xl"
+              style={{
+                height: "72%",
+                top: "2%",
+                transform: "rotate(-8deg) translateX(-30%)",
+                transformOrigin: "bottom center",
+              }}
+            >
+              <div className="p-2 flex flex-col gap-1.5 mt-2">
+                <div className="h-1 bg-white/20 rounded-full w-3/4" />
+                <div className="h-1 bg-white/10 rounded-full w-1/2" />
+                <div className="h-1 bg-white/10 rounded-full w-2/3" />
+              </div>
+            </div>
+            {/* Paper 2 - front, rotated right */}
+            <div
+              className="absolute w-[48%] bg-white/15 border border-white/20 rounded-xl"
+              style={{
+                height: "72%",
+                top: "0%",
+                transform: "rotate(6deg) translateX(30%)",
+                transformOrigin: "bottom center",
+              }}
+            >
+              <div className="p-2 flex flex-col gap-1.5 mt-2">
+                <div className="h-1 bg-white/25 rounded-full w-2/3" />
+                <div className="h-1 bg-white/15 rounded-full w-1/2" />
+                <div className="h-1 bg-white/15 rounded-full w-3/4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Folder body */}
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-2xl border border-white/8 transition-all duration-200 group-hover:border-white/15 overflow-hidden"
+            style={{
+              height: "68%",
+              background: "linear-gradient(180deg, #1e1e1e 0%, #161616 100%)",
+            }}
+          >
+            {/* Subtle inner highlight at top */}
+            <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
+
+            {/* Folder front glass panel */}
+            <div
+              className="absolute bottom-0 left-0 right-0 rounded-2xl"
+              style={{
+                height: "65%",
+                background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 100%)",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}
+            />
+
+            {/* Dept icon + name + count */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
+              <div className="flex items-center gap-2">
+                <span style={{ color: meta.color }}>{meta.icon}</span>
+                <span className="text-white/80 text-sm font-light tracking-wide">{dept}</span>
+              </div>
+              <span className="text-white/25 text-xs tabular-nums">
+                {count} {count === 1 ? "file" : "files"}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FileDrawer({ dept, files, projectId, onClose, onFileAdded }: {
+  dept: string; files: Version[]; projectId: string; onClose: () => void; onFileAdded: () => void;
 }) {
-  const [open, setOpen] = useState(true);
+  const meta = DEPT_META[dept] ?? { icon: null, color: "#6B7280" };
   const [adding, setAdding] = useState(false);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
-  const meta = DEPT_META[dept] ?? { icon: <FileText size={13} />, accent: "text-white/40", tab: "border-white/10 bg-white/5" };
 
   async function addFile(e: React.FormEvent) {
     e.preventDefault();
@@ -56,101 +136,79 @@ function DepartmentFolder({ dept, files, projectId, onFileAdded }: {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* Folder tab */}
-      <div className="flex items-end gap-0 ml-5">
-        <div className={`flex items-center gap-2 px-4 py-1.5 rounded-t-lg border border-b-0 text-xs tracking-widest uppercase ${meta.tab} ${meta.accent}`}>
-          {meta.icon}
-          <span>{dept}</span>
-          <span className="text-white/20 normal-case tracking-normal ml-1">{files.length}</span>
+    <div className="col-span-full mt-1 mb-2 rounded-2xl border border-white/10 overflow-hidden bg-[#111111]">
+      {/* Drawer header */}
+      <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+        <div className="flex items-center gap-2.5">
+          <span style={{ color: meta.color }}>{meta.icon}</span>
+          <span className="text-white text-sm font-light tracking-wide">{dept}</span>
+          <span className="text-white/25 text-xs">{files.length} files</span>
         </div>
-      </div>
-
-      {/* Folder body */}
-      <div className="border border-white/8 rounded-b-xl rounded-tr-xl bg-white/[0.02] overflow-hidden">
-        {/* Folder top bar */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="w-full flex items-center justify-between px-5 py-3 border-b border-white/5 hover:bg-white/3 transition-colors"
-        >
-          <span className="text-white/20 text-[10px] tracking-widest uppercase">
-            {files.length === 0 ? "Empty" : `${files.length} ${files.length === 1 ? "file" : "files"}`}
-          </span>
-          <ChevronDown size={12} className={`text-white/20 transition-transform duration-200 ${open ? "" : "-rotate-90"}`} />
+        <button onClick={onClose} className="text-white/20 hover:text-white/50 transition-colors">
+          <X size={14} />
         </button>
-
-        {open && (
-          <>
-            {/* File rows */}
-            {files.length === 0 && !adding ? (
-              <div className="px-5 py-6 flex flex-col items-center gap-2">
-                <p className="text-white/15 text-xs">No files yet</p>
-              </div>
-            ) : (
-              files.map((v, i) => (
-                <div key={v.id} className={`flex items-center justify-between px-5 py-3.5 ${i < files.length - 1 || adding ? "border-b border-white/5" : ""} hover:bg-white/3 transition-colors group`}>
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={`w-1 h-1 rounded-full shrink-0 ${meta.accent.replace("text-", "bg-")}`} />
-                    <div className="min-w-0">
-                      <p className="text-white/80 text-sm leading-none">{v.title}</p>
-                      {v.body && <p className="text-white/25 text-xs mt-1 truncate">{v.body}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 ml-4 shrink-0">
-                    <span className="text-white/15 text-[10px]">
-                      {new Date(v.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                    </span>
-                    {v.drive_url && (
-                      <a href={v.drive_url} target="_blank" rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all">
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-
-            {/* Add file inline form */}
-            {adding && (
-              <form onSubmit={addFile} className="px-5 py-4 flex flex-col gap-2.5 border-t border-white/5 bg-white/[0.02]">
-                <input autoFocus placeholder="File title (e.g. Score v2 — Final)"
-                  value={title} onChange={e => setTitle(e.target.value)} required
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full transition-colors"
-                />
-                <input placeholder="Drive / Dropbox link (optional)"
-                  value={url} onChange={e => setUrl(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full transition-colors"
-                />
-                <textarea placeholder="Notes (optional)" rows={2}
-                  value={notes} onChange={e => setNotes(e.target.value)}
-                  className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full resize-none transition-colors"
-                />
-                <div className="flex items-center gap-3">
-                  <button type="submit" disabled={loading || !title.trim()}
-                    className="bg-white text-black rounded-lg px-4 py-2 text-xs font-medium hover:bg-white/90 disabled:opacity-40 transition-all">
-                    {loading ? "Adding..." : "Add File"}
-                  </button>
-                  <button type="button" onClick={() => setAdding(false)}
-                    className="text-white/25 hover:text-white/50 text-xs transition-colors">
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Add file button */}
-            {!adding && (
-              <button onClick={() => setAdding(true)}
-                className="w-full flex items-center gap-2 px-5 py-3 text-white/20 hover:text-white/50 hover:bg-white/3 text-xs transition-colors border-t border-white/5">
-                <Plus size={11} />
-                <span>Add file to {dept}</span>
-              </button>
-            )}
-          </>
-        )}
       </div>
+
+      {/* File list */}
+      {files.length === 0 && !adding ? (
+        <div className="py-8 text-center text-white/20 text-sm">No files yet</div>
+      ) : (
+        files.map((v, i) => (
+          <div key={v.id} className={`flex items-center justify-between px-5 py-3.5 group hover:bg-white/3 transition-colors ${i < files.length - 1 ? "border-b border-white/5" : ""}`}>
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: meta.color + "80" }} />
+              <div className="min-w-0">
+                <p className="text-white/80 text-sm">{v.title}</p>
+                {v.body && <p className="text-white/30 text-xs mt-0.5 truncate">{v.body}</p>}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 ml-4 shrink-0">
+              <span className="text-white/20 text-[10px]">
+                {new Date(v.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+              </span>
+              {v.drive_url && (
+                <a href={v.drive_url} target="_blank" rel="noopener noreferrer"
+                  className="text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all">
+                  <ExternalLink size={12} />
+                </a>
+              )}
+            </div>
+          </div>
+        ))
+      )}
+
+      {/* Add file form */}
+      {adding ? (
+        <form onSubmit={addFile} className="px-5 py-4 flex flex-col gap-2.5 border-t border-white/8 bg-white/[0.02]">
+          <input autoFocus placeholder="File title (e.g. Score v2 — Final)"
+            value={title} onChange={e => setTitle(e.target.value)} required
+            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full"
+          />
+          <div className="grid grid-cols-2 gap-2.5">
+            <input placeholder="Drive / Dropbox link"
+              value={url} onChange={e => setUrl(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full"
+            />
+            <input placeholder="Notes (optional)"
+              value={notes} onChange={e => setNotes(e.target.value)}
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 w-full"
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="submit" disabled={loading || !title.trim()}
+              className="bg-white text-black rounded-lg px-4 py-2 text-xs font-medium hover:bg-white/90 disabled:opacity-40 transition-all">
+              {loading ? "Adding..." : "Add File"}
+            </button>
+            <button type="button" onClick={() => setAdding(false)}
+              className="text-white/30 hover:text-white/60 text-xs transition-colors">Cancel</button>
+          </div>
+        </form>
+      ) : (
+        <button onClick={() => setAdding(true)}
+          className="w-full flex items-center gap-2 px-5 py-3.5 text-white/25 hover:text-white/50 hover:bg-white/3 text-xs transition-colors border-t border-white/8">
+          <Plus size={12} /> Add file to {dept}
+        </button>
+      )}
     </div>
   );
 }
@@ -162,6 +220,7 @@ export default function ProjectClient({ project, versions, members, currentUserI
   const [status, setStatus] = useState(project.status);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [activeTab, setActiveTab] = useState<"files" | "team">("files");
+  const [openFolder, setOpenFolder] = useState<string | null>(null);
 
   const departments = project.departments ?? [];
 
@@ -173,12 +232,16 @@ export default function ProjectClient({ project, versions, members, currentUserI
     });
   }
 
+  function toggleFolder(dept: string) {
+    setOpenFolder(prev => prev === dept ? null : dept);
+  }
+
   return (
     <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
       <Sidebar active="dashboard" />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-8 py-10">
+        <div className="max-w-4xl mx-auto px-8 py-10">
 
           {/* Back */}
           <a href="/dashboard" className="inline-flex items-center gap-2 text-white/20 hover:text-white/50 text-xs tracking-widest uppercase transition-colors mb-8">
@@ -191,7 +254,6 @@ export default function ProjectClient({ project, versions, members, currentUserI
               {project.client && <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase mb-1">{project.client}</p>}
               <h1 className="text-white text-2xl font-light tracking-wide">{project.name}</h1>
             </div>
-
             <div className="relative">
               <button onClick={() => setShowStatusMenu(!showStatusMenu)}
                 className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border tracking-widest uppercase ${STATUS_STYLES[status] ?? "text-white/30 bg-white/5 border-white/10"}`}>
@@ -220,26 +282,37 @@ export default function ProjectClient({ project, versions, members, currentUserI
             ))}
           </div>
 
-          {/* Department Folders */}
+          {/* Folder grid */}
           {activeTab === "files" && (
-            <div className="flex flex-col gap-6">
-              {departments.length === 0 ? (
-                <p className="text-white/20 text-sm py-16 text-center">No departments assigned to this project.</p>
-              ) : (
-                departments.map(dept => (
-                  <DepartmentFolder
-                    key={dept}
-                    dept={dept}
-                    files={versions.filter(v => v.department === dept)}
-                    projectId={project.id}
-                    onFileAdded={() => router.refresh()}
-                  />
-                ))
-              )}
-            </div>
+            departments.length === 0 ? (
+              <p className="text-white/20 text-sm py-16 text-center">No departments assigned.</p>
+            ) : (
+              <div className="grid grid-cols-3 gap-5">
+                {departments.map(dept => (
+                  <>
+                    <FolderCard
+                      key={dept}
+                      dept={dept}
+                      files={versions.filter(v => v.department === dept)}
+                      onClick={() => toggleFolder(dept)}
+                    />
+                    {openFolder === dept && (
+                      <FileDrawer
+                        key={`${dept}-drawer`}
+                        dept={dept}
+                        files={versions.filter(v => v.department === dept)}
+                        projectId={project.id}
+                        onClose={() => setOpenFolder(null)}
+                        onFileAdded={() => router.refresh()}
+                      />
+                    )}
+                  </>
+                ))}
+              </div>
+            )
           )}
 
-          {/* Team Tab */}
+          {/* Team */}
           {activeTab === "team" && (
             <div>
               {members.length === 0 ? (
