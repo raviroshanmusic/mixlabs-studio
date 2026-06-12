@@ -26,84 +26,79 @@ type Project = { id: string; name: string; client: string | null; status: string
 type Version = { id: string; title: string; department: string | null; drive_url: string | null; body: string | null; created_at: string };
 type Member = { id: string; role: string | null; profiles: { id: string; full_name: string | null; email: string | null } | null };
 
-function FolderCard({ dept, files, onClick }: { dept: string; files: Version[]; onClick: () => void }) {
+function FolderCard({ dept, files, isOpen, onClick }: { dept: string; files: Version[]; isOpen: boolean; onClick: () => void }) {
   const meta = DEPT_META[dept] ?? { icon: null, color: "#6B7280" };
   const count = files.length;
 
   return (
     <button onClick={onClick} className="group text-left w-full focus:outline-none">
-      {/* Folder shape */}
-      <div className="relative w-full" style={{ paddingBottom: "80%" }}>
+      <div className="relative w-full" style={{ paddingBottom: "85%" }}>
         <div className="absolute inset-0">
 
-          {/* Papers peeking out of top */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[55%] h-full flex items-start justify-center">
-            {/* Paper 1 - back, rotated left */}
-            <div
-              className="absolute w-[48%] bg-white/10 border border-white/15 rounded-xl"
-              style={{
-                height: "72%",
-                top: "2%",
-                transform: "rotate(-8deg) translateX(-30%)",
-                transformOrigin: "bottom center",
-              }}
-            >
-              <div className="p-2 flex flex-col gap-1.5 mt-2">
-                <div className="h-1 bg-white/20 rounded-full w-3/4" />
-                <div className="h-1 bg-white/10 rounded-full w-1/2" />
-                <div className="h-1 bg-white/10 rounded-full w-2/3" />
-              </div>
+          {/* Paper 1 — back left, white */}
+          <div className="absolute" style={{
+            width: "52%", height: "60%",
+            bottom: "28%", left: "10%",
+            background: "linear-gradient(160deg, #d0d0d0 0%, #b8b8b8 100%)",
+            borderRadius: "10px",
+            transform: "rotate(-10deg)",
+            transformOrigin: "bottom center",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+          }}>
+            <div className="p-3 pt-4 flex flex-col gap-2">
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.12)", borderRadius: "2px", width: "70%" }} />
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.08)", borderRadius: "2px", width: "50%" }} />
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.08)", borderRadius: "2px", width: "60%" }} />
             </div>
-            {/* Paper 2 - front, rotated right */}
-            <div
-              className="absolute w-[48%] bg-white/15 border border-white/20 rounded-xl"
-              style={{
-                height: "72%",
-                top: "0%",
-                transform: "rotate(6deg) translateX(30%)",
-                transformOrigin: "bottom center",
-              }}
-            >
-              <div className="p-2 flex flex-col gap-1.5 mt-2">
-                <div className="h-1 bg-white/25 rounded-full w-2/3" />
-                <div className="h-1 bg-white/15 rounded-full w-1/2" />
-                <div className="h-1 bg-white/15 rounded-full w-3/4" />
-              </div>
+          </div>
+
+          {/* Paper 2 — front right, brighter white */}
+          <div className="absolute" style={{
+            width: "52%", height: "60%",
+            bottom: "28%", right: "10%",
+            background: "linear-gradient(160deg, #ebebeb 0%, #d4d4d4 100%)",
+            borderRadius: "10px",
+            transform: "rotate(8deg)",
+            transformOrigin: "bottom center",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.45)",
+          }}>
+            <div className="p-3 pt-4 flex flex-col gap-2">
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.10)", borderRadius: "2px", width: "65%" }} />
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.07)", borderRadius: "2px", width: "80%" }} />
+              <div style={{ height: "3px", background: "rgba(0,0,0,0.07)", borderRadius: "2px", width: "45%" }} />
             </div>
           </div>
 
           {/* Folder body */}
-          <div
-            className="absolute bottom-0 left-0 right-0 rounded-2xl border border-white/8 transition-all duration-200 group-hover:border-white/15 overflow-hidden"
+          <div className="absolute bottom-0 left-0 right-0 overflow-hidden transition-all duration-200 group-hover:brightness-110"
             style={{
-              height: "68%",
-              background: "linear-gradient(180deg, #1e1e1e 0%, #161616 100%)",
-            }}
-          >
-            {/* Subtle inner highlight at top */}
-            <div className="absolute top-0 left-0 right-0 h-px bg-white/10" />
+              height: "72%",
+              borderRadius: "16px",
+              background: "linear-gradient(180deg, #222222 0%, #141414 100%)",
+              border: isOpen ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.07)",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)",
+            }}>
 
-            {/* Folder front glass panel */}
-            <div
-              className="absolute bottom-0 left-0 right-0 rounded-2xl"
-              style={{
-                height: "65%",
-                background: "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 100%)",
-                borderTop: "1px solid rgba(255,255,255,0.06)",
-              }}
-            />
+            {/* Glass front panel — bottom half */}
+            <div className="absolute bottom-0 left-0 right-0" style={{
+              height: "60%",
+              background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.05) 100%)",
+              borderTop: "1px solid rgba(255,255,255,0.05)",
+              borderRadius: "0 0 16px 16px",
+            }} />
 
-            {/* Dept icon + name + count */}
+            {/* Label */}
             <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
               <div className="flex items-center gap-2">
                 <span style={{ color: meta.color }}>{meta.icon}</span>
-                <span className="text-white/80 text-sm font-light tracking-wide">{dept}</span>
+                <span className="text-white/75 text-sm font-light tracking-wide">{dept}</span>
               </div>
-              <span className="text-white/25 text-xs tabular-nums">
+              <span className="text-white/20 text-[11px] tabular-nums">
                 {count} {count === 1 ? "file" : "files"}
               </span>
             </div>
           </div>
+
         </div>
       </div>
     </button>
@@ -289,25 +284,24 @@ export default function ProjectClient({ project, versions, members, currentUserI
             ) : (
               <div className="grid grid-cols-3 gap-5">
                 {departments.map(dept => (
-                  <>
-                    <FolderCard
-                      key={dept}
-                      dept={dept}
-                      files={versions.filter(v => v.department === dept)}
-                      onClick={() => toggleFolder(dept)}
-                    />
-                    {openFolder === dept && (
-                      <FileDrawer
-                        key={`${dept}-drawer`}
-                        dept={dept}
-                        files={versions.filter(v => v.department === dept)}
-                        projectId={project.id}
-                        onClose={() => setOpenFolder(null)}
-                        onFileAdded={() => router.refresh()}
-                      />
-                    )}
-                  </>
+                  <FolderCard
+                    key={dept}
+                    dept={dept}
+                    files={versions.filter(v => v.department === dept)}
+                    isOpen={openFolder === dept}
+                    onClick={() => toggleFolder(dept)}
+                  />
                 ))}
+                {openFolder && (
+                  <FileDrawer
+                    key={openFolder}
+                    dept={openFolder}
+                    files={versions.filter(v => v.department === openFolder)}
+                    projectId={project.id}
+                    onClose={() => setOpenFolder(null)}
+                    onFileAdded={() => router.refresh()}
+                  />
+                )}
               </div>
             )
           )}
