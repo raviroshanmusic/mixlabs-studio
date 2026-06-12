@@ -10,42 +10,55 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { email, role } = await request.json();
   if (!email?.trim()) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-  // Look up user ID by email via RPC (profiles.email may be null, so we check auth.users)
-  const { data: userId, error: rpcError } = await supabase
-    .rpc("get_user_id_by_email", { email_input: email.trim().toLowerCase() });
+  const normalizedEmail = email.trim().toLowerCase();
 
-  if (rpcError || !userId) {
-    // Fallback: try profiles table directly
+  // Try RPC first (looks up auth.users by email)
+  let resolvedUserId: string | null = null;
+  let resolvedFullName: string | null = null;
+  let resolvedEmail = normalizedEmail;
+
+  const { data: rpcId } = await supabase.rpc("get_user_id_by_email", { email_input: normalizedEmail });
+  if (rpcId) {
+    resolvedUserId = rpcId;
+    // Try to get display name from profiles
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", rpcId)
+      .single();
+    resolvedFullName = profile?.full_name ?? null;
+    resolvedEmail = profile?.email || normalizedEmail;
+  } else {
+    // Fallback: search profiles by email
     const { data: profile } = await supabase
       .from("profiles")
       .select("id, full_name, email")
-      .or(`email.eq.${email.trim()},email.eq.${email.trim().toLowerCase()}`)
+      .eq("email", normalizedEmail)
       .single();
-
     if (!profile) {
       return NextResponse.json(
-        { error: "No user found with that email. They must sign up first." },
+        { error: "No user found with that email. They need to sign up first." },
         { status: 404 }
       );
     }
-
-    const { data: member, error } = await supabase
-      .from("project_members")
-      .insert({ project_id: id, user_id: profile.id, role: role || "viewer" })
-      .select("*")
-      .single();
-
-    if (error) {
-      if (error.code === "23505") return NextResponse.json({ error: "Member already added" }, { status: 409 });
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    return NextResponse.json({ member: { ...member, profiles: profile } });
+    resolvedUserId = profile.id;
+    resolvedFullName = profile.full_name ?? null;
+    resolvedEmail = profile.email || normalizedEmail;
   }
 
-  // Insert using the resolved user ID
   const { data: member, error } = await supabase
     .from("project_members")
-    .insert({ project_id: id, user_id: userId, role: role || "viewer" })
+    .insert({
+      project_id: id,
+      user_id: resolvedUserId,
+      email: resolvedEmail,
+      full_name: resolvedFullName,
+      role: role || "viewer",
+      department: "all",
+      permission: "view",
+      status: "active",
+      invited_by: user.id,
+    })
     .select("*")
     .single();
 
@@ -54,12 +67,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Fetch profile separately (user_id → auth.users, not directly joinable to profiles)
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .eq("id", userId)
-    .single();
-
-  return NextResponse.json({ member: { ...member, profiles: profile ?? null } });
+  return NextResponse.json({
+    member: {
+      ...member,
+      profiles: { id: resolvedUserId, full_name: resolvedFullName, email: resolvedEmail },
+    },
+  });
 }
