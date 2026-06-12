@@ -7,22 +7,25 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
 
-  // Build the response object first so we can write cookies into it
+  // Build response first so we can write cookies into it
   const response = NextResponse.json({ success: true });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {
-      getAll() { return request.cookies.getAll(); },
-      setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          response.cookies.set(name, value, {
-            ...(options as object),
-            httpOnly: true,
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-            path: "/",
-          });
+      get(name: string) {
+        return request.cookies.get(name)?.value;
+      },
+      set(name: string, value: string, options: Record<string, unknown>) {
+        response.cookies.set(name, value, {
+          ...(options as object),
+          httpOnly: true,
+          sameSite: "lax",
+          secure: process.env.NODE_ENV === "production",
+          path: "/",
         });
+      },
+      remove(name: string, options: Record<string, unknown>) {
+        response.cookies.set(name, "", { ...(options as object), maxAge: 0, path: "/" });
       },
     },
   });
