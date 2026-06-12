@@ -1,32 +1,41 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { loginAction } from "./actions";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"in" | "up">("in");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const router = useRouter();
-  const supabase = createClient();
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
 
+    const formData = new FormData(e.currentTarget);
+
     if (mode === "in") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
-      window.location.href = "/dashboard";
+      const result = await loginAction(formData);
+      // If we get here, login failed (success = server redirect, never returns)
+      if (result?.error) {
+        setError(result.error);
+        setLoading(false);
+      }
     } else {
-      const { error } = await supabase.auth.signUp({ email, password });
-      if (error) { setError(error.message); setLoading(false); return; }
-      setMessage("Check your email to confirm your account.");
+      // Sign up — keep client-side for now
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+      });
+      if (signUpError) {
+        setError(signUpError.message);
+      } else {
+        setMessage("Check your email to confirm your account.");
+      }
       setLoading(false);
     }
   }
@@ -55,6 +64,7 @@ export default function LoginPage() {
           {(["in", "up"] as const).map((m) => (
             <button
               key={m}
+              type="button"
               onClick={() => setMode(m)}
               className={`flex-1 py-2 rounded-md text-xs tracking-widest uppercase transition-all ${
                 mode === m ? "bg-white/10 text-white" : "text-white/30 hover:text-white/50"
@@ -67,18 +77,16 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
+            name="email"
             type="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors"
           />
           <input
+            name="password"
             type="password"
             placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
             required
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors"
           />
