@@ -22,8 +22,7 @@ export default function LoginPage() {
     if (mode === "in") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
-      router.push("/dashboard");
-      router.refresh();
+      window.location.href = "/dashboard";
     } else {
       const { error } = await supabase.auth.signUp({ email, password });
       if (error) { setError(error.message); setLoading(false); return; }
