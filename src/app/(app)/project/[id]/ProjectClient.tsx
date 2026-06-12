@@ -3,9 +3,10 @@ import { useState } from "react";
 import {
   ArrowLeft, Plus, ExternalLink, ChevronDown,
   Music, Palette, Scissors, Wand2, Zap, Volume2,
-  X, Settings, Users, FileText, Trash2, Check, Link, PlayCircle,
+  X, Settings, Users, FileText, Trash2, Check, Link, PlayCircle, Calendar,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
+import Timeline, { Milestone } from "./Timeline";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -428,10 +429,10 @@ function SettingsTab({ project, onProjectUpdate }: { project: Project; onProject
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-type Tab = "files" | "team" | "settings";
+type Tab = "files" | "team" | "settings" | "timeline";
 
-export default function ProjectClient({ project: initialProject, versions, members, currentUserId }: {
-  project: Project; versions: Version[]; members: Member[]; currentUserId: string;
+export default function ProjectClient({ project: initialProject, versions, members, milestones, currentUserId }: {
+  project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; currentUserId: string;
 }) {
   const [project, setProject] = useState(initialProject);
   const [status, setStatus] = useState(initialProject.status);
@@ -451,6 +452,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "files",    label: "Files & Versions", icon: <FileText size={13} /> },
+    { id: "timeline", label: "Timeline",         icon: <Calendar size={13} /> },
     { id: "team",     label: "Team",              icon: <Users size={13} /> },
     { id: "settings", label: "Settings",          icon: <Settings size={13} /> },
   ];
@@ -521,6 +523,9 @@ export default function ProjectClient({ project: initialProject, versions, membe
           <div className="pt-2">
             {activeTab === "files" && (
               <FilesTab project={project} versions={versions} />
+            )}
+            {activeTab === "timeline" && (
+              <Timeline project={project} initialMilestones={milestones} />
             )}
             {activeTab === "team" && (
               <TeamTab project={project} members={members} />

@@ -40,11 +40,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     })
   );
 
+  const { data: milestones } = await supabase
+    .from("project_milestones")
+    .select("*")
+    .eq("project_id", id)
+    .order("start_date", { ascending: true });
+
   return (
     <ProjectClient
       project={{ ...project, departments: project.departments ?? [] }}
       versions={versions ?? []}
       members={members ?? []}
+      milestones={milestones ?? []}
       currentUserId={user.id}
     />
   );
