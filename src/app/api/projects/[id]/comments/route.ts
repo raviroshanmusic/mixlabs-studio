@@ -26,40 +26,45 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { body, timecode_sec, version_id } = await req.json();
   if (!body?.trim()) return NextResponse.json({ error: "Comment required" }, { status: 400 });
 
-  // Get author name for display
+  // Get author display name
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, email")
     .eq("id", user.id)
     .single();
-
   const authorName = profile?.full_name || profile?.email || user.email || "Unknown";
 
-  const insertData: Record<string, unknown> = {
-    project_id: id,
-    author_id: user.id,
-    author_name: authorName,
-    body: body.trim(),
-    timecode: timecode_sec ?? null,
-    version_id: version_id || null,
-    status: "open",
-  };
+  // Look up version details to satisfy NOT NULL constraints
+  let department = "General";
+  let versionName = "Review";
+  if (version_id) {
+    const { data: version } = await supabase
+      .from("project_versions")
+      .select("department, version_name")
+      .eq("id", version_id)
+      .single();
+    if (version) {
+      department = version.department || "General";
+      versionName = version.version_name || "Review";
+    }
+  }
 
   const { data, error } = await supabase
     .from("review_comments")
-    .insert(insertData)
+    .insert({
+      project_id: id,
+      version_id: version_id || null,
+      author_id: user.id,
+      author_name: authorName,
+      body: body.trim(),
+      timecode: timecode_sec ?? null,
+      department,
+      version_name: versionName,
+      status: "open",
+    })
     .select("*")
     .single();
 
-  if (error) {
-    // If status or other NOT NULL columns cause issues, retry without them
-    if (error.message.includes("status") || error.message.includes("column")) {
-      const minimal = { project_id: id, author_id: user.id, author_name: authorName, body: body.trim(), timecode: timecode_sec ?? null };
-      const { data: d2, error: e2 } = await supabase.from("review_comments").insert(minimal).select("*").single();
-      if (e2) return NextResponse.json({ error: e2.message }, { status: 500 });
-      return NextResponse.json(d2);
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data);
 }
