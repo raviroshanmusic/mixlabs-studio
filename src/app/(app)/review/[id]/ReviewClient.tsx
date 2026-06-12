@@ -9,7 +9,7 @@ import {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[] };
-type Version = { id: string; title: string; department: string | null; drive_url: string | null; body: string | null; created_at: string };
+type Version = { id: string; version_name: string; department: string | null; drive_url: string | null; status: string; created_at: string };
 type Comment = {
   id: string; body: string; timecode: number | null; version_id: string | null;
   created_at: string; author_id: string; author_name: string | null;
@@ -193,7 +193,7 @@ function FilePicker({ versions, selected, onSelect }: {
       <button onClick={() => setOpen(p => !p)}
         className="flex items-center gap-2.5 bg-white/[0.05] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/80 hover:border-white/20 transition-all min-w-0 max-w-xs">
         <FileText size={13} className="text-white/30 shrink-0" />
-        <span className="truncate">{selected?.title ?? "Select a file to review"}</span>
+        <span className="truncate">{selected?.version_name ?? "Select a file to review"}</span>
         {selected?.department && (
           <span className="shrink-0 text-[10px] text-white/25 border border-white/10 px-1.5 py-0.5 rounded-md ml-1">
             {selected.department}
@@ -212,7 +212,7 @@ function FilePicker({ versions, selected, onSelect }: {
                 className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors text-left ${selected?.id === v.id ? "bg-white/5" : ""}`}>
                 <span className="text-white/25">{DEPT_ICON[v.department ?? ""] ?? <FileText size={12} />}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-white/80 text-sm truncate">{v.title}</p>
+                  <p className="text-white/80 text-sm truncate">{v.version_name}</p>
                   {v.department && <p className="text-white/30 text-xs">{v.department}</p>}
                 </div>
                 {selected?.id === v.id && <div className="w-1.5 h-1.5 rounded-full bg-white/40 shrink-0" />}
@@ -413,14 +413,14 @@ export default function ReviewClient({ project, versions, comments: initialComme
           {/* File meta below player */}
           {selectedVersion && (
             <div className="mt-3 flex items-center gap-3 px-1">
-              <span className="text-white/40 text-xs">{selectedVersion.title}</span>
+              <span className="text-white/40 text-xs">{selectedVersion.version_name}</span>
               {selectedVersion.department && (
                 <span className="text-[10px] text-white/20 border border-white/8 px-2 py-0.5 rounded-full">
                   {selectedVersion.department}
                 </span>
               )}
-              {selectedVersion.body && (
-                <span className="text-white/20 text-xs">— {selectedVersion.body}</span>
+              {selectedVersion.status && selectedVersion.status !== "draft" && (
+                <span className="text-white/20 text-xs capitalize">— {selectedVersion.status}</span>
               )}
               {selectedVersion.drive_url && (
                 <a href={selectedVersion.drive_url} target="_blank" rel="noopener noreferrer"

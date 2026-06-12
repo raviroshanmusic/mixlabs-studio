@@ -32,7 +32,7 @@ const MEMBER_ROLES = ["viewer", "editor", "admin"];
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[] };
-type Version = { id: string; title: string; department: string | null; drive_url: string | null; body: string | null; created_at: string };
+type Version = { id: string; version_name: string; department: string; drive_url: string | null; status: string; created_at: string };
 type Member = { id: string; role: string | null; profiles: { id: string; full_name: string | null; email: string | null } | null };
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
@@ -103,10 +103,10 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
     }
     const newFile: Version = {
       id: data.id,
-      title: data.title ?? title.trim(),
+      version_name: data.version_name ?? title.trim(),
       department: data.department ?? activeDept,
       drive_url: data.drive_url ?? null,
-      body: data.body ?? null,
+      status: data.status ?? "draft",
       created_at: data.created_at ?? new Date().toISOString(),
     };
     setLocalFiles(prev => [newFile, ...prev]);
@@ -192,17 +192,11 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
               value={title} onChange={e => setTitle(e.target.value)} required
               className="bg-transparent border-b border-white/10 pb-2 text-sm text-white placeholder-white/20 outline-none focus:border-white/25 transition-colors w-full"
             />
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                <Link size={11} className="text-white/20 shrink-0" />
-                <input placeholder="Drive / Dropbox link"
-                  value={url} onChange={e => setUrl(e.target.value)}
-                  className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full"
-                />
-              </div>
-              <input placeholder="Notes (optional)"
-                value={notes} onChange={e => setNotes(e.target.value)}
-                className="bg-transparent border-b border-white/10 pb-2 text-sm text-white placeholder-white/20 outline-none focus:border-white/25 transition-colors w-full"
+            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
+              <Link size={11} className="text-white/20 shrink-0" />
+              <input placeholder="Google Drive link (optional)"
+                value={url} onChange={e => setUrl(e.target.value)}
+                className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full"
               />
             </div>
             {addError && <p className="text-red-400/80 text-xs">{addError}</p>}
@@ -235,8 +229,8 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
               <div key={f.id}
                 className={`grid grid-cols-[1fr_90px_32px] gap-4 items-center px-3 py-3.5 group hover:bg-white/[0.03] rounded-lg transition-colors ${i < files.length - 1 ? "border-b border-white/[0.04]" : ""}`}>
                 <div className="min-w-0">
-                  <p className="text-white/80 text-sm truncate">{f.title}</p>
-                  {f.body && <p className="text-white/25 text-xs mt-0.5 truncate">{f.body}</p>}
+                  <p className="text-white/80 text-sm truncate">{f.version_name}</p>
+                  <p className="text-white/25 text-xs mt-0.5 capitalize">{f.status}</p>
                 </div>
                 <span className="text-white/25 text-xs">
                   {new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
