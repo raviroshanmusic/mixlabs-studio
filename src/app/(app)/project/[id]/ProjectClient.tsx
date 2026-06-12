@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   ArrowLeft, Plus, ExternalLink, ChevronDown,
   Music, Palette, Scissors, Wand2, Zap, Volume2,
-  X, Settings, Users, FileText, Trash2, Check, Link,
+  X, Settings, Users, FileText, Trash2, Check, Link, PlayCircle,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 
@@ -457,6 +457,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
                 <p className="text-white/25 text-[10px] tracking-[0.3em] uppercase mb-1.5">{project.client}</p>
               )}
               <h1 className="text-white text-3xl font-light tracking-wide">{project.name}</h1>
+
               {/* Department pills */}
               {project.departments.length > 0 && (
                 <div className="flex gap-2 mt-3 flex-wrap">
@@ -473,7 +474,14 @@ export default function ProjectClient({ project: initialProject, versions, membe
                 </div>
               )}
             </div>
-            <StatusBadge status={status} onChange={updateStatus} />
+            <div className="flex items-center gap-3">
+              <a href={`/review/${project.id}`}
+                className="flex items-center gap-2 text-xs text-white/40 hover:text-white/70 border border-white/10 hover:border-white/20 px-3.5 py-2 rounded-xl transition-all">
+                <PlayCircle size={13} />
+                Review Room
+              </a>
+              <StatusBadge status={status} onChange={updateStatus} />
+            </div>
           </div>
 
           {/* ── Tab Bar ── */}
