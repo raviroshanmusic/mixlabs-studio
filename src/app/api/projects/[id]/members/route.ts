@@ -10,21 +10,42 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { email, role } = await request.json();
   if (!email?.trim()) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
-  // Look up profile by email
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("id, full_name, email")
-    .eq("email", email.trim())
-    .single();
+  // Look up user ID by email via RPC (profiles.email may be null, so we check auth.users)
+  const { data: userId, error: rpcError } = await supabase
+    .rpc("get_user_id_by_email", { email_input: email.trim().toLowerCase() });
 
-  if (profileError || !profile) {
-    return NextResponse.json({ error: "No user found with that email address" }, { status: 404 });
+  if (rpcError || !userId) {
+    // Fallback: try profiles table directly
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .or(`email.eq.${email.trim()},email.eq.${email.trim().toLowerCase()}`)
+      .single();
+
+    if (!profile) {
+      return NextResponse.json(
+        { error: "No user found with that email. They must sign up first." },
+        { status: 404 }
+      );
+    }
+
+    const { data: member, error } = await supabase
+      .from("project_members")
+      .insert({ project_id: id, user_id: profile.id, role: role || "viewer" })
+      .select("*, profiles(id, full_name, email)")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") return NextResponse.json({ error: "Member already added" }, { status: 409 });
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ member });
   }
 
-  // Add to project_members
+  // Insert using the resolved user ID
   const { data: member, error } = await supabase
     .from("project_members")
-    .insert({ project_id: id, user_id: profile.id, role: role || "viewer" })
+    .insert({ project_id: id, user_id: userId, role: role || "viewer" })
     .select("*, profiles(id, full_name, email)")
     .single();
 
@@ -32,6 +53,5 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (error.code === "23505") return NextResponse.json({ error: "Member already added" }, { status: 409 });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-
   return NextResponse.json({ member });
 }
