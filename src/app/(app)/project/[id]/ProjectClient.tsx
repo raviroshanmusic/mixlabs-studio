@@ -46,47 +46,67 @@ function FolderCard({ dept, files, isOpen, onClick }: { dept: string; files: Ver
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="absolute inset-0 w-full h-full"
-            style={{ filter: isOpen ? "drop-shadow(0 0 8px rgba(255,255,255,0.12))" : "drop-shadow(0 8px 24px rgba(0,0,0,0.7))" }}
+            style={{ filter: isOpen ? "drop-shadow(0 0 10px rgba(255,255,255,0.14))" : "drop-shadow(0 10px 28px rgba(0,0,0,0.75))" }}
           >
             <defs>
               <linearGradient id={`body-${dept}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#4d4d4d" />
-                <stop offset="60%" stopColor="#3d3d3d" />
-                <stop offset="100%" stopColor="#333333" />
+                <stop offset="0%" stopColor="#525252" />
+                <stop offset="55%" stopColor="#424242" />
+                <stop offset="100%" stopColor="#3a3a3a" />
               </linearGradient>
-              {/* Bottom stripe gradient */}
               <linearGradient id={`stripe-${dept}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2e2e2e" />
-                <stop offset="100%" stopColor="#292929" />
+                <stop offset="0%" stopColor="#323232" />
+                <stop offset="100%" stopColor="#2c2c2c" />
               </linearGradient>
             </defs>
 
-            {/* BLACK BACK — full folder silhouette with tab */}
-            {/* Tab: top-left rounded, slopes via curve to body width at y=13 */}
+            {/* ── BLACK BACK — full folder silhouette ── */}
+            {/* Tab: top-left, slopes via cubic curve to full width at y=16 */}
             <path
               d={[
-                "M 7,0",           // tab top-left (offset for corner radius)
-                "Q 0,0 0,7",       // rounded top-left corner
-                "L 0,79",          // down left edge
-                "Q 0,86 7,86",     // rounded bottom-left
-                "L 93,86",         // across bottom
-                "Q 100,86 100,79", // rounded bottom-right
-                "L 100,13",        // up right edge to body-top level
-                "L 50,13",         // across body top (right of tab zone)
-                "C 47,13 40,0 36,0", // curved slope: tab right edge (the key shape!)
-                "L 7,0 Z",         // across tab top back to start
+                "M 8,0",            // tab top-left (offset for corner)
+                "Q 0,0 0,8",        // rounded top-left corner (r=8)
+                "L 0,78",           // down left edge
+                "Q 0,86 8,86",      // rounded bottom-left
+                "L 92,86",          // across bottom
+                "Q 100,86 100,78",  // rounded bottom-right
+                "L 100,16",         // right edge up to body-top
+                "L 50,16",          // body top, right of tab
+                "C 50,4 40,0 36,0", // smooth S-curve: tab right slope
+                "L 8,0 Z",          // tab top back to start
               ].join(" ")}
-              fill="#111111"
+              fill="#0f0f0f"
             />
 
-            {/* GREY FRONT BODY */}
-            <rect x="0" y="13" width="100" height="73" rx="10" fill={`url(#body-${dept})`} />
+            {/* ── GREY FRONT BODY — inset so black border shows all around ── */}
+            {/* top-left corner small (r=4), other corners r=9 — matches reference */}
+            <path
+              d={[
+                "M 6,16",          // top-left of body, small corner offset
+                "Q 2,16 2,20",     // top-left corner (r=4)
+                "L 2,77",          // left edge
+                "Q 2,84 9,84",     // bottom-left (r=7)
+                "L 91,84",         // bottom
+                "Q 98,84 98,77",   // bottom-right (r=7)
+                "L 98,25",         // right edge
+                "Q 98,16 89,16",   // top-right (r=9)
+                "L 6,16 Z",        // back across top
+              ].join(" ")}
+              fill={`url(#body-${dept})`}
+            />
 
-            {/* BOTTOM STRIPE */}
-            <rect x="0" y="74" width="100" height="12" rx="0" fill={`url(#stripe-${dept})`} />
-            {/* round the corners of the stripe */}
-            <rect x="0" y="78" width="100" height="8" rx="0" fill={`url(#stripe-${dept})`} />
-            <path d="M 0,78 L 0,86 Q 0,86 7,86 L 93,86 Q 100,86 100,78 Z" fill={`url(#stripe-${dept})`} />
+            {/* ── BOTTOM STRIPE ── */}
+            <path
+              d={[
+                "M 2,72",
+                "L 2,77",
+                "Q 2,84 9,84",
+                "L 91,84",
+                "Q 98,84 98,77",
+                "L 98,72 Z",
+              ].join(" ")}
+              fill={`url(#stripe-${dept})`}
+            />
           </svg>
 
           {/* ── LABEL (positioned over SVG bottom area) ── */}
