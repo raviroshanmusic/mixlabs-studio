@@ -201,10 +201,13 @@ function CommentCard({ comment, onTimecodeClick }: { comment: Comment; onTimecod
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
-export default function ReviewClient({ project, versions, comments: initialComments, currentUser }: {
-  project: Project; versions: Version[]; comments: Comment[]; currentUser: CurrentUser;
+export default function ReviewClient({ project, versions, comments: initialComments, currentUser, initialDept }: {
+  project: Project; versions: Version[]; comments: Comment[]; currentUser: CurrentUser; initialDept?: string | null;
 }) {
-  const [selectedVersion, setSelectedVersion] = useState<Version | null>(versions[0] ?? null);
+  const firstVersion = initialDept
+    ? (versions.find(v => v.department === initialDept) ?? versions[0] ?? null)
+    : (versions[0] ?? null);
+  const [selectedVersion, setSelectedVersion] = useState<Version | null>(firstVersion);
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [body, setBody] = useState("");
   const [timecodeInput, setTimecodeInput] = useState("");

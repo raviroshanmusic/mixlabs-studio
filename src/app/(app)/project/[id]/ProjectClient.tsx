@@ -117,23 +117,33 @@ function FilesTab({ project, versions }: { project: Project; versions: Version[]
           const count = localFiles.filter(v => v.department === dept).length;
           const active = activeDept === dept;
           return (
-            <button key={dept} onClick={() => { setActiveDept(dept); setAddingFile(false); }}
-              className={`group flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left ${active ? "bg-white/8" : "hover:bg-white/4"}`}>
-              <div className="flex items-center gap-2.5">
-                <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all"
-                  style={{ background: active ? m.bg : "transparent", color: active ? m.accent : "rgba(255,255,255,0.25)" }}>
-                  {m.icon}
-                </span>
-                <span className={`text-sm font-light transition-colors ${active ? "text-white" : "text-white/40 group-hover:text-white/60"}`}>
-                  {dept}
-                </span>
-              </div>
+            <div key={dept} className="relative group/row">
+              <button onClick={() => { setActiveDept(dept); setAddingFile(false); }}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all text-left ${active ? "bg-white/8" : "hover:bg-white/4"}`}>
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                    style={{ background: active ? m.bg : "transparent", color: active ? m.accent : "rgba(255,255,255,0.25)" }}>
+                    {m.icon}
+                  </span>
+                  <span className={`text-sm font-light transition-colors ${active ? "text-white" : "text-white/40 group-hover/row:text-white/60"}`}>
+                    {dept}
+                  </span>
+                </div>
+                {count > 0 && (
+                  <span className="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md bg-white/6 text-white/30">
+                    {count}
+                  </span>
+                )}
+              </button>
+              {/* Review Room shortcut — appears on hover */}
               {count > 0 && (
-                <span className="text-[10px] tabular-nums px-1.5 py-0.5 rounded-md bg-white/6 text-white/30">
-                  {count}
-                </span>
+                <a href={`/review/${project.id}?dept=${dept}`}
+                  title="Open in Review Room"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/row:opacity-100 transition-opacity text-white/25 hover:text-white/60 p-1">
+                  <PlayCircle size={13} />
+                </a>
               )}
-            </button>
+            </div>
           );
         })}
       </div>

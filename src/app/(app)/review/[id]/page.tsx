@@ -2,8 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
 import ReviewClient from "./ReviewClient";
 
-export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ReviewPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ dept?: string }>;
+}) {
   const { id } = await params;
+  const { dept } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -42,6 +49,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
       versions={versions ?? []}
       comments={comments ?? []}
       currentUser={{ id: user.id, full_name: profile?.full_name ?? null, email: user.email ?? "" }}
+      initialDept={dept ?? null}
     />
   );
 }
