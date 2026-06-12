@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase
     .from("projects")
-    .insert({ name: name.trim(), client: client?.trim() || null, status: "active", owner_id: user.id, departments: departments ?? [] })
+    .insert({ name: name.trim(), client: client?.trim() || "", status: "active", owner_id: user.id, departments: departments ?? [] })
     .select()
     .single();
 

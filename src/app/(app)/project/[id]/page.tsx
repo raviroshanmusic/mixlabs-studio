@@ -30,7 +30,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <ProjectClient
-      project={project}
+      project={{ ...project, departments: project.departments ?? [] }}
       versions={versions ?? []}
       members={members ?? []}
       currentUserId={user.id}
