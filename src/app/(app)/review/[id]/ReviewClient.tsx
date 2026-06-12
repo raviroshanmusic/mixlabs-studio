@@ -26,19 +26,21 @@ const DEPT_ICON: Record<string, React.ReactNode> = {
 
 function fmtTimecode(sec: number | null | undefined): string {
   if (sec == null) return "";
-  const m = Math.floor(sec / 60);
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
   const s = Math.floor(sec % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
+  if (h > 0) return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
 }
 
 function parseTimecode(str: string): number | null {
   const clean = str.trim();
   if (!clean) return null;
-  // Accept M:SS or SS
   const parts = clean.split(":").map(Number);
   if (parts.some(isNaN)) return null;
   if (parts.length === 1) return parts[0];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   return null;
 }
 
@@ -53,128 +55,99 @@ function timeAgo(dateStr: string): string {
 }
 
 // ─── Timecode Roller ──────────────────────────────────────────────────────────
+// Film format: HH:MM:SS
 
-function RollerColumn({
-  value, max, onChange, label,
-}: { value: number; max: number; onChange: (v: number) => void; label: string }) {
+function parseFilmTimecode(str: string): { h: number; m: number; s: number } {
+  const parts = str.split(":").map(Number);
+  if (parts.length === 3) return { h: parts[0] ?? 0, m: parts[1] ?? 0, s: parts[2] ?? 0 };
+  if (parts.length === 2) return { h: 0, m: parts[0] ?? 0, s: parts[1] ?? 0 };
+  return { h: 0, m: 0, s: 0 };
+}
+
+function fmtFilm(h: number, m: number, s: number): string {
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function Drum({ value, max, onChange }: { value: number; max: number; onChange: (v: number) => void }) {
   const wrap = (v: number) => ((v % (max + 1)) + (max + 1)) % (max + 1);
 
-  function onWheel(e: React.WheelEvent) {
-    e.preventDefault();
-    onChange(wrap(value + (e.deltaY > 0 ? 1 : -1)));
-  }
-
-  const prev = wrap(value - 1);
-  const next = wrap(value + 1);
-
   return (
-    <div className="flex flex-col items-center gap-0 select-none">
-      <span className="text-[9px] tracking-widest uppercase text-white/20 mb-2">{label}</span>
-
-      {/* Up arrow */}
+    <div
+      className="flex flex-col items-center cursor-ns-resize select-none"
+      onWheel={e => { e.preventDefault(); onChange(wrap(value + (e.deltaY > 0 ? 1 : -1))); }}
+    >
       <button type="button" onClick={() => onChange(wrap(value - 1))}
-        className="w-full flex justify-center py-1.5 text-white/20 hover:text-white/50 transition-colors">
-        <ChevronUp size={14} />
+        className="text-white/15 hover:text-white/40 transition-colors px-2 py-0.5">
+        <ChevronUp size={11} />
       </button>
-
-      {/* Roller drum */}
-      <div onWheel={onWheel} className="flex flex-col items-center cursor-ns-resize">
-        {/* Previous */}
-        <div className="text-white/15 text-xl font-light tabular-nums py-0.5 transition-all">
-          {String(prev).padStart(2, "0")}
-        </div>
-        {/* Current — highlighted */}
-        <div className="text-white text-3xl font-light tabular-nums py-1 leading-none">
-          {String(value).padStart(2, "0")}
-        </div>
-        {/* Next */}
-        <div className="text-white/15 text-xl font-light tabular-nums py-0.5 transition-all">
-          {String(next).padStart(2, "0")}
-        </div>
+      <div className="text-white/20 text-xs font-mono tabular-nums leading-none py-0.5">
+        {String(wrap(value - 1)).padStart(2, "0")}
       </div>
-
-      {/* Down arrow */}
+      <div className="text-white text-sm font-mono tabular-nums leading-none py-1 px-2 bg-white/8 rounded-md my-0.5">
+        {String(value).padStart(2, "0")}
+      </div>
+      <div className="text-white/20 text-xs font-mono tabular-nums leading-none py-0.5">
+        {String(wrap(value + 1)).padStart(2, "0")}
+      </div>
       <button type="button" onClick={() => onChange(wrap(value + 1))}
-        className="w-full flex justify-center py-1.5 text-white/20 hover:text-white/50 transition-colors">
-        <ChevronDown size={14} />
+        className="text-white/15 hover:text-white/40 transition-colors px-2 py-0.5">
+        <ChevronDown size={11} />
       </button>
     </div>
   );
 }
 
-function TimecodeRoller({
-  value, onChange,
-}: { value: string; onChange: (val: string) => void }) {
+function TimecodeRoller({ value, onChange }: { value: string; onChange: (val: string) => void }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const { h, m, s } = parseFilmTimecode(value);
+  const hasValue = value.length > 0 && value !== "00:00:00";
 
-  // Parse current value into mins/secs
-  const parsed = parseTimecode(value);
-  const mins = parsed != null ? Math.floor(parsed / 60) : 0;
-  const secs = parsed != null ? Math.floor(parsed % 60) : 0;
-
-  // Close on outside click
   useEffect(() => {
-    function handler(e: MouseEvent) {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handler);
+    };
+    document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  function setMins(m: number) { onChange(`${m}:${String(secs).padStart(2, "0")}`); }
-  function setSecs(s: number) { onChange(`${mins}:${String(s).padStart(2, "0")}`); }
+  function setH(v: number) { onChange(fmtFilm(v, m, s)); }
+  function setM(v: number) { onChange(fmtFilm(h, v, s)); }
+  function setS(v: number) { onChange(fmtFilm(h, m, v)); }
 
-  function handleClear() { onChange(""); setOpen(false); }
-
-  const display = parsed != null ? fmtTimecode(parsed) : null;
+  // Init to 00:00:00 when opening if empty
+  function handleOpen() {
+    if (!value) onChange("00:00:00");
+    setOpen(p => !p);
+  }
 
   return (
     <div ref={ref} className="relative">
-      {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => setOpen(p => !p)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-xs font-mono ${
-          display
+      <button type="button" onClick={handleOpen}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-all ${
+          hasValue
             ? "bg-white/8 border-white/15 text-white"
-            : "bg-white/[0.03] border-white/8 text-white/25 hover:border-white/15 hover:text-white/40"
-        }`}
-      >
-        <Clock size={11} className={display ? "text-white/50" : "text-white/20"} />
-        {display ?? "Set timecode"}
-        {display && (
-          <span
-            onClick={e => { e.stopPropagation(); handleClear(); }}
-            className="ml-1 text-white/30 hover:text-white/70 cursor-pointer"
-          >×</span>
+            : "bg-white/[0.03] border-white/8 text-white/30 hover:border-white/15"
+        }`}>
+        <Clock size={10} className="text-white/30" />
+        <span>{hasValue ? value : "timecode"}</span>
+        {hasValue && (
+          <span onClick={e => { e.stopPropagation(); onChange(""); }}
+            className="text-white/25 hover:text-white/60 ml-0.5 cursor-pointer leading-none">×</span>
         )}
       </button>
 
-      {/* Roller popover */}
       {open && (
-        <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#141414] border border-white/10 rounded-2xl shadow-2xl p-5 w-52">
-          {/* Header */}
-          <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase text-center mb-4">Timecode</p>
-
-          {/* Columns */}
-          <div className="flex items-center justify-center gap-2">
-            <RollerColumn value={mins} max={99} onChange={setMins} label="min" />
-
-            {/* Colon separator */}
-            <div className="text-white/30 text-2xl font-light pb-1 mt-6">:</div>
-
-            <RollerColumn value={secs} max={59} onChange={setSecs} label="sec" />
+        <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#161616] border border-white/10 rounded-xl shadow-2xl p-3">
+          <p className="text-[9px] tracking-[0.2em] uppercase text-white/20 text-center mb-2">HH : MM : SS</p>
+          <div className="flex items-center gap-1">
+            <Drum value={h} max={23} onChange={setH} />
+            <span className="text-white/25 text-sm font-mono mb-0.5">:</span>
+            <Drum value={m} max={59} onChange={setM} />
+            <span className="text-white/25 text-sm font-mono mb-0.5">:</span>
+            <Drum value={s} max={59} onChange={setS} />
           </div>
-
-          {/* Confirm */}
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="mt-5 w-full py-2 rounded-xl bg-white/8 hover:bg-white/12 text-white/60 hover:text-white text-xs tracking-widest uppercase transition-all"
-          >
-            Done
-          </button>
         </div>
       )}
     </div>
@@ -383,8 +356,10 @@ export default function ReviewClient({ project, versions, comments: initialComme
   }
 
   function handleTimecodeClick(sec: number) {
-    setTimecodeInput(fmtTimecode(sec));
-    // focus textarea so user can type note right away
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = Math.floor(sec % 60);
+    setTimecodeInput(fmtFilm(h, m, s));
     setTimeout(() => textareaRef.current?.focus(), 50);
   }
 
