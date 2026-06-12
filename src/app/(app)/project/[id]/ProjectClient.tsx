@@ -116,9 +116,9 @@ export default function ProjectClient({
 
           {/* Back + Header */}
           <div className="mb-8">
-            <Link href="/dashboard" className="inline-flex items-center gap-2 text-white/20 hover:text-white/50 text-xs tracking-widest uppercase transition-colors mb-6">
+            <a href="/dashboard" className="inline-flex items-center gap-2 text-white/20 hover:text-white/50 text-xs tracking-widest uppercase transition-colors mb-6">
               <ArrowLeft size={12} /> Dashboard
-            </Link>
+            </a>
 
             <div className="flex items-start justify-between">
               <div>

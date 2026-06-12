@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import { User } from "@supabase/supabase-js";
-import Link from "next/link";
 import Sidebar from "@/components/ui/Sidebar";
 import NewProjectModal from "@/components/ui/NewProjectModal";
 import { Plus, Grid3X3, List } from "lucide-react";
@@ -143,7 +142,7 @@ export default function DashboardClient({
           ) : (
             <div className={viewMode === "grid" ? "grid grid-cols-3 gap-4" : "flex flex-col gap-3"}>
               {filtered.map((project) => (
-                <Link key={project.id} href={`/project/${project.id}`}>
+                <a key={project.id} href={`/project/${project.id}`}>
                   <div className="glass rounded-xl p-5 hover:bg-white/5 transition-all cursor-pointer group">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="text-white text-sm font-medium group-hover:text-white/80 transition-colors leading-snug">
@@ -160,7 +159,7 @@ export default function DashboardClient({
                       {new Date(project.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                     </p>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
           )}

@@ -30,8 +30,8 @@ export default function NewProjectModal({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    router.push(`/project/${data.id}`);
     onClose();
+    window.location.href = `/project/${data.id}`;
   }
 
   return (

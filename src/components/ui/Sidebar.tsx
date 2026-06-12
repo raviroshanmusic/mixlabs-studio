@@ -1,7 +1,5 @@
 "use client";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { usePathname } from "next/navigation";
 import { LayoutDashboard, FolderOpen, MessageSquare, User, LogOut } from "lucide-react";
 
 const NAV = [
@@ -13,18 +11,14 @@ const NAV = [
 
 export default function Sidebar({ active }: { active?: string }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
 
   async function signOut() {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    await fetch("/api/auth/signout", { method: "POST" });
+    window.location.href = "/login";
   }
 
   return (
     <aside className="w-16 flex flex-col items-center py-6 gap-2 border-r border-white/5 shrink-0">
-      {/* Logo */}
       <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[10px] font-bold text-white mb-4">
         ML
       </div>
@@ -32,7 +26,7 @@ export default function Sidebar({ active }: { active?: string }) {
       {NAV.map(({ href, label, icon: Icon, key }) => {
         const isActive = pathname.startsWith(href) || active === key;
         return (
-          <Link
+          <a
             key={href}
             href={href}
             title={label}
@@ -41,7 +35,7 @@ export default function Sidebar({ active }: { active?: string }) {
             }`}
           >
             <Icon size={16} />
-          </Link>
+          </a>
         );
       })}
 
