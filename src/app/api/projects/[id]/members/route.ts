@@ -32,26 +32,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const { data: member, error } = await supabase
       .from("project_members")
       .insert({ project_id: id, user_id: profile.id, role: role || "viewer" })
-      .select("*, profiles(id, full_name, email)")
+      .select("*")
       .single();
 
     if (error) {
       if (error.code === "23505") return NextResponse.json({ error: "Member already added" }, { status: 409 });
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json({ member });
+    return NextResponse.json({ member: { ...member, profiles: profile } });
   }
 
   // Insert using the resolved user ID
   const { data: member, error } = await supabase
     .from("project_members")
     .insert({ project_id: id, user_id: userId, role: role || "viewer" })
-    .select("*, profiles(id, full_name, email)")
+    .select("*")
     .single();
 
   if (error) {
     if (error.code === "23505") return NextResponse.json({ error: "Member already added" }, { status: 409 });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ member });
+
+  // Fetch profile separately (user_id → auth.users, not directly joinable to profiles)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, full_name, email")
+    .eq("id", userId)
+    .single();
+
+  return NextResponse.json({ member: { ...member, profiles: profile ?? null } });
 }

@@ -23,10 +23,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .eq("project_id", id)
     .order("created_at", { ascending: false });
 
-  const { data: members } = await supabase
+  // Fetch members then enrich with profiles separately (user_id → auth.users, not directly joinable)
+  const { data: membersRaw } = await supabase
     .from("project_members")
-    .select("*, profiles(id, full_name, email)")
+    .select("*")
     .eq("project_id", id);
+
+  const members = await Promise.all(
+    (membersRaw ?? []).map(async (m) => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("id", m.user_id)
+        .single();
+      return { ...m, profiles: profile ?? null };
+    })
+  );
 
   return (
     <ProjectClient
