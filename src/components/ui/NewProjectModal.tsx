@@ -23,18 +23,20 @@ export default function NewProjectModal({ onClose }: { onClose: () => void }) {
 
     const { data, error: err } = await supabase
       .from("projects")
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .insert({
         name: name.trim(),
         client: client.trim() || null,
         status: "active",
         owner_id: user.id,
-      })
+      } as any)
       .select()
       .single();
 
     if (err) { setError(err.message); setLoading(false); return; }
 
-    router.push(`/project/${data.id}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    router.push(`/project/${(data as any).id}`);
     router.refresh();
     onClose();
   }
