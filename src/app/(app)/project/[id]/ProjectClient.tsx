@@ -30,98 +30,59 @@ function FolderCard({ dept, files, isOpen, onClick }: { dept: string; files: Ver
   const meta = DEPT_META[dept] ?? { icon: null, color: "#6B7280" };
   const count = files.length;
 
-  // Box starts at 14% — papers just barely peek (14% of card height visible above box)
-  const BOX_TOP = "14%";
-
   return (
     <button onClick={onClick} className="group text-left w-full focus:outline-none">
-      <div className="relative w-full" style={{ paddingBottom: "100%" }}>
+      {/* Folder shape — aspect ratio matches reference */}
+      <div className="relative w-full" style={{ paddingBottom: "88%" }}>
         <div className="absolute inset-0">
 
-          {/* ── DARK OUTER BOX (the tray) ── */}
+          {/* ── TAB (top-left protrusion) ── */}
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "38%",
+            height: "14%",
+            background: "#111111",
+            borderRadius: "8px 8px 0 0",
+            zIndex: 1,
+          }} />
+
+          {/* ── FOLDER BODY ── */}
           <div style={{
             position: "absolute",
             left: 0, right: 0, bottom: 0,
-            top: BOX_TOP,
-            borderRadius: "16px",
-            background: "linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.9), 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.07)",
-            border: isOpen ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.07)",
-          }} />
-
-          {/* ── PAPER LEFT — barely peeks above box rim ── */}
-          <div style={{
-            position: "absolute",
-            width: "46%",
-            height: "75%",
-            top: "1%",
-            left: "4%",
-            borderRadius: "10px 10px 6px 6px",
-            background: "linear-gradient(180deg, #ebebeb 0%, #d0d0d0 100%)",
-            transform: "rotate(-6deg)",
-            transformOrigin: "50% 90%",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.7)",
+            top: "9%",             /* slightly overlaps tab bottom so no gap */
+            borderRadius: "4px 14px 14px 14px",
+            background: "linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 55%, #323232 100%)",
+            boxShadow: isOpen
+              ? "0 0 0 1.5px rgba(255,255,255,0.18), 0 12px 40px rgba(0,0,0,0.6)"
+              : "0 8px 32px rgba(0,0,0,0.5)",
             zIndex: 2,
-          }} />
-
-          {/* ── PAPER RIGHT — barely peeks above box rim ── */}
-          <div style={{
-            position: "absolute",
-            width: "46%",
-            height: "75%",
-            top: "1%",
-            right: "4%",
-            borderRadius: "10px 10px 6px 6px",
-            background: "linear-gradient(180deg, #f8f8f8 0%, #e0e0e0 100%)",
-            transform: "rotate(6deg)",
-            transformOrigin: "50% 90%",
-            boxShadow: "0 4px 28px rgba(0,0,0,0.75)",
-            zIndex: 3,
-          }} />
-
-          {/* ── GLASS FRONT PANEL — spotlight radial glow ── */}
-          <div style={{
-            position: "absolute",
-            left: 0, right: 0, bottom: 0,
-            top: BOX_TOP,
-            borderRadius: "16px",
-            background: [
-              "radial-gradient(ellipse 80% 60% at 50% 30%,",
-              "  rgba(220,220,220,0.18) 0%,",
-              "  rgba(140,140,140,0.10) 40%,",
-              "  rgba(30,30,30,0.55) 70%,",
-              "  rgba(10,10,10,0.80) 100%)",
-            ].join(""),
-            backdropFilter: "blur(20px) saturate(1.2)",
-            WebkitBackdropFilter: "blur(20px) saturate(1.2)",
-            zIndex: 4,
           }}>
-            {/* subtle top rim highlight */}
+            {/* subtle bottom band — the footer stripe in the reference */}
             <div style={{
-              position: "absolute", top: 0, left: "10%", right: "10%", height: "1px",
-              background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)",
-            }} />
-            {/* center glow bloom */}
-            <div style={{
-              position: "absolute", top: "12%", left: "20%", right: "20%", height: "35%",
-              background: "radial-gradient(ellipse at 50% 30%, rgba(255,255,255,0.07) 0%, transparent 70%)",
-              borderRadius: "50%",
+              position: "absolute",
+              left: 0, right: 0, bottom: 0,
+              height: "14%",
+              borderRadius: "0 0 14px 14px",
+              background: "rgba(0,0,0,0.22)",
             }} />
           </div>
 
-          {/* ── LABEL ── */}
+          {/* ── LABEL (bottom of body) ── */}
           <div style={{
             position: "absolute", left: 0, right: 0, bottom: 0,
-            padding: "0 16px 16px",
+            padding: "0 14px 14px",
             display: "flex", alignItems: "flex-end", justifyContent: "space-between",
             zIndex: 5,
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-              <span style={{ color: meta.color, opacity: 0.9 }}>{meta.icon}</span>
-              <span style={{ color: "rgba(255,255,255,0.75)", fontSize: "13px", fontWeight: 300, letterSpacing: "0.04em" }}>{dept}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ color: meta.color, opacity: 0.85 }}>{meta.icon}</span>
+              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 400, letterSpacing: "0.04em" }}>{dept}</span>
             </div>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px", letterSpacing: "0.05em" }}>
-              {count} {count === 1 ? "file" : "files"}
+            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}>
+              {count}
             </span>
           </div>
 
