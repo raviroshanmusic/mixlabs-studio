@@ -1,36 +1,41 @@
 "use client";
 import { useState } from "react";
-import { loginAction } from "./actions";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"in" | "up">("in");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setMessage("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-
     if (mode === "in") {
-      const result = await loginAction(formData);
-      // If we get here, login failed (success = server redirect, never returns)
-      if (result?.error) {
-        setError(result.error);
-        setLoading(false);
-      }
-    } else {
-      // Sign up — keep client-side for now
-      const { createClient } = await import("@/lib/supabase/client");
-      const supabase = createClient();
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Login failed");
+        setLoading(false);
+        return;
+      }
+
+      // API route set the auth cookies in its response — do a hard nav to dashboard
+      window.location.href = "/dashboard";
+    } else {
+      const supabase = createClient();
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
       if (signUpError) {
         setError(signUpError.message);
       } else {
@@ -77,16 +82,18 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <input
-            name="email"
             type="email"
             placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors"
           />
           <input
-            name="password"
             type="password"
             placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
             className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors"
           />
