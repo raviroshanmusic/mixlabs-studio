@@ -30,58 +30,77 @@ function FolderCard({ dept, files, isOpen, onClick }: { dept: string; files: Ver
   const meta = DEPT_META[dept] ?? { icon: null, color: "#6B7280" };
   const count = files.length;
 
+  // SVG viewBox: 100 wide × 86 tall
+  // Tab: 0→38 wide, 0→13 tall, curved slope on right edge
+  // Back (black): full folder silhouette
+  // Front (grey): body from y=13 downward
+
   return (
     <button onClick={onClick} className="group text-left w-full focus:outline-none">
-      {/* Folder shape — aspect ratio matches reference */}
-      <div className="relative w-full" style={{ paddingBottom: "88%" }}>
+      <div className="relative w-full select-none" style={{ paddingBottom: "86%" }}>
         <div className="absolute inset-0">
 
-          {/* ── TAB (top-left protrusion) ── */}
-          <div style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "38%",
-            height: "14%",
-            background: "#111111",
-            borderRadius: "8px 8px 0 0",
-            zIndex: 1,
-          }} />
+          {/* ── SVG FOLDER SHAPE ── */}
+          <svg
+            viewBox="0 0 100 86"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="absolute inset-0 w-full h-full"
+            style={{ filter: isOpen ? "drop-shadow(0 0 8px rgba(255,255,255,0.12))" : "drop-shadow(0 8px 24px rgba(0,0,0,0.7))" }}
+          >
+            <defs>
+              <linearGradient id={`body-${dept}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#4d4d4d" />
+                <stop offset="60%" stopColor="#3d3d3d" />
+                <stop offset="100%" stopColor="#333333" />
+              </linearGradient>
+              {/* Bottom stripe gradient */}
+              <linearGradient id={`stripe-${dept}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#2e2e2e" />
+                <stop offset="100%" stopColor="#292929" />
+              </linearGradient>
+            </defs>
 
-          {/* ── FOLDER BODY ── */}
-          <div style={{
-            position: "absolute",
-            left: 0, right: 0, bottom: 0,
-            top: "9%",             /* slightly overlaps tab bottom so no gap */
-            borderRadius: "4px 14px 14px 14px",
-            background: "linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 55%, #323232 100%)",
-            boxShadow: isOpen
-              ? "0 0 0 1.5px rgba(255,255,255,0.18), 0 12px 40px rgba(0,0,0,0.6)"
-              : "0 8px 32px rgba(0,0,0,0.5)",
-            zIndex: 2,
-          }}>
-            {/* subtle bottom band — the footer stripe in the reference */}
-            <div style={{
-              position: "absolute",
-              left: 0, right: 0, bottom: 0,
-              height: "14%",
-              borderRadius: "0 0 14px 14px",
-              background: "rgba(0,0,0,0.22)",
-            }} />
-          </div>
+            {/* BLACK BACK — full folder silhouette with tab */}
+            {/* Tab: top-left rounded, slopes via curve to body width at y=13 */}
+            <path
+              d={[
+                "M 7,0",           // tab top-left (offset for corner radius)
+                "Q 0,0 0,7",       // rounded top-left corner
+                "L 0,79",          // down left edge
+                "Q 0,86 7,86",     // rounded bottom-left
+                "L 93,86",         // across bottom
+                "Q 100,86 100,79", // rounded bottom-right
+                "L 100,13",        // up right edge to body-top level
+                "L 50,13",         // across body top (right of tab zone)
+                "C 47,13 40,0 36,0", // curved slope: tab right edge (the key shape!)
+                "L 7,0 Z",         // across tab top back to start
+              ].join(" ")}
+              fill="#111111"
+            />
 
-          {/* ── LABEL (bottom of body) ── */}
+            {/* GREY FRONT BODY */}
+            <rect x="0" y="13" width="100" height="73" rx="10" fill={`url(#body-${dept})`} />
+
+            {/* BOTTOM STRIPE */}
+            <rect x="0" y="74" width="100" height="12" rx="0" fill={`url(#stripe-${dept})`} />
+            {/* round the corners of the stripe */}
+            <rect x="0" y="78" width="100" height="8" rx="0" fill={`url(#stripe-${dept})`} />
+            <path d="M 0,78 L 0,86 Q 0,86 7,86 L 93,86 Q 100,86 100,78 Z" fill={`url(#stripe-${dept})`} />
+          </svg>
+
+          {/* ── LABEL (positioned over SVG bottom area) ── */}
           <div style={{
             position: "absolute", left: 0, right: 0, bottom: 0,
-            padding: "0 14px 14px",
+            padding: "0 14px 13px",
             display: "flex", alignItems: "flex-end", justifyContent: "space-between",
             zIndex: 5,
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ color: meta.color, opacity: 0.85 }}>{meta.icon}</span>
-              <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", fontWeight: 400, letterSpacing: "0.04em" }}>{dept}</span>
+              <span style={{ color: meta.color, opacity: 0.9 }}>{meta.icon}</span>
+              <span style={{ color: "rgba(255,255,255,0.65)", fontSize: "12px", fontWeight: 400, letterSpacing: "0.04em" }}>{dept}</span>
             </div>
-            <span style={{ color: "rgba(255,255,255,0.2)", fontSize: "10px" }}>
+            <span style={{ color: "rgba(255,255,255,0.22)", fontSize: "10px" }}>
               {count}
             </span>
           </div>
