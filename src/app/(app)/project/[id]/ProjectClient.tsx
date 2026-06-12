@@ -32,71 +32,87 @@ function FolderCard({ dept, files, isOpen, onClick }: { dept: string; files: Ver
 
   return (
     <button onClick={onClick} className="group text-left w-full focus:outline-none">
-      <div className="relative w-full" style={{ paddingBottom: "85%" }}>
-        <div className="absolute inset-0">
+      {/* Outer wrapper — extra space at top for papers to poke above */}
+      <div className="relative w-full" style={{ paddingBottom: "90%" }}>
+        <div className="absolute inset-0" style={{ paddingTop: "18%" }}>
 
-          {/* Paper 1 — back left, white */}
+          {/* ── FOLDER BOX ── dark outer shell */}
+          <div className="absolute bottom-0 left-0 right-0 top-[18%]" style={{
+            borderRadius: "22px",
+            background: "linear-gradient(170deg, #252525 0%, #111111 100%)",
+            boxShadow: "0 16px 48px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.07), inset 0 -1px 0 rgba(0,0,0,0.4)",
+            border: isOpen ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255,255,255,0.06)",
+            transition: "border-color 0.2s",
+          }} />
+
+          {/* ── PAPER LEFT — sits inside box, pokes above top edge, tilted left ── */}
           <div className="absolute" style={{
-            width: "52%", height: "60%",
-            bottom: "28%", left: "10%",
-            background: "linear-gradient(160deg, #d0d0d0 0%, #b8b8b8 100%)",
-            borderRadius: "10px",
-            transform: "rotate(-10deg)",
+            width: "44%",
+            height: "68%",
+            top: "0%",
+            left: "8%",
+            borderRadius: "14px 14px 10px 10px",
+            background: "linear-gradient(170deg, #f0f0f0 0%, #d8d8d8 100%)",
+            transform: "rotate(-7deg)",
             transformOrigin: "bottom center",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+            zIndex: 2,
           }}>
-            <div className="p-3 pt-4 flex flex-col gap-2">
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.12)", borderRadius: "2px", width: "70%" }} />
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.08)", borderRadius: "2px", width: "50%" }} />
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.08)", borderRadius: "2px", width: "60%" }} />
+            <div style={{ padding: "14px 12px 0", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.14)", borderRadius: "3px", width: "72%" }} />
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.08)", borderRadius: "3px", width: "55%" }} />
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.08)", borderRadius: "3px", width: "64%" }} />
             </div>
           </div>
 
-          {/* Paper 2 — front right, brighter white */}
+          {/* ── PAPER RIGHT — sits inside box, pokes above, tilted right ── */}
           <div className="absolute" style={{
-            width: "52%", height: "60%",
-            bottom: "28%", right: "10%",
-            background: "linear-gradient(160deg, #ebebeb 0%, #d4d4d4 100%)",
-            borderRadius: "10px",
-            transform: "rotate(8deg)",
+            width: "44%",
+            height: "68%",
+            top: "2%",
+            right: "8%",
+            borderRadius: "14px 14px 10px 10px",
+            background: "linear-gradient(170deg, #ffffff 0%, #e4e4e4 100%)",
+            transform: "rotate(6deg)",
             transformOrigin: "bottom center",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.45)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.55)",
+            zIndex: 3,
           }}>
-            <div className="p-3 pt-4 flex flex-col gap-2">
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.10)", borderRadius: "2px", width: "65%" }} />
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.07)", borderRadius: "2px", width: "80%" }} />
-              <div style={{ height: "3px", background: "rgba(0,0,0,0.07)", borderRadius: "2px", width: "45%" }} />
+            <div style={{ padding: "14px 12px 0", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.12)", borderRadius: "3px", width: "60%" }} />
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.07)", borderRadius: "3px", width: "78%" }} />
+              <div style={{ height: "4px", background: "rgba(0,0,0,0.07)", borderRadius: "3px", width: "48%" }} />
             </div>
           </div>
 
-          {/* Folder body */}
-          <div className="absolute bottom-0 left-0 right-0 overflow-hidden transition-all duration-200 group-hover:brightness-110"
-            style={{
-              height: "72%",
-              borderRadius: "16px",
-              background: "linear-gradient(180deg, #222222 0%, #141414 100%)",
-              border: isOpen ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.07)",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)",
-            }}>
-
-            {/* Glass front panel — bottom half */}
-            <div className="absolute bottom-0 left-0 right-0" style={{
-              height: "60%",
-              background: "linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.05) 100%)",
-              borderTop: "1px solid rgba(255,255,255,0.05)",
-              borderRadius: "0 0 16px 16px",
+          {/* ── GLASS FRONT PANEL — frosted overlay covering bottom ~58% of box ── */}
+          <div className="absolute bottom-0 left-0 right-0" style={{
+            height: "60%",
+            borderRadius: "22px",
+            background: "linear-gradient(170deg, rgba(90,90,90,0.35) 0%, rgba(40,40,40,0.55) 100%)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            border: "1px solid rgba(255,255,255,0.09)",
+            borderBottom: "1px solid rgba(255,255,255,0.04)",
+            zIndex: 4,
+          }}>
+            {/* Inner highlight top edge */}
+            <div style={{
+              position: "absolute", top: 0, left: "12%", right: "12%", height: "1px",
+              background: "rgba(255,255,255,0.18)", borderRadius: "1px",
             }} />
+          </div>
 
-            {/* Label */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 flex items-end justify-between">
-              <div className="flex items-center gap-2">
-                <span style={{ color: meta.color }}>{meta.icon}</span>
-                <span className="text-white/75 text-sm font-light tracking-wide">{dept}</span>
-              </div>
-              <span className="text-white/20 text-[11px] tabular-nums">
-                {count} {count === 1 ? "file" : "files"}
-              </span>
+          {/* ── LABEL — dept name + count, on top of glass ── */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-end justify-between"
+            style={{ padding: "0 18px 16px", zIndex: 5 }}>
+            <div className="flex items-center gap-2">
+              <span style={{ color: meta.color }}>{meta.icon}</span>
+              <span className="text-white/80 text-sm font-light tracking-wide">{dept}</span>
             </div>
+            <span className="text-white/30 text-[11px] tabular-nums">
+              {count} {count === 1 ? "file" : "files"}
+            </span>
           </div>
 
         </div>
