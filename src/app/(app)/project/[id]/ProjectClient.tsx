@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, ExternalLink, FileVideo, FileAudio, File, Clock, ChevronDown } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
-import { createClient } from "@/lib/supabase/client";
 
 const STATUS_OPTIONS = ["active", "in review", "ready", "paused", "delivered"];
 const STATUS_STYLES: Record<string, string> = {
@@ -64,8 +63,6 @@ export default function ProjectClient({
   currentUserId: string;
 }) {
   const router = useRouter();
-  const supabase = createClient();
-
   const [status, setStatus] = useState(project.status);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
   const [showAddVersion, setShowAddVersion] = useState(false);
@@ -81,7 +78,11 @@ export default function ProjectClient({
   async function updateStatus(newStatus: string) {
     setStatus(newStatus);
     setShowStatusMenu(false);
-    await supabase.from("projects").update({ status: newStatus }).eq("id", project.id);
+    await fetch(`/api/projects/${project.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
     router.refresh();
   }
 
@@ -90,14 +91,11 @@ export default function ProjectClient({
     if (!vTitle.trim()) return;
     setVLoading(true);
 
-    await supabase.from("project_versions").insert({
-      project_id: project.id,
-      title: vTitle.trim(),
-      department: vDept,
-      drive_url: vUrl.trim() || null,
-      author_id: currentUserId,
-      body: vNotes.trim() || null,
-    } as never);
+    await fetch(`/api/projects/${project.id}/versions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: vTitle.trim(), department: vDept, drive_url: vUrl.trim() || null, body: vNotes.trim() || null }),
+    });
 
     setVTitle(""); setVUrl(""); setVNotes(""); setVLoading(false);
     setShowAddVersion(false);

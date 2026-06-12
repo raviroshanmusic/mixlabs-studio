@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 
@@ -10,7 +9,6 @@ export default function NewProjectModal({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  const supabase = createClient();
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -18,26 +16,21 @@ export default function NewProjectModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
     setError("");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setError("Not authenticated"); setLoading(false); return; }
+    const res = await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, client }),
+    });
 
-    const { data, error: err } = await supabase
-      .from("projects")
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .insert({
-        name: name.trim(),
-        client: client.trim() || null,
-        status: "active",
-        owner_id: user.id,
-      } as any)
-      .select()
-      .single();
+    const data = await res.json();
 
-    if (err) { setError(err.message); setLoading(false); return; }
+    if (!res.ok) {
+      setError(data.error || "Failed to create project");
+      setLoading(false);
+      return;
+    }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    router.push(`/project/${(data as any).id}`);
-    router.refresh();
+    router.push(`/project/${data.id}`);
     onClose();
   }
 
