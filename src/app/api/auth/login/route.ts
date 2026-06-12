@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
             path: "/",
             sameSite: "lax",
             secure: true,
-            httpOnly: true,
+            // NOT httpOnly — browser Supabase client needs to read these
           });
         });
       },
