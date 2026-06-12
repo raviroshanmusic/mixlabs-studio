@@ -11,8 +11,8 @@ import {
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[] };
 type Version = { id: string; title: string; department: string | null; drive_url: string | null; body: string | null; created_at: string };
 type Comment = {
-  id: string; body: string; timecode_sec: number | null; version_id: string | null;
-  created_at: string; user_id: string;
+  id: string; body: string; timecode: number | null; version_id: string | null;
+  created_at: string; author_id: string; author_name: string | null;
   profiles: { id: string; full_name: string | null; email: string | null } | null;
 };
 type CurrentUser = { id: string; full_name: string | null; email: string };
@@ -24,8 +24,8 @@ const DEPT_ICON: Record<string, React.ReactNode> = {
   Edit: <Scissors size={12} />, Animation: <Wand2 size={12} />, VFX: <Zap size={12} />,
 };
 
-function fmtTimecode(sec: number | null): string {
-  if (sec === null) return "";
+function fmtTimecode(sec: number | null | undefined): string {
+  if (sec == null) return "";
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);
   return `${m}:${String(s).padStart(2, "0")}`;
@@ -168,8 +168,8 @@ function Player({ version }: { version: Version | null }) {
 
 function CommentCard({ comment, onTimecodeClick }: { comment: Comment; onTimecodeClick: (sec: number) => void }) {
   const profile = comment.profiles;
-  const name = profile?.full_name || profile?.email || "Unknown";
-  const initStr = initials(profile ?? { full_name: null, email: null });
+  const name = comment.author_name || profile?.full_name || profile?.email || "Unknown";
+  const initStr = initials(profile ?? { full_name: comment.author_name, email: null });
 
   return (
     <div className="flex gap-3 px-4 py-3.5 hover:bg-white/[0.025] transition-colors group">
@@ -183,13 +183,13 @@ function CommentCard({ comment, onTimecodeClick }: { comment: Comment; onTimecod
         <div className="flex items-center gap-2 mb-1">
           <span className="text-white/60 text-xs font-medium">{name}</span>
           <span className="text-white/20 text-[10px]">{timeAgo(comment.created_at)}</span>
-          {comment.timecode_sec !== null && (
+          {comment.timecode != null && (
             <button
-              onClick={() => onTimecodeClick(comment.timecode_sec!)}
+              onClick={() => onTimecodeClick(comment.timecode!)}
               className="ml-auto flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 bg-white/5 hover:bg-white/8 border border-white/8 px-2 py-0.5 rounded-md transition-all font-mono"
             >
               <Clock size={9} />
-              {fmtTimecode(comment.timecode_sec)}
+              {fmtTimecode(comment.timecode)}
             </button>
           )}
         </div>
@@ -243,7 +243,7 @@ export default function ReviewClient({ project, versions, comments: initialComme
       setComments(prev => [...prev, {
         ...newComment,
         profiles: { id: currentUser.id, full_name: currentUser.full_name, email: currentUser.email },
-      }].sort((a, b) => (a.timecode_sec ?? Infinity) - (b.timecode_sec ?? Infinity)));
+      }].sort((a, b) => (a.timecode ?? Infinity) - (b.timecode ?? Infinity)));
       setBody("");
       setTimecodeInput("");
     }

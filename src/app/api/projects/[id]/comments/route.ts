@@ -9,9 +9,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const { data, error } = await supabase
     .from("review_comments")
-    .select("*, profiles(id, full_name, email)")
+    .select("*, profiles!review_comments_author_id_fkey(id, full_name, email)")
     .eq("project_id", id)
-    .order("timecode_sec", { ascending: true });
+    .order("timecode", { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);
@@ -31,11 +31,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .insert({
       project_id: id,
       version_id: version_id || null,
-      user_id: user.id,
+      author_id: user.id,
       body: body.trim(),
-      timecode_sec: timecode_sec ?? null,
+      timecode: timecode_sec ?? null,
     })
-    .select("*, profiles(id, full_name, email)")
+    .select("*")
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

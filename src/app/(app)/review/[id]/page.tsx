@@ -26,9 +26,9 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   const { data: comments } = await supabase
     .from("review_comments")
-    .select("*, profiles(id, full_name, email)")
+    .select("*")
     .eq("project_id", id)
-    .order("timecode_sec", { ascending: true });
+    .order("timecode", { ascending: true });
 
   const { data: profile } = await supabase
     .from("profiles")
