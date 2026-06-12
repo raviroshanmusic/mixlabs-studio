@@ -6,12 +6,12 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { name, client } = await request.json();
+  const { name, client, departments } = await request.json();
   if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 });
 
   const { data, error } = await supabase
     .from("projects")
-    .insert({ name: name.trim(), client: client?.trim() || null, status: "active", owner_id: user.id })
+    .insert({ name: name.trim(), client: client?.trim() || null, status: "active", owner_id: user.id, departments: departments ?? [] })
     .select()
     .single();
 
