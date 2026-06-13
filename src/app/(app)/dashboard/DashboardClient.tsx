@@ -6,8 +6,9 @@ import NewProjectModal from "@/components/ui/NewProjectModal";
 import {
   Plus, Search, Volume2, Music, Palette, Scissors, Wand2, Zap,
   MessageSquare, FileText, Users, PlayCircle, ArrowUpRight,
-  Clock, ChevronRight,
+  Clock, ChevronRight, Sun, Moon,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -222,6 +223,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const [search, setSearch] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
 
+  const { theme, toggle } = useTheme();
   const displayName = profile?.full_name || user.email?.split("@")[0] || "there";
   const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -254,11 +256,30 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                 {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
               </p>
             </div>
-            <button onClick={() => setShowNewProject(true)}
-              className="flex items-center gap-1.5 bg-white text-black rounded-xl px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5 shrink-0 whitespace-nowrap">
-              <Plus size={13} />
-              <span>New Project</span>
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Theme toggle */}
+              <button
+                onClick={toggle}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 border"
+                style={{
+                  background: "var(--bg-card)",
+                  borderColor: "var(--border-subtle)",
+                  color: "var(--text-2)",
+                }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.color = "var(--text-1)"}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.color = "var(--text-2)"}
+              >
+                {theme === "dark" ? <Sun size={15} strokeWidth={1.5} /> : <Moon size={15} strokeWidth={1.5} />}
+              </button>
+
+              {/* New project */}
+              <button onClick={() => setShowNewProject(true)}
+                className="flex items-center gap-1.5 bg-white text-black rounded-xl px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5 whitespace-nowrap">
+                <Plus size={13} />
+                <span>New Project</span>
+              </button>
+            </div>
           </div>
 
           {/* ── Stats Strip ── */}

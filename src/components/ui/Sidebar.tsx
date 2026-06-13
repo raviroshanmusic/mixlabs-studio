@@ -56,8 +56,8 @@ export default function Sidebar({
     return (
       <nav
         className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-around
-                   border-t border-white/[0.06] bg-[#060606]/95 backdrop-blur-2xl"
-        style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: "8px" }}
+                   border-t border-white/[0.06] backdrop-blur-2xl"
+        style={{ background: "var(--bg-sidebar)", paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: "8px" }}
       >
         {/* First 2 nav items */}
         {NAV.slice(0, 2).map(({ href, label, icon: Icon, key, color }) => {
@@ -122,7 +122,7 @@ export default function Sidebar({
       style={{
         width: expanded ? 220 : 56,
         minWidth: expanded ? 220 : 56,
-        background: "#060606",
+        background: "var(--bg-sidebar)",
         transition: "width 260ms cubic-bezier(0.4,0,0.2,1), min-width 260ms cubic-bezier(0.4,0,0.2,1)",
       }}
     >
