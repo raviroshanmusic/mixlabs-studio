@@ -10,6 +10,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",   // enables env(safe-area-inset-bottom) in Safari
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

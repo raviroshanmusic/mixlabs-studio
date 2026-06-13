@@ -905,7 +905,7 @@ export default function ReviewClient({
 
       {/* On mobile: reserve space for fixed bottom nav (56px) + device safe-area-inset-bottom (0–34px on iPhone) */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden"
-        style={isMobile ? { paddingBottom: "calc(56px + env(safe-area-inset-bottom))" } : {}}>
+        style={isMobile ? { paddingBottom: "calc(80px + env(safe-area-inset-bottom))" } : {}}>
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
