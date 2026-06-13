@@ -8,56 +8,18 @@ import {
   User,
   LogOut,
   Bell,
-  Settings,
   Plus,
-  ChevronRight,
 } from "lucide-react";
 
-/* ── Nav definition ──────────────────────────────────────────────── */
+/* ─── Nav config ────────────────────────────────────────────────── */
 const NAV = [
-  {
-    href: "/dashboard",
-    label: "Dashboard",
-    sub: "Overview & stats",
-    icon: LayoutDashboard,
-    key: "dashboard",
-    color: "#818cf8",          // indigo
-    glow: "rgba(129,140,248,0.18)",
-  },
-  {
-    href: "/project",
-    label: "Projects",
-    sub: "All your work",
-    icon: FolderOpen,
-    key: "project",
-    color: "#fb923c",          // amber-orange
-    glow: "rgba(251,146,60,0.18)",
-  },
-  {
-    href: "/review",
-    label: "Review",
-    sub: "Client feedback",
-    icon: MessageSquare,
-    key: "review",
-    color: "#34d399",          // emerald
-    glow: "rgba(52,211,153,0.18)",
-    badge: 0,                  // set > 0 to show badge
-  },
+  { href: "/dashboard", label: "Dashboard", sub: "Overview",        icon: LayoutDashboard, key: "dashboard", color: "#818cf8" },
+  { href: "/project",   label: "Projects",  sub: "All work",        icon: FolderOpen,      key: "project",   color: "#fb923c" },
+  { href: "/review",    label: "Review",    sub: "Client feedback",  icon: MessageSquare,   key: "review",    color: "#34d399" },
+  { href: "/member",    label: "Profile",   sub: "Your account",     icon: User,            key: "member",    color: "#c084fc" },
 ];
 
-const NAV_UTILITY = [
-  {
-    href: "/member",
-    label: "Profile",
-    sub: "Your account",
-    icon: User,
-    key: "member",
-    color: "#c084fc",          // purple
-    glow: "rgba(192,132,252,0.18)",
-  },
-];
-
-/* ── Component ───────────────────────────────────────────────────── */
+/* ─── Component ─────────────────────────────────────────────────── */
 export default function Sidebar({
   active,
   userName,
@@ -87,80 +49,59 @@ export default function Sidebar({
 
   if (!mounted) return null;
 
-  /* ── MOBILE bottom nav ─────────────────────────────────────────── */
+  /* ══════════════════════════════════════════════════════════
+     MOBILE — fixed bottom nav
+  ══════════════════════════════════════════════════════════ */
   if (isMobile) {
     return (
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-end justify-around
                    border-t border-white/[0.06] bg-[#060606]/95 backdrop-blur-2xl"
-        style={{ paddingBottom: "max(10px, env(safe-area-inset-bottom))", paddingTop: "10px" }}
+        style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))", paddingTop: "8px" }}
       >
-        {/* Left two nav items */}
+        {/* First 2 nav items */}
         {NAV.slice(0, 2).map(({ href, label, icon: Icon, key, color }) => {
           const isActive = pathname.startsWith(href) || active === key;
           return (
-            <a key={href} href={href}
-              className="relative flex flex-col items-center gap-[5px] px-3 pb-1 group">
-              {/* active dot above */}
-              <span
-                className="absolute -top-[10px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full transition-all duration-300"
-                style={{ background: isActive ? color : "transparent",
-                         boxShadow: isActive ? `0 0 6px ${color}` : "none" }}
-              />
-              <span
-                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: isActive ? `${color}18` : "transparent",
-                  color: isActive ? color : "rgba(255,255,255,0.3)",
-                }}>
-                <Icon size={18} />
+            <a key={href} href={href} className="flex flex-col items-center gap-1 px-4 pb-1 group">
+              <span className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200"
+                style={{ background: isActive ? `${color}1a` : "transparent", color: isActive ? color : "rgba(255,255,255,0.28)" }}>
+                <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                {isActive && (
+                  <span className="absolute -top-[9px] left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full"
+                    style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
+                )}
               </span>
-              <span className="text-[9px] tracking-wide font-light"
-                style={{ color: isActive ? color : "rgba(255,255,255,0.3)" }}>
-                {label}
-              </span>
+              <span className="text-[9px] tracking-wider"
+                style={{ color: isActive ? color : "rgba(255,255,255,0.25)" }}>{label}</span>
             </a>
           );
         })}
 
-        {/* Center FAB — Quick Create */}
-        <a href="/project"
-          className="flex flex-col items-center gap-[5px] px-3 pb-1">
-          <span className="w-11 h-11 rounded-2xl flex items-center justify-center -mt-4
-                           bg-white text-black shadow-[0_0_24px_rgba(255,255,255,0.25)]
-                           transition-all duration-200 active:scale-95">
-            <Plus size={20} strokeWidth={2.5} />
+        {/* Centre FAB */}
+        <a href="/project" className="flex flex-col items-center gap-1 px-2 -mt-4">
+          <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center
+                           shadow-[0_0_28px_rgba(255,255,255,0.2)] transition-all active:scale-95">
+            <Plus size={20} strokeWidth={2.5} className="text-black" />
           </span>
-          <span className="text-[9px] tracking-wide font-light text-white/20">New</span>
+          <span className="text-[9px] tracking-wider text-white/25">New</span>
         </a>
 
-        {/* Right two nav items */}
-        {[NAV[2], NAV_UTILITY[0]].map(({ href, label, icon: Icon, key, color, badge }: any) => {
+        {/* Last 2 nav items */}
+        {NAV.slice(2).map(({ href, label, icon: Icon, key, color }) => {
           const isActive = pathname.startsWith(href) || active === key;
           return (
-            <a key={href} href={href}
-              className="relative flex flex-col items-center gap-[5px] px-3 pb-1">
-              <span
-                className="absolute -top-[10px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full transition-all duration-300"
-                style={{ background: isActive ? color : "transparent",
-                         boxShadow: isActive ? `0 0 6px ${color}` : "none" }}
-              />
-              <span
-                className="relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200"
-                style={{
-                  background: isActive ? `${color}18` : "transparent",
-                  color: isActive ? color : "rgba(255,255,255,0.3)",
-                }}>
-                <Icon size={18} />
-                {badge > 0 && (
-                  <span className="absolute top-1 right-1 w-[7px] h-[7px] rounded-full bg-[#34d399]
-                                   ring-1 ring-black" />
+            <a key={href} href={href} className="flex flex-col items-center gap-1 px-4 pb-1 group">
+              <span className="relative w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-200"
+                style={{ background: isActive ? `${color}1a` : "transparent", color: isActive ? color : "rgba(255,255,255,0.28)" }}>
+                <Icon size={18} strokeWidth={isActive ? 2 : 1.5} />
+                {isActive && (
+                  <span className="absolute -top-[9px] left-1/2 -translate-x-1/2 w-4 h-[2px] rounded-full"
+                    style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
                 )}
               </span>
-              <span className="text-[9px] tracking-wide font-light"
-                style={{ color: isActive ? color : "rgba(255,255,255,0.3)" }}>
-                {label}
-              </span>
+              <span className="text-[9px] tracking-wider"
+                style={{ color: isActive ? color : "rgba(255,255,255,0.25)" }}>{label}</span>
             </a>
           );
         })}
@@ -168,211 +109,172 @@ export default function Sidebar({
     );
   }
 
-  /* ── DESKTOP expandable sidebar ────────────────────────────────── */
-  const w = expanded ? "224px" : "56px";
-
+  /* ══════════════════════════════════════════════════════════
+     DESKTOP — hover-to-expand sidebar
+     Collapsed: 56px  |  Expanded: 220px
+     Icon is always px-3 = 12px each side → perfectly centered at 56px
+  ══════════════════════════════════════════════════════════ */
   return (
     <aside
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
-      className="relative flex flex-col shrink-0 border-r border-white/[0.05] bg-[#060606] overflow-hidden"
+      className="relative flex flex-col shrink-0 overflow-hidden border-r border-white/[0.05]"
       style={{
-        width: w,
-        minWidth: w,
-        transition: "width 280ms cubic-bezier(0.4,0,0.2,1), min-width 280ms cubic-bezier(0.4,0,0.2,1)",
+        width: expanded ? 220 : 56,
+        minWidth: expanded ? 220 : 56,
+        background: "#060606",
+        transition: "width 260ms cubic-bezier(0.4,0,0.2,1), min-width 260ms cubic-bezier(0.4,0,0.2,1)",
       }}
     >
-      {/* subtle vertical gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent" />
 
       {/* ── Logo ── */}
-      <div className="flex items-center gap-3 px-3 pt-5 pb-5">
+      <div className="flex items-center h-14 px-3 shrink-0">
+        {/* icon: 32px wide, px-3 → starts at 12px left → centered in 56px */}
         <span className="w-8 h-8 rounded-xl bg-white flex items-center justify-center
                          text-[10px] font-black text-black shrink-0
-                         shadow-[0_0_20px_rgba(255,255,255,0.15)]">
+                         shadow-[0_0_16px_rgba(255,255,255,0.12)]">
           ML
         </span>
-        <div className="overflow-hidden" style={{ opacity: expanded ? 1 : 0, transition: "opacity 200ms" }}>
-          <p className="text-[11px] font-semibold text-white whitespace-nowrap tracking-wide">MixLabs</p>
-          <p className="text-[9px] text-white/30 whitespace-nowrap tracking-wider uppercase">Studio OS</p>
+        <div className="ml-3 overflow-hidden"
+          style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms 40ms", whiteSpace: "nowrap" }}>
+          <p className="text-[11px] font-semibold text-white leading-tight">MixLabs</p>
+          <p className="text-[9px] text-white/30 leading-tight tracking-widest uppercase">Studio OS</p>
         </div>
       </div>
 
-      {/* ── Quick Create ── */}
-      <div className="px-2 mb-4">
+      {/* ── New project button ── */}
+      <div className="px-3 mb-3 shrink-0">
         <a href="/project"
-          className="flex items-center gap-3 rounded-xl overflow-hidden group cursor-pointer
-                     transition-all duration-200 hover:bg-white/[0.06]"
-          style={{ padding: expanded ? "8px 10px" : "8px 10px" }}>
-          <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0
-                           group-hover:bg-white/20 transition-all duration-200">
-            <Plus size={14} className="text-white/60 group-hover:text-white transition-colors" />
+          className="flex items-center rounded-xl transition-all duration-200 overflow-hidden group
+                     border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.04]"
+          style={{ padding: "8px 0" }}>
+          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                           text-white/40 group-hover:text-white/70 transition-colors">
+            <Plus size={15} />
           </span>
-          <span className="overflow-hidden whitespace-nowrap text-[12px] font-medium text-white/50
-                           group-hover:text-white/80 transition-colors"
-            style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms" }}>
-            Quick Create
+          <span className="overflow-hidden whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
+            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", maxWidth: expanded ? 160 : 0 }}>
+            New Project
           </span>
         </a>
       </div>
 
-      {/* ── Divider ── */}
-      <div className="mx-3 mb-3 h-px bg-white/[0.05]" />
+      {/* thin rule */}
+      <div className="mx-3 mb-2 shrink-0 h-px bg-white/[0.05]" />
 
       {/* ── Main nav ── */}
-      <nav className="flex flex-col gap-1 px-2 flex-1">
-        {NAV.map(({ href, label, sub, icon: Icon, key, color, glow, badge }: any) => {
+      <nav className="flex flex-col gap-0.5 px-3 flex-1 min-h-0">
+        {NAV.map(({ href, label, sub, icon: Icon, key, color }) => {
           const isActive = pathname.startsWith(href) || active === key;
+          const glow = color + "1a"; // ~10% opacity
           return (
             <a key={href} href={href}
-              className="relative flex items-center gap-3 rounded-xl overflow-hidden
-                         transition-all duration-200 group"
+              className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
               style={{
-                padding: "9px 10px",
+                padding: "9px 0",
                 background: isActive ? glow : "transparent",
               }}
-              onMouseEnter={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-              }}
-              onMouseLeave={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
+              onMouseEnter={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+              onMouseLeave={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
-              {/* active left bar */}
-              <span
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full transition-all duration-300"
+              {/* left accent bar */}
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[2.5px] rounded-r-full"
                 style={{
-                  height: isActive ? "60%" : "0%",
+                  height: isActive ? "52%" : 0,
                   background: color,
-                  boxShadow: isActive ? `0 0 8px ${color}` : "none",
-                }}
-              />
+                  boxShadow: isActive ? `0 0 6px ${color}` : "none",
+                  transition: "height 200ms, box-shadow 200ms",
+                }} />
 
-              {/* icon */}
-              <span
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200 relative"
+              {/* icon — always 32px, px-0 since parent has px-3 */}
+              <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg transition-colors duration-200"
                 style={{
-                  background: isActive ? `${color}22` : "transparent",
+                  background: isActive ? color + "22" : "transparent",
                   color: isActive ? color : "rgba(255,255,255,0.25)",
                 }}>
-                <Icon size={15} />
-                {badge > 0 && (
-                  <span className="absolute top-[5px] right-[5px] w-[6px] h-[6px] rounded-full bg-[#34d399]
-                                   ring-1 ring-[#060606]" />
-                )}
+                <Icon size={15} strokeWidth={isActive ? 2 : 1.5} />
               </span>
 
-              {/* label + sub */}
-              <div className="overflow-hidden"
-                style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms", minWidth: 0 }}>
-                <p className="text-[12px] font-medium whitespace-nowrap leading-tight"
+              {/* label */}
+              <div className="overflow-hidden ml-3"
+                style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0, flex: 1 }}>
+                <p className="text-[12px] font-medium whitespace-nowrap leading-snug"
                   style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.5)" }}>
                   {label}
                 </p>
-                <p className="text-[10px] whitespace-nowrap text-white/20 leading-tight mt-[1px]">
-                  {sub}
-                </p>
+                <p className="text-[10px] whitespace-nowrap leading-snug text-white/20">{sub}</p>
               </div>
-
-              {/* chevron on hover */}
-              {expanded && (
-                <ChevronRight size={12} className="ml-auto shrink-0 opacity-0 group-hover:opacity-30
-                                                   transition-opacity text-white" />
-              )}
             </a>
           );
         })}
       </nav>
 
       {/* ── Bottom section ── */}
-      <div className="px-2 pb-4 flex flex-col gap-1">
+      <div className="px-3 pt-2 pb-4 shrink-0 flex flex-col gap-0.5">
 
-        {/* Notification bell */}
-        <button
-          className="flex items-center gap-3 rounded-xl transition-all duration-200 hover:bg-white/[0.04] group"
-          style={{ padding: "9px 10px" }}
+        {/* thin rule */}
+        <div className="mb-2 h-px bg-white/[0.05]" />
+
+        {/* Notifications — links to member page */}
+        <a href="/member"
+          className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
+          style={{ padding: "9px 0" }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
         >
-          <span className="relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0
-                           text-white/20 group-hover:text-white/50 transition-colors">
-            <Bell size={15} />
-            {/* live badge placeholder */}
-            <span className="absolute top-[5px] right-[5px] w-[6px] h-[6px] rounded-full bg-[#f59e0b]
-                             ring-1 ring-[#060606]" />
+          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                           text-white/25 group-hover:text-white/60 transition-colors duration-200 relative">
+            <Bell size={15} strokeWidth={1.5} />
+            {/* notification dot */}
+            <span className="absolute top-[7px] right-[7px] w-[5px] h-[5px] rounded-full bg-[#f59e0b] ring-[1.5px] ring-[#060606]" />
           </span>
-          <span className="overflow-hidden whitespace-nowrap text-[12px] text-white/30
-                           group-hover:text-white/60 transition-colors"
-            style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms" }}>
+          <span className="overflow-hidden ml-3 whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
+            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms" }}>
             Notifications
           </span>
-        </button>
+        </a>
 
-        {/* Settings → member page */}
-        {NAV_UTILITY.map(({ href, label, sub, icon: Icon, key, color, glow }: any) => {
-          const isActive = pathname.startsWith(href) || active === key;
-          return (
-            <a key={href} href={href}
-              className="relative flex items-center gap-3 rounded-xl overflow-hidden
-                         transition-all duration-200 group"
-              style={{ padding: "9px 10px", background: isActive ? glow : "transparent" }}
-              onMouseEnter={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)";
-              }}
-              onMouseLeave={e => {
-                if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent";
-              }}
-            >
-              <span
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] rounded-r-full transition-all duration-300"
-                style={{ height: isActive ? "60%" : "0%", background: color, boxShadow: isActive ? `0 0 8px ${color}` : "none" }}
-              />
-              <span
-                className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200"
-                style={{ background: isActive ? `${color}22` : "transparent", color: isActive ? color : "rgba(255,255,255,0.25)" }}>
-                <Icon size={15} />
-              </span>
-              <div className="overflow-hidden" style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms" }}>
-                <p className="text-[12px] font-medium whitespace-nowrap leading-tight"
-                  style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.5)" }}>{label}</p>
-                <p className="text-[10px] whitespace-nowrap text-white/20 leading-tight mt-[1px]">{sub}</p>
-              </div>
-            </a>
-          );
-        })}
-
-        {/* Divider */}
-        <div className="mx-1 my-1 h-px bg-white/[0.05]" />
-
-        {/* User avatar + sign out */}
-        <div className="flex items-center gap-3 rounded-xl px-[10px] py-[9px]">
+        {/* User row + sign out */}
+        <div className="flex items-center rounded-xl overflow-hidden" style={{ padding: "8px 0" }}>
           {/* avatar */}
-          <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center
-                           text-[11px] font-bold text-white/60 shrink-0 border border-white/[0.08]">
+          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                           bg-white/[0.08] border border-white/[0.08]
+                           text-[11px] font-semibold text-white/60">
             {userInitials ?? "U"}
           </span>
-          <div className="flex-1 overflow-hidden" style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms" }}>
-            <p className="text-[11px] font-medium text-white/60 whitespace-nowrap truncate leading-tight">
+
+          {/* name — only in expanded */}
+          <div className="overflow-hidden ml-3 flex-1"
+            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0 }}>
+            <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
               {userName ?? "User"}
             </p>
-            <p className="text-[9px] text-white/20 whitespace-nowrap leading-tight">MixLabs Studio</p>
+            <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Studio</p>
           </div>
-          {/* logout */}
+
+          {/* sign out — only in expanded */}
           {expanded && (
             <button onClick={signOut}
-              className="w-7 h-7 rounded-lg flex items-center justify-center
-                         text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all shrink-0">
+              className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0
+                         text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all duration-200"
+              title="Sign out">
               <LogOut size={13} />
             </button>
           )}
         </div>
-        {/* logout when collapsed */}
+
+        {/* Sign out when collapsed (standalone) */}
         {!expanded && (
           <button onClick={signOut}
-            className="flex items-center justify-center rounded-xl transition-all duration-200
-                       hover:bg-white/[0.04] mx-1"
-            style={{ padding: "9px 10px" }}>
-            <span className="w-8 h-8 rounded-lg flex items-center justify-center
-                             text-white/20 hover:text-white/40 transition-colors">
-              <LogOut size={15} />
+            className="flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
+            style={{ padding: "9px 0" }}
+            title="Sign out"
+            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"}
+            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+          >
+            <span className="w-8 h-8 flex items-center justify-center rounded-lg
+                             text-white/20 group-hover:text-white/50 transition-colors duration-200">
+              <LogOut size={15} strokeWidth={1.5} />
             </span>
           </button>
         )}
