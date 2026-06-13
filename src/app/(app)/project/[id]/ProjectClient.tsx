@@ -391,10 +391,10 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
   );
 
   return (
-    <div className="flex gap-6 h-full">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full overflow-hidden">
       {/* Dept nav */}
-      <div className="w-40 shrink-0 flex flex-col gap-0.5 pt-0.5">
-        <p className="text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-2.5 font-light">Departments</p>
+      <div className="md:w-40 md:shrink-0 flex md:flex-col flex-row gap-1 md:gap-0.5 overflow-x-auto scrollbar-hide md:pt-0.5 pb-1 md:pb-0">
+        <p className="hidden md:block text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-2.5 font-light">Departments</p>
         {depts.map(dept => {
           const m = DEPT_META[dept] ?? { icon: null, accent: "#6B7280", bg: "transparent", hex: "#6B7280" };
           const count = localFiles.filter(v => v.department === dept).length;
@@ -402,7 +402,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
           return (
             <div key={dept} className="relative group/row">
               <button onClick={() => { setActiveDept(dept); setAddingFile(false); setStatusMenu(null); }}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all ${active ? "bg-white/6" : "hover:bg-white/3"}`}>
+                className={`flex-shrink-0 md:w-full flex items-center justify-between px-3 py-2 md:py-2.5 rounded-xl transition-all ${active ? "bg-white/6" : "hover:bg-white/3"}`}>
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all"
                     style={{ background: active ? m.bg : "transparent", color: active ? m.accent : "rgba(255,255,255,0.2)" }}>
@@ -410,17 +410,17 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                   </span>
                   <span className={`text-[12px] font-light transition-colors ${active ? "text-white/80" : "text-white/28 group-hover/row:text-white/50"}`}>{dept}</span>
                 </div>
-                <span className={`text-[9px] tabular-nums px-1 rounded ${active ? "text-white/35" : "text-white/16"}`}>{count}</span>
+                <span className={`hidden md:inline text-[9px] tabular-nums px-1 rounded ${active ? "text-white/35" : "text-white/16"}`}>{count}</span>
               </button>
             </div>
           );
         })}
-        <div className="mt-auto pt-3 border-t border-white/[0.04] px-3">
+        <div className="hidden md:block mt-auto pt-3 border-t border-white/[0.04] px-3">
           <p className="text-white/15 text-[9px] font-light">{localFiles.length} total</p>
         </div>
       </div>
 
-      <div className="w-px bg-white/[0.04] self-stretch"/>
+      <div className="hidden md:block w-px bg-white/[0.04] self-stretch"/>
 
       {/* File content */}
       <div className="flex-1 min-w-0 flex flex-col" onClick={() => setStatusMenu(null)}>
@@ -755,14 +755,14 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
   ] as const;
 
   return (
-    <div className="flex gap-8 h-full">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full overflow-hidden">
 
       {/* Left nav */}
-      <div className="w-44 shrink-0 flex flex-col gap-0.5 pt-0.5">
-        <p className="text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-3 font-light">Settings</p>
+      <div className="md:w-44 md:shrink-0 flex md:flex-col flex-row gap-1 md:gap-0.5 md:pt-0.5 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
+        <p className="hidden md:block text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-3 font-light">Settings</p>
         {NAV.map(n => (
           <button key={n.id} onClick={() => setSection(n.id)}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all text-[12px] font-light ${
+            className={`flex-shrink-0 flex items-center gap-2.5 px-3 py-2 md:py-2.5 rounded-xl text-left transition-all text-[12px] font-light ${
               section === n.id
                 ? n.id === "danger" ? "bg-red-500/8 text-red-400/80" : "bg-white/6 text-white/80"
                 : n.id === "danger" ? "text-red-400/40 hover:text-red-400/65 hover:bg-red-500/5" : "text-white/28 hover:bg-white/3 hover:text-white/55"
@@ -773,7 +773,7 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
         ))}
       </div>
 
-      <div className="w-px bg-white/[0.04] self-stretch"/>
+      <div className="hidden md:block w-px bg-white/[0.04] self-stretch"/>
 
       {/* Content */}
       <div className="flex-1 min-w-0 max-w-sm overflow-y-auto scrollbar-hide">
@@ -993,7 +993,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
           <div className="absolute inset-0 pointer-events-none"
             style={{ background: `radial-gradient(ellipse 60% 100% at 20% 0%, ${primaryHex}06 0%, transparent 70%)` }}/>
 
-          <div className="px-9 pt-7 pb-0 relative">
+          <div className="px-4 md:px-9 pt-4 md:pt-7 pb-0 relative">
             {/* Breadcrumb */}
             <a href="/dashboard"
               className="inline-flex items-center gap-1.5 text-white/16 hover:text-white/45 text-[9px] tracking-[0.28em] uppercase transition-colors mb-5 font-light group">
@@ -1004,7 +1004,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             </a>
 
             {/* Title + actions */}
-            <div className="flex items-start justify-between gap-6 mb-5">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-6 mb-4">
               <div className="flex-1 min-w-0">
                 {project.client && <p className="text-white/18 text-[10px] tracking-[0.3em] uppercase mb-1 font-light">{project.client}</p>}
                 <h1 className="text-white/82 text-2xl font-light tracking-wide truncate">{project.name}</h1>
@@ -1032,7 +1032,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-4 gap-2 mb-5">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {[
                 { icon: <FileText size={13}/>,   label: "Files",       value: versions.length,   sub: `${project.departments.length} dept${project.departments.length !== 1?"s":""}` },
                 { icon: <Activity size={13}/>,    label: "Milestones",  value: milestones.length > 0 ? `${milestones.filter(m=>m.status==="completed").length}/${milestones.length}` : "—", sub: "done" },
@@ -1053,7 +1053,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             </div>
 
             {/* Tab bar */}
-            <div className="flex items-center gap-0">
+            <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
               {TABS.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-[11px] tracking-wide transition-all relative -mb-px border-b-2 font-light ${
@@ -1077,20 +1077,21 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
         {/* ══ Scrollable Body ══ */}
         {isTimeline ? (
-          <div className="flex-1 overflow-hidden px-9 py-6">
+          <div className="flex-1 overflow-hidden px-4 md:px-9 py-4 md:py-6">
             <Timeline project={project} initialMilestones={milestones}/>
           </div>
         ) : (
           <div className="flex-1 flex overflow-hidden">
             {/* Left — main tab content, scrolls independently */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide px-9 py-6">
+            <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-4 md:py-6 pb-28 md:pb-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
               {activeTab === "team"     && <TeamTab project={project} members={members} canManage={canManage}/>}
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}
             </div>
 
-            {/* Right — sidebar, scrolls independently */}
+            {/* Right — sidebar, scrolls independently, hidden on mobile */}
+            <div className="hidden md:block">
             <ProjectSidebar
               project={project}
               versions={versions}
@@ -1098,6 +1099,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
               milestones={milestones}
               userRole={userRole}
             />
+            </div>
           </div>
         )}
 

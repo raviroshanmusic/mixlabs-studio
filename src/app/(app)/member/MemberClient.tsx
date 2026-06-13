@@ -150,14 +150,14 @@ function ProjectCard({ project, role, isOwner }: { project: Project; role?: stri
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
-        <span className={`flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light ${rm.color} ${rm.border} ${rm.bg}`}>
-          {rm.icon}{rm.label}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <span className={`flex items-center gap-1 text-[9px] px-2 sm:px-2.5 py-1 rounded-full border font-light ${rm.color} ${rm.border} ${rm.bg}`}>
+          {rm.icon}<span className="hidden sm:inline">{rm.label}</span>
         </span>
-        <span className={`flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light ${st.text} ${st.border} ${st.bg}`}>
+        <span className={`hidden sm:flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light ${st.text} ${st.border} ${st.bg}`}>
           <span className={`w-1 h-1 rounded-full ${st.dot}`}/>{project.status}
         </span>
-        <span className="text-white/18 text-[10px] font-light w-14 text-right">{timeAgo(project.updated_at)}</span>
+        <span className="hidden md:block text-white/18 text-[10px] font-light w-14 text-right">{timeAgo(project.updated_at)}</span>
         <ChevronRight size={11} className="text-white/15 group-hover:text-white/40 transition-colors"/>
       </div>
     </a>
@@ -343,7 +343,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
 
           {/* ══ OVERVIEW ══ */}
           {section === "overview" && (
-            <div className="flex gap-8">
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
               {/* Left — main content */}
               <div className="flex-1 min-w-0 flex flex-col gap-6">
 
@@ -402,7 +402,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
               </div>
 
               {/* Right sidebar */}
-              <div className="w-60 shrink-0 flex flex-col gap-4">
+              <div className="w-full lg:w-60 lg:shrink-0 flex flex-col gap-4">
 
                 {/* Identity card */}
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4">

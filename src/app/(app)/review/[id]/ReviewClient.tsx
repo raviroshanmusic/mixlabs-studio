@@ -906,7 +906,7 @@ export default function ReviewClient({
 
       {/* ── Top Bar ── */}
       {!cinemaMode && (
-        <header className="shrink-0 flex items-center gap-3 px-5 py-3 border-b border-white/[0.08] bg-[#0a0a0a]">
+        <header className="shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2.5 md:py-3 border-b border-white/[0.08] bg-[#0a0a0a]">
           {/* Left — back + project/dept/version switcher */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <a href={`/project/${project.id}`}
@@ -964,7 +964,7 @@ export default function ReviewClient({
 
           {/* Center: version + status */}
           {currentVer && (
-            <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden md:flex items-center gap-3 shrink-0">
               <div className="flex items-center gap-2 text-white/45">
                 {DEPT_ICON[currentVer.department ?? ""] ?? <FileText size={13} />}
                 <span className="text-white/60 text-xs font-medium">{currentVer.version_name}</span>
@@ -976,12 +976,12 @@ export default function ReviewClient({
           {/* Right */}
           <div className="flex items-center gap-1.5 shrink-0 flex-1 justify-end">
             <button onClick={handleRefresh}
-              className={`w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all ${refreshing ? "animate-spin" : ""}`}
+              className={`hidden md:flex w-8 h-8 rounded-xl border border-white/10 items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all ${refreshing ? "animate-spin" : ""}`}
               title="Refresh notes">
               <RefreshCw size={13} />
             </button>
             <button onClick={() => exportNotes(visibleComments, project, selectedVersion)}
-              className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all"
+              className="hidden md:flex w-8 h-8 rounded-xl border border-white/10 items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all"
               title="Export notes">
               <Download size={13} />
             </button>
@@ -992,7 +992,7 @@ export default function ReviewClient({
               </a>
             )}
             <button onClick={() => setCinemaMode(true)}
-              className="flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
+              className="hidden md:flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
               <Maximize2 size={11} />
               Cinema
             </button>
@@ -1001,16 +1001,18 @@ export default function ReviewClient({
       )}
 
       {/* ── Body ── */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
 
-        {/* Version Sidebar */}
+        {/* Version Sidebar — desktop only */}
         {!cinemaMode && (
-          <VersionSidebar
-            versions={allVersions} comments={comments} selected={selectedVersion}
-            collapsed={sidebarCollapsed}
-            onSelect={setSelectedVersion}
-            onCollapse={() => setSidebarCollapsed(p => !p)}
-          />
+          <div className="hidden md:contents">
+            <VersionSidebar
+              versions={allVersions} comments={comments} selected={selectedVersion}
+              collapsed={sidebarCollapsed}
+              onSelect={setSelectedVersion}
+              onCollapse={() => setSidebarCollapsed(p => !p)}
+            />
+          </div>
         )}
 
         {/* Center: Player */}
@@ -1026,7 +1028,7 @@ export default function ReviewClient({
           )}
 
           {/* Player */}
-          <div className={`flex-1 min-h-0 ${cinemaMode ? "" : "p-4 pb-2"}`}>
+          <div className={`flex-1 min-h-0 ${cinemaMode ? "" : "p-3 md:p-4 pb-2"}`}>
             <div className={`w-full h-full overflow-hidden bg-black ${cinemaMode ? "" : "rounded-2xl border border-white/[0.06]"}`}>
               <Player version={selectedVersion} />
             </div>
@@ -1058,12 +1060,13 @@ export default function ReviewClient({
 
         {/* Comments Panel */}
         {!cinemaMode && (
-          <div className={`shrink-0 border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "w-12" : "w-[340px]"}`}>
+          <div className={`shrink-0 border-t md:border-t-0 md:border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "md:w-12 h-12 md:h-auto" : "md:w-[340px] h-[45vh] md:h-auto"}`}>
 
             {panelCollapsed ? (
-              <div className="flex flex-col items-center pt-4 gap-3">
-                <button onClick={() => setPanelCollapsed(false)} className="text-white/35 hover:text-white/70 transition-colors" title="Show notes">
+              <div className="flex md:flex-col items-center md:pt-4 gap-3 h-full md:h-auto px-4 md:px-0">
+                <button onClick={() => setPanelCollapsed(false)} className="flex items-center gap-2 text-white/35 hover:text-white/70 transition-colors md:flex-col" title="Show notes">
                   <MessageSquare size={15} />
+                  <span className="md:hidden text-[10px] text-white/30">Notes</span>
                 </button>
                 {openCount > 0 && (
                   <span className="min-w-[22px] h-[22px] rounded-full bg-amber-500/25 border border-amber-400/30 text-amber-300 text-[10px] flex items-center justify-center font-bold px-1">
