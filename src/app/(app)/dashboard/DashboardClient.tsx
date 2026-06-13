@@ -8,6 +8,7 @@ import {
   MessageSquare, FileText, Users, PlayCircle, ArrowUpRight,
   Clock, ChevronRight,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -73,9 +74,13 @@ function fmtTimecode(sec: number | null): string {
 
 // ─── Project Card ─────────────────────────────────────────────────────────────
 
-function ProjectCard({ project }: { project: Project }) {
+function ProjectCard({ project, isLight }: { project: Project; isLight: boolean }) {
   const st = STATUS_CONFIG[project.status] ?? STATUS_CONFIG["paused"];
   const depts = project.departments ?? [];
+
+  const tagColor  = isLight ? "rgba(0,0,0,0.60)"  : "rgba(255,255,255,0.50)";
+  const tagBorder = isLight ? "rgba(0,0,0,0.14)"  : "rgba(255,255,255,0.10)";
+  const tagBg     = isLight ? "rgba(0,0,0,0.05)"  : "rgba(255,255,255,0.05)";
 
   return (
     <div className="group relative flex flex-col rounded-2xl border border-white/[0.07] hover:border-white/14 bg-[#111] hover:bg-[#141414] transition-all overflow-hidden">
@@ -105,7 +110,7 @@ function ProjectCard({ project }: { project: Project }) {
               const m = DEPT_META[d];
               return m ? (
                 <span key={d} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border"
-                  style={{ color: m.accent, borderColor: "rgba(255,255,255,0.08)", background: m.bg }}>
+                  style={{ color: tagColor, borderColor: tagBorder, background: tagBg }}>
                   {m.icon} {d}
                 </span>
               ) : null;
@@ -222,6 +227,8 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const [search, setSearch] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
 
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   const displayName = profile?.full_name || user.email?.split("@")[0] || "there";
   const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
@@ -330,7 +337,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
-                  {filtered.map(p => <ProjectCard key={p.id} project={p} />)}
+                  {filtered.map(p => <ProjectCard key={p.id} project={p} isLight={isLight} />)}
                 </div>
               )}
             </div>

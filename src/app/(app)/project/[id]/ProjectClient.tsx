@@ -11,6 +11,7 @@ import {
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
 import DeliveryTab, { Delivery } from "./Delivery";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -938,6 +939,12 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const [activeTab, setActiveTab] = useState<Tab>("files");
   const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const tagColor  = isLight ? "rgba(0,0,0,0.60)"  : "rgba(255,255,255,0.50)";
+  const tagBorder = isLight ? "rgba(0,0,0,0.14)"  : "rgba(255,255,255,0.10)";
+  const tagBg     = isLight ? "rgba(0,0,0,0.05)"  : "rgba(255,255,255,0.05)";
+
   const currentMember = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
   const currentName = currentMember?.profiles?.full_name || currentMember?.profiles?.email || "";
   const currentInitials = currentName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
@@ -1007,7 +1014,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
                       const m = DEPT_META[d];
                       return (
                         <span key={d} className="flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light"
-                          style={{ color: m?.accent ?? "rgba(255,255,255,0.45)", borderColor: "rgba(255,255,255,0.08)", background: m?.bg ?? "rgba(255,255,255,0.05)" }}>
+                          style={{ color: tagColor, borderColor: tagBorder, background: tagBg }}>
                           {m?.icon}{d}
                         </span>
                       );

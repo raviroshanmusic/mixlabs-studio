@@ -26,25 +26,25 @@
 }
 
 html.light {
-  --bg-base:          #E8E8E8;
-  --bg-app:           #EFEFEF;
-  --bg-sidebar:       #F8F8F8;
-  --bg-card:          rgba(0,0,0,0.025);
-  --bg-card-hover:    rgba(0,0,0,0.05);
+  --bg-base:          #DEDEDE;
+  --bg-app:           #E8E8E8;
+  --bg-sidebar:       #F4F4F4;
+  --bg-card:          rgba(0,0,0,0.04);
+  --bg-card-hover:    rgba(0,0,0,0.07);
   --bg-surface:       #FFFFFF;
-  --bg-surface-2:     #F5F5F5;
-  --bg-surface-3:     #F0F0F0;
-  --bg-surface-4:     #EBEBEB;
-  --bg-panel:         #F8F8F8;
-  --bg-header:        #FFFFFF;
-  --bg-footer:        #F5F5F5;
-  --border-subtle:    rgba(0,0,0,0.08);
-  --border-medium:    rgba(0,0,0,0.13);
-  --shadow:           rgba(0,0,0,0.12);
-  --text-1:           rgba(0,0,0,0.90);
-  --text-2:           rgba(0,0,0,0.65);
-  --text-3:           rgba(0,0,0,0.45);
-  --text-4:           rgba(0,0,0,0.28);
+  --bg-surface-2:     #F2F2F2;
+  --bg-surface-3:     #EDEDED;
+  --bg-surface-4:     #E8E8E8;
+  --bg-panel:         #F4F4F4;
+  --bg-header:        #FAFAFA;
+  --bg-footer:        #F2F2F2;
+  --border-subtle:    rgba(0,0,0,0.16);
+  --border-medium:    rgba(0,0,0,0.22);
+  --shadow:           rgba(0,0,0,0.14);
+  --text-1:           rgba(0,0,0,0.92);
+  --text-2:           rgba(0,0,0,0.72);
+  --text-3:           rgba(0,0,0,0.52);
+  --text-4:           rgba(0,0,0,0.36);
 }
 
 @layer base {
@@ -81,51 +81,51 @@ html.light {
    LIGHT MODE OVERRIDES — comprehensive coverage
 ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Text ── */
-html.light .text-white              { color: rgba(0,0,0,0.90) !important; }
-html.light .text-white\/90          { color: rgba(0,0,0,0.90) !important; }
-html.light .text-white\/82          { color: rgba(0,0,0,0.84) !important; }
-html.light .text-white\/80          { color: rgba(0,0,0,0.82) !important; }
-html.light .text-white\/78          { color: rgba(0,0,0,0.80) !important; }
-html.light .text-white\/75          { color: rgba(0,0,0,0.78) !important; }
-html.light .text-white\/72          { color: rgba(0,0,0,0.75) !important; }
-html.light .text-white\/70          { color: rgba(0,0,0,0.72) !important; }
-html.light .text-white\/60          { color: rgba(0,0,0,0.65) !important; }
-html.light .text-white\/55          { color: rgba(0,0,0,0.60) !important; }
-html.light .text-white\/50          { color: rgba(0,0,0,0.60) !important; }
-html.light .text-white\/45          { color: rgba(0,0,0,0.55) !important; }
-html.light .text-white\/40          { color: rgba(0,0,0,0.50) !important; }
-html.light .text-white\/35          { color: rgba(0,0,0,0.50) !important; }
-html.light .text-white\/30          { color: rgba(0,0,0,0.45) !important; }
-html.light .text-white\/28          { color: rgba(0,0,0,0.45) !important; }
-html.light .text-white\/25          { color: rgba(0,0,0,0.42) !important; }
-html.light .text-white\/22          { color: rgba(0,0,0,0.40) !important; }
-html.light .text-white\/20          { color: rgba(0,0,0,0.38) !important; }
-html.light .text-white\/18          { color: rgba(0,0,0,0.35) !important; }
-html.light .text-white\/15          { color: rgba(0,0,0,0.32) !important; }
-html.light .text-white\/12          { color: rgba(0,0,0,0.28) !important; }
-html.light .text-white\/10          { color: rgba(0,0,0,0.25) !important; }
+/* ── Text — high contrast, easy to read ── */
+html.light .text-white              { color: rgba(0,0,0,0.92) !important; }
+html.light .text-white\/90          { color: rgba(0,0,0,0.92) !important; }
+html.light .text-white\/82          { color: rgba(0,0,0,0.88) !important; }
+html.light .text-white\/80          { color: rgba(0,0,0,0.86) !important; }
+html.light .text-white\/78          { color: rgba(0,0,0,0.84) !important; }
+html.light .text-white\/75          { color: rgba(0,0,0,0.82) !important; }
+html.light .text-white\/72          { color: rgba(0,0,0,0.80) !important; }
+html.light .text-white\/70          { color: rgba(0,0,0,0.78) !important; }
+html.light .text-white\/60          { color: rgba(0,0,0,0.72) !important; }
+html.light .text-white\/55          { color: rgba(0,0,0,0.68) !important; }
+html.light .text-white\/50          { color: rgba(0,0,0,0.68) !important; }
+html.light .text-white\/45          { color: rgba(0,0,0,0.64) !important; }
+html.light .text-white\/40          { color: rgba(0,0,0,0.60) !important; }
+html.light .text-white\/35          { color: rgba(0,0,0,0.58) !important; }
+html.light .text-white\/30          { color: rgba(0,0,0,0.55) !important; }
+html.light .text-white\/28          { color: rgba(0,0,0,0.54) !important; }
+html.light .text-white\/25          { color: rgba(0,0,0,0.52) !important; }
+html.light .text-white\/22          { color: rgba(0,0,0,0.50) !important; }
+html.light .text-white\/20          { color: rgba(0,0,0,0.48) !important; }
+html.light .text-white\/18          { color: rgba(0,0,0,0.46) !important; }
+html.light .text-white\/15          { color: rgba(0,0,0,0.44) !important; }
+html.light .text-white\/12          { color: rgba(0,0,0,0.40) !important; }
+html.light .text-white\/10          { color: rgba(0,0,0,0.36) !important; }
 
-/* ── Borders ── */
-html.light .border-white\/3         { border-color: rgba(0,0,0,0.07) !important; }
-html.light .border-white\/5         { border-color: rgba(0,0,0,0.09) !important; }
-html.light .border-white\/7         { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/8         { border-color: rgba(0,0,0,0.11) !important; }
-html.light .border-white\/10        { border-color: rgba(0,0,0,0.12) !important; }
-html.light .border-white\/12        { border-color: rgba(0,0,0,0.13) !important; }
-html.light .border-white\/14        { border-color: rgba(0,0,0,0.14) !important; }
-html.light .border-white\/15        { border-color: rgba(0,0,0,0.14) !important; }
-html.light .border-white\/16        { border-color: rgba(0,0,0,0.15) !important; }
-html.light .border-white\/20        { border-color: rgba(0,0,0,0.16) !important; }
-html.light .border-white\/30        { border-color: rgba(0,0,0,0.20) !important; }
-html.light .border-white\/\[0\.03\] { border-color: rgba(0,0,0,0.07) !important; }
-html.light .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.08) !important; }
-html.light .border-white\/\[0\.05\] { border-color: rgba(0,0,0,0.09) !important; }
-html.light .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/\[0\.07\] { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.11) !important; }
-html.light .border-white\/\[0\.09\] { border-color: rgba(0,0,0,0.12) !important; }
-html.light .border-white\/\[0\.10\] { border-color: rgba(0,0,0,0.12) !important; }
+/* ── Borders — prominent and visible ── */
+html.light .border-white\/3         { border-color: rgba(0,0,0,0.12) !important; }
+html.light .border-white\/5         { border-color: rgba(0,0,0,0.14) !important; }
+html.light .border-white\/7         { border-color: rgba(0,0,0,0.16) !important; }
+html.light .border-white\/8         { border-color: rgba(0,0,0,0.17) !important; }
+html.light .border-white\/10        { border-color: rgba(0,0,0,0.18) !important; }
+html.light .border-white\/12        { border-color: rgba(0,0,0,0.19) !important; }
+html.light .border-white\/14        { border-color: rgba(0,0,0,0.20) !important; }
+html.light .border-white\/15        { border-color: rgba(0,0,0,0.20) !important; }
+html.light .border-white\/16        { border-color: rgba(0,0,0,0.21) !important; }
+html.light .border-white\/20        { border-color: rgba(0,0,0,0.22) !important; }
+html.light .border-white\/30        { border-color: rgba(0,0,0,0.26) !important; }
+html.light .border-white\/\[0\.03\] { border-color: rgba(0,0,0,0.12) !important; }
+html.light .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.13) !important; }
+html.light .border-white\/\[0\.05\] { border-color: rgba(0,0,0,0.14) !important; }
+html.light .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.15) !important; }
+html.light .border-white\/\[0\.07\] { border-color: rgba(0,0,0,0.16) !important; }
+html.light .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.17) !important; }
+html.light .border-white\/\[0\.09\] { border-color: rgba(0,0,0,0.18) !important; }
+html.light .border-white\/\[0\.10\] { border-color: rgba(0,0,0,0.18) !important; }
 
 /* ── White-opacity backgrounds → subtle dark-on-light ── */
 html.light .bg-white\/\[0\.015\]    { background-color: rgba(255,255,255,0.85) !important; }
