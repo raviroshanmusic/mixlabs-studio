@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import Sidebar from "@/components/ui/Sidebar";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ChevronLeft,
   Send, Play, ExternalLink, MessageSquare, Clock,
@@ -794,8 +795,14 @@ export default function ReviewClient({
 
   const currentVer = allVersions.find(v => v.id === selectedVersion?.id) ?? selectedVersion;
 
+  const userName     = currentUser.full_name || currentUser.email.split("@")[0];
+  const userInitials = userName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+
   return (
-    <div className="flex flex-col h-screen bg-[#080808] overflow-hidden" style={{ color: "var(--text-1)" }}>
+    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
+      <Sidebar active="review" userName={userName} userInitials={userInitials} />
+
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
@@ -1049,6 +1056,7 @@ export default function ReviewClient({
           </div>
         )}
       </div>
+      </div>{/* /.flex-col inner */}
     </div>
   );
 }
