@@ -223,6 +223,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const [showNewProject, setShowNewProject] = useState(false);
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "there";
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   const filtered = useMemo(() => projects.filter(p => {
     const matchStatus = filter === "All" || p.status.toLowerCase() === filter.toLowerCase();
@@ -234,7 +235,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
 
   return (
     <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
-      <Sidebar active="dashboard" />
+      <Sidebar active="dashboard" userName={displayName} userInitials={initials} />
 
       <main className="flex-1 overflow-y-auto scrollbar-hide">
         {/* Extra bottom padding on mobile so bottom nav doesn't cover content + safe area */}

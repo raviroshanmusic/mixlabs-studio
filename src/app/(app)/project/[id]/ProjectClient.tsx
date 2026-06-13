@@ -938,6 +938,10 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const [activeTab, setActiveTab] = useState<Tab>("files");
   const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
+  const currentMember = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
+  const currentName = currentMember?.profiles?.full_name || currentMember?.profiles?.email || "";
+  const currentInitials = currentName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
+
   const userRole = useMemo<UserRole>(() => {
     if (project.owner_id === currentUserId) return "owner";
     const me = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
@@ -972,7 +976,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
   return (
     <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
-      <Sidebar active="dashboard"/>
+      <Sidebar active="project" userName={currentName} userInitials={currentInitials} />
 
       {/* ── Main area: fixed header + scrollable body ── */}
       <div className="flex-1 flex flex-col overflow-hidden">

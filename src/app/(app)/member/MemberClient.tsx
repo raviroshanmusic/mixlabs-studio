@@ -196,6 +196,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   const [copied, setCopied] = useState(false);
 
   const displayName = profile.full_name || user.email.split("@")[0];
+  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
   const col = avatarColor(displayName);
 
   function getMemberRole(pid: string) {
@@ -257,7 +258,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
 
   return (
     <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
-      <Sidebar active="member"/>
+      <Sidebar active="member" userName={displayName} userInitials={initials} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
 
