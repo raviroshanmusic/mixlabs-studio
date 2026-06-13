@@ -681,12 +681,20 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
 
 // ─── Settings Tab ─────────────────────────────────────────────────────────────
 
-function SettingsTab({ project, onProjectUpdate, canManage }: { project: Project; onProjectUpdate: (p: Partial<Project>) => void; canManage: boolean }) {
-  const [name, setName]     = useState(project.name);
+const ALL_DEPARTMENTS = ["Sound", "Score", "Color", "Edit", "Animation", "VFX"] as const;
+
+function SettingsTab({ project, onProjectUpdate, canManage }: {
+  project: Project; onProjectUpdate: (p: Partial<Project>) => void; canManage: boolean;
+}) {
+  const [name,   setName]   = useState(project.name);
   const [client, setClient] = useState(project.client || "");
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved]   = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [depts,  setDepts]  = useState<string[]>(project.departments ?? []);
+  const [saving,        setSaving]        = useState(false);
+  const [saved,         setSaved]         = useState(false);
+  const [savingDepts,   setSavingDepts]   = useState(false);
+  const [savedDepts,    setSavedDepts]    = useState(false);
+  const [deleting,      setDeleting]      = useState(false);
+  const [section,       setSection]       = useState<"general"|"departments"|"danger">("general");
 
   if (!canManage) return (
     <div className="flex flex-col items-center justify-center h-full gap-3">
@@ -695,15 +703,39 @@ function SettingsTab({ project, onProjectUpdate, canManage }: { project: Project
     </div>
   );
 
-  async function handleSave(e: React.FormEvent) {
+  async function handleSaveGeneral(e: React.FormEvent) {
     e.preventDefault();
+    if (!name.trim()) return;
     setSaving(true);
     const res = await fetch(`/api/projects/${project.id}`, {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), client: client.trim() }),
+      body: JSON.stringify({ name: name.trim(), client: client.trim() || null }),
     });
-    if (res.ok) { onProjectUpdate({ name: name.trim(), client: client.trim() || null }); setSaved(true); setTimeout(() => setSaved(false), 2000); }
+    if (res.ok) {
+      onProjectUpdate({ name: name.trim(), client: client.trim() || null });
+      setSaved(true); setTimeout(() => setSaved(false), 2000);
+    }
     setSaving(false);
+  }
+
+  function toggleDept(dept: string) {
+    setDepts(prev =>
+      prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
+    );
+  }
+
+  async function handleSaveDepts() {
+    if (depts.length === 0) return;
+    setSavingDepts(true);
+    const res = await fetch(`/api/projects/${project.id}`, {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ departments: depts }),
+    });
+    if (res.ok) {
+      onProjectUpdate({ departments: depts });
+      setSavedDepts(true); setTimeout(() => setSavedDepts(false), 2000);
+    }
+    setSavingDepts(false);
   }
 
   async function handleDelete() {
@@ -713,39 +745,182 @@ function SettingsTab({ project, onProjectUpdate, canManage }: { project: Project
     window.location.href = "/dashboard";
   }
 
+  const deptsChanged = JSON.stringify(depts.slice().sort()) !== JSON.stringify((project.departments ?? []).slice().sort());
+
+  const NAV = [
+    { id: "general",     label: "General",     icon: <Settings size={12}/> },
+    { id: "departments", label: "Departments",  icon: <FolderOpen size={12}/> },
+    { id: "danger",      label: "Danger Zone",  icon: <Trash2 size={12}/> },
+  ] as const;
+
   return (
-    <div className="max-w-sm flex flex-col gap-10">
-      <div>
-        <p className="text-white/16 text-[9px] tracking-[0.25em] uppercase mb-5 font-light">General</p>
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <div>
-            <label className="text-white/25 text-xs mb-2 block font-light">Project name</label>
-            <input value={name} onChange={e => setName(e.target.value)} required
-              className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/75 outline-none focus:border-white/16 transition-colors font-light"/>
-          </div>
-          <div>
-            <label className="text-white/25 text-xs mb-2 block font-light">Client name</label>
-            <input value={client} onChange={e => setClient(e.target.value)} placeholder="Optional"
-              className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/75 placeholder-white/14 outline-none focus:border-white/16 transition-colors font-light"/>
-          </div>
-          <button type="submit" disabled={saving}
-            className="self-start flex items-center gap-2 bg-white text-black text-xs font-medium px-5 py-2.5 rounded-xl hover:bg-white/90 disabled:opacity-30 transition-all">
-            {saved ? <><Check size={11}/> Saved</> : saving ? "Saving…" : "Save changes"}
+    <div className="flex gap-8 h-full">
+
+      {/* Left nav */}
+      <div className="w-44 shrink-0 flex flex-col gap-0.5 pt-0.5">
+        <p className="text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-3 font-light">Settings</p>
+        {NAV.map(n => (
+          <button key={n.id} onClick={() => setSection(n.id)}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all text-[12px] font-light ${
+              section === n.id
+                ? n.id === "danger" ? "bg-red-500/8 text-red-400/80" : "bg-white/6 text-white/80"
+                : n.id === "danger" ? "text-red-400/40 hover:text-red-400/65 hover:bg-red-500/5" : "text-white/28 hover:bg-white/3 hover:text-white/55"
+            }`}>
+            <span className="opacity-70">{n.icon}</span>
+            {n.label}
           </button>
-        </form>
+        ))}
       </div>
-      <div className="border-t border-white/[0.04] pt-8">
-        <p className="text-white/16 text-[9px] tracking-[0.25em] uppercase mb-5 font-light">Danger Zone</p>
-        <div className="flex items-center justify-between p-4 rounded-2xl border border-red-500/10 bg-red-500/[0.015]">
+
+      <div className="w-px bg-white/[0.04] self-stretch"/>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 max-w-sm overflow-y-auto scrollbar-hide">
+
+        {/* ── General ── */}
+        {section === "general" && (
           <div>
-            <p className="text-white/52 text-sm font-light">Delete project</p>
-            <p className="text-white/16 text-xs mt-0.5 font-light">Removes all data permanently</p>
+            <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-6 font-light">General</p>
+            <form onSubmit={handleSaveGeneral} className="flex flex-col gap-5">
+              <div>
+                <label className="text-white/28 text-xs mb-2 block font-light">Project name</label>
+                <input value={name} onChange={e => setName(e.target.value)} required
+                  className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/78 outline-none focus:border-white/16 transition-colors font-light"/>
+              </div>
+              <div>
+                <label className="text-white/28 text-xs mb-2 block font-light">Client name</label>
+                <input value={client} onChange={e => setClient(e.target.value)} placeholder="Optional"
+                  className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/78 placeholder-white/14 outline-none focus:border-white/16 transition-colors font-light"/>
+                <p className="text-white/16 text-[10px] font-light mt-1.5">Shown on the project header and breadcrumb</p>
+              </div>
+              <div className="pt-1">
+                <button type="submit" disabled={saving}
+                  className="flex items-center gap-2 bg-white text-black text-xs font-medium px-5 py-2.5 rounded-xl hover:bg-white/90 disabled:opacity-30 transition-all">
+                  {saved ? <><Check size={11}/> Saved</> : saving ? "Saving…" : "Save changes"}
+                </button>
+              </div>
+            </form>
           </div>
-          <button onClick={handleDelete} disabled={deleting}
-            className="flex items-center gap-1.5 text-red-400/65 hover:text-red-400 border border-red-500/15 hover:border-red-500/30 px-3 py-2 rounded-xl text-xs transition-all disabled:opacity-30 font-light">
-            <Trash2 size={11}/> {deleting ? "Deleting…" : "Delete"}
-          </button>
-        </div>
+        )}
+
+        {/* ── Departments ── */}
+        {section === "departments" && (
+          <div>
+            <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-1.5 font-light">Departments</p>
+            <p className="text-white/22 text-xs font-light mb-6">Select which departments are active on this project. Departments control which file categories and review rooms exist.</p>
+
+            <div className="flex flex-col gap-2 mb-6">
+              {ALL_DEPARTMENTS.map(dept => {
+                const m = DEPT_META[dept];
+                const active = depts.includes(dept);
+                const hasFiles = false; // could check versions prop if passed
+                return (
+                  <button key={dept} type="button" onClick={() => toggleDept(dept)}
+                    className={`flex items-center justify-between px-4 py-3.5 rounded-2xl border transition-all text-left group ${
+                      active
+                        ? "border-white/12 bg-white/[0.03]"
+                        : "border-white/[0.05] bg-transparent hover:bg-white/[0.02] hover:border-white/8"
+                    }`}
+                    style={active ? { borderColor: m.hex + "35", background: m.hex + "08" } : {}}>
+                    <div className="flex items-center gap-3">
+                      <span className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all`}
+                        style={active ? { background: m.bg, color: m.accent } : { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.22)" }}>
+                        {m.icon}
+                      </span>
+                      <div>
+                        <p className={`text-sm font-light transition-colors ${active ? "text-white/80" : "text-white/30 group-hover:text-white/50"}`}>{dept}</p>
+                        <p className="text-white/16 text-[10px] font-light mt-0.5">
+                          {dept === "Sound"     && "Sound design, SFX, foley, mixing"}
+                          {dept === "Score"     && "Original music composition"}
+                          {dept === "Color"     && "Color grading & correction"}
+                          {dept === "Edit"      && "Video editing & assembly"}
+                          {dept === "Animation" && "Motion graphics & animation"}
+                          {dept === "VFX"       && "Visual effects & compositing"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
+                      active ? "border-transparent" : "border-white/12"
+                    }`}
+                      style={active ? { background: m.hex, boxShadow: `0 0 8px ${m.hex}40` } : {}}>
+                      {active && <Check size={10} className="text-black"/>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {depts.length === 0 && (
+              <p className="text-amber-400/60 text-xs font-light flex items-center gap-1.5 mb-4">
+                <AlertCircle size={11}/> At least one department is required
+              </p>
+            )}
+
+            <div className="flex items-center gap-3">
+              <button onClick={handleSaveDepts} disabled={savingDepts || depts.length === 0 || !deptsChanged}
+                className="flex items-center gap-2 bg-white text-black text-xs font-medium px-5 py-2.5 rounded-xl hover:bg-white/90 disabled:opacity-30 transition-all">
+                {savedDepts ? <><Check size={11}/> Saved</> : savingDepts ? "Saving…" : "Save departments"}
+              </button>
+              {deptsChanged && (
+                <button onClick={() => setDepts(project.departments ?? [])}
+                  className="text-white/22 hover:text-white/50 text-xs font-light transition-colors">
+                  Discard changes
+                </button>
+              )}
+            </div>
+
+            <div className="mt-6 p-3.5 rounded-xl border border-white/[0.05] bg-white/[0.015]">
+              <p className="text-white/22 text-[10px] font-light leading-relaxed">
+                Removing a department doesn't delete existing files — it just hides that department from the Files and Review tabs. You can re-add it anytime to restore access.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Danger Zone ── */}
+        {section === "danger" && (
+          <div>
+            <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-6 font-light">Danger Zone</p>
+            <div className="flex flex-col gap-4">
+
+              {/* Archive (placeholder, non-destructive) */}
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
+                <div>
+                  <p className="text-white/58 text-sm font-light">Archive project</p>
+                  <p className="text-white/18 text-xs mt-0.5 font-light">Hide from dashboard without deleting</p>
+                </div>
+                <button disabled className="flex items-center gap-1.5 text-white/22 border border-white/8 px-3.5 py-2 rounded-xl text-xs font-light opacity-40 cursor-not-allowed">
+                  Archive
+                </button>
+              </div>
+
+              {/* Transfer ownership (placeholder) */}
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
+                <div>
+                  <p className="text-white/58 text-sm font-light">Transfer ownership</p>
+                  <p className="text-white/18 text-xs mt-0.5 font-light">Assign a new owner to this project</p>
+                </div>
+                <button disabled className="flex items-center gap-1.5 text-white/22 border border-white/8 px-3.5 py-2 rounded-xl text-xs font-light opacity-40 cursor-not-allowed">
+                  Transfer
+                </button>
+              </div>
+
+              {/* Delete */}
+              <div className="flex items-center justify-between p-4 rounded-2xl border border-red-500/12 bg-red-500/[0.02]">
+                <div>
+                  <p className="text-white/58 text-sm font-light">Delete project</p>
+                  <p className="text-white/18 text-xs mt-0.5 font-light">Permanently removes all files, milestones, and deliveries</p>
+                </div>
+                <button onClick={handleDelete} disabled={deleting}
+                  className="flex items-center gap-1.5 text-red-400/65 hover:text-red-400 border border-red-500/15 hover:border-red-500/35 px-3.5 py-2 rounded-xl text-xs transition-all disabled:opacity-30 font-light">
+                  <Trash2 size={11}/> {deleting ? "Deleting…" : "Delete"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
