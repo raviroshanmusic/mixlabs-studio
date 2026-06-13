@@ -950,9 +950,10 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — height:56.25vw is the most reliable 16:9 on mobile Safari
-           (vw is an absolute viewport unit, no percentage-of-what? ambiguity) */}
-      <div className="w-full bg-black shrink-0" style={{ height: "56.25vw" }}>
+      {/* Player — min 290px so Drive's top scrubber + bottom control pill don't
+           eat the entire iframe. Pure 16:9 (56.25vw) = 219px on a 390px phone,
+           leaving only ~120px for actual video. 290px gives ~200px of video area. */}
+      <div className="w-full bg-black shrink-0" style={{ height: "max(290px, 56.25vw)" }}>
         <Player version={selectedVersion} />
       </div>
 
