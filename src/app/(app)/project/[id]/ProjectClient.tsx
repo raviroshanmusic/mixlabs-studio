@@ -1,13 +1,14 @@
 "use client";
 import { useState, useMemo, useRef } from "react";
 import {
-  ArrowLeft, Plus, ExternalLink, ChevronDown, ChevronRight,
+  ArrowLeft, Plus, ChevronDown, ChevronRight,
   Music, Palette, Scissors, Wand2, Zap, Volume2,
-  Settings, Users, FileText, Trash2, Check, Link,
+  Settings, Users, FileText, Trash2, Check,
   PlayCircle, Calendar, TrendingUp, Activity, Package,
   ShieldCheck, Eye, Pencil, Crown, AlertCircle,
-  Clock, FolderOpen, RefreshCw, Dot,
+  Clock, FolderOpen, RefreshCw, Dot, Upload,
 } from "lucide-react";
+import B2Upload from "@/components/ui/B2Upload";
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
 import DeliveryTab, { Delivery } from "./Delivery";
@@ -345,7 +346,8 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
   const [activeDept, setActiveDept]   = useState(depts[0] ?? "");
   const [addingFile, setAddingFile]   = useState(false);
   const [title, setTitle]             = useState("");
-  const [url, setUrl]                 = useState("");
+  const [fileKey, setFileKey]         = useState("");
+  const [uploaded, setUploaded]       = useState(false);
   const [loading, setLoading]         = useState(false);
   const [addError, setAddError]       = useState("");
   const [localFiles, setLocalFiles]   = useState<Version[]>(versions);
@@ -357,11 +359,11 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !fileKey) return;
     setLoading(true); setAddError("");
     const res = await fetch(`/api/projects/${project.id}/versions`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: title.trim(), department: activeDept, drive_url: url.trim() || null }),
+      body: JSON.stringify({ title: title.trim(), department: activeDept, drive_url: `b2://${fileKey}` }),
     });
     const data = await res.json();
     if (!res.ok) { setAddError(data.error || "Failed"); setLoading(false); return; }
@@ -370,7 +372,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
       department: data.department ?? activeDept, drive_url: data.drive_url ?? null,
       status: data.status ?? "draft", created_at: data.created_at ?? new Date().toISOString(),
     }, ...prev]);
-    setTitle(""); setUrl(""); setAddError(""); setLoading(false); setAddingFile(false);
+    setTitle(""); setFileKey(""); setUploaded(false); setAddError(""); setLoading(false); setAddingFile(false);
   }
 
   async function handleStatusChange(fileId: string, newStatus: string) {
@@ -453,21 +455,23 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
         {addingFile && canEdit && (
           <form onSubmit={handleAdd} onClick={e => e.stopPropagation()}
             className="mb-4 p-4 rounded-2xl border border-white/8 bg-white/[0.02] flex flex-col gap-3 shrink-0">
-            <input autoFocus placeholder="File name — e.g. Score v2 Final Mix"
-              value={title} onChange={e => setTitle(e.target.value)} required
-              className="bg-transparent border-b border-white/8 pb-2 text-sm text-white/75 placeholder-white/15 outline-none focus:border-white/18 transition-colors w-full font-light"/>
-            <div className="flex items-center gap-2 border-b border-white/8 pb-2">
-              <Link size={10} className="text-white/16 shrink-0"/>
-              <input placeholder="Google Drive link (optional)" value={url} onChange={e => setUrl(e.target.value)}
-                className="bg-transparent text-sm text-white/65 placeholder-white/14 outline-none w-full font-light"/>
-            </div>
+            <B2Upload projectId={project.id} onUploaded={(key, filename) => {
+              setFileKey(key);
+              setUploaded(true);
+              if (!title.trim()) setTitle(filename.replace(/\.[^.]+$/, ""));
+            }} />
+            {uploaded && (
+              <input autoFocus placeholder="File name"
+                value={title} onChange={e => setTitle(e.target.value)} required
+                className="bg-transparent border-b border-white/8 pb-2 text-sm text-white/75 placeholder-white/15 outline-none focus:border-white/18 transition-colors w-full font-light"/>
+            )}
             {addError && <p className="text-red-400/70 text-xs font-light">{addError}</p>}
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={loading || !title.trim()}
+              <button type="submit" disabled={loading || !uploaded || !title.trim()}
                 className="bg-white text-black text-xs font-medium px-4 py-2 rounded-xl hover:bg-white/90 disabled:opacity-30 transition-all">
-                {loading ? "Adding…" : "Add"}
+                {loading ? "Saving…" : "Save file"}
               </button>
-              <button type="button" onClick={() => { setAddingFile(false); setAddError(""); }}
+              <button type="button" onClick={() => { setAddingFile(false); setAddError(""); setTitle(""); setFileKey(""); setUploaded(false); }}
                 className="text-white/22 hover:text-white/50 text-xs font-light transition-colors">Cancel</button>
             </div>
           </form>
@@ -542,12 +546,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                   <span className="text-white/20 text-[11px] font-light">
                     {new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
-                  <div className="flex justify-end">
-                    {f.drive_url
-                      ? <a href={f.drive_url} target="_blank" rel="noopener noreferrer"
-                          className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-white/60 transition-all"><ExternalLink size={12}/></a>
-                      : <span/>}
-                  </div>
+                  <div className="flex justify-end"/>
                 </div>
               );
             })}

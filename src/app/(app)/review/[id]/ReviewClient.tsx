@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Sidebar from "@/components/ui/Sidebar";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ChevronLeft,
-  Send, Play, ExternalLink, MessageSquare, Clock,
+  Send, MessageSquare, Clock,
   Volume2, Music, Palette, Scissors, Wand2, Zap, FileText,
   Check, Download, Maximize2, Minimize2,
   CheckCircle2, Film, Layers,
@@ -107,17 +107,6 @@ function initials(name: string): string {
   return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 }
 
-function getEmbedUrl(url: string): string | null {
-  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&color=white`;
-  const vm = url.match(/vimeo\.com\/(\d+)/);
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1&color=ffffff`;
-  const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
-  if (url.includes("dropbox.com"))
-    return url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
-  return url;
-}
 
 function exportNotes(comments: Comment[], project: Project, version: Version | null) {
   const lines = [
@@ -554,6 +543,19 @@ function VersionStatusPicker({ version, onUpdate }: { version: Version | null; o
 // ─── Player ───────────────────────────────────────────────────────────────────
 
 function Player({ version }: { version: Version | null }) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [signError, setSignError] = useState(false);
+
+  useEffect(() => {
+    if (!version?.drive_url) { setSignedUrl(null); setSignError(false); return; }
+    const key = version.drive_url.startsWith("b2://") ? version.drive_url.slice(5) : version.drive_url;
+    setSignedUrl(null); setSignError(false);
+    fetch(`/api/upload/sign?key=${encodeURIComponent(key)}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => setSignedUrl(d.url))
+      .catch(() => setSignError(true));
+  }, [version?.id]);
+
   if (!version) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-6">
@@ -571,23 +573,56 @@ function Player({ version }: { version: Version | null }) {
     );
   }
 
-  const embedUrl = version.drive_url ? getEmbedUrl(version.drive_url) : null;
+  if (signError) return (
+    <div className="w-full h-full flex items-center justify-center">
+      <p className="text-rose-400/70 text-sm">Could not load video — try refreshing</p>
+    </div>
+  );
 
-  if (!embedUrl) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-4">
-        <p className="text-white/40 text-sm">No previewable link for this file.</p>
-        {version.drive_url && (
-          <a href={version.drive_url} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-2 text-xs text-white/50 hover:text-white/80 border border-white/15 px-4 py-2 rounded-xl transition-all hover:bg-white/5">
-            <ExternalLink size={12} /> Open externally
-          </a>
-        )}
-      </div>
-    );
-  }
+  if (!signedUrl) return (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin"/>
+    </div>
+  );
 
-  return <iframe key={embedUrl} src={embedUrl} className="w-full h-full" allow="autoplay; fullscreen" allowFullScreen />;
+  return <video key={signedUrl} src={signedUrl} controls className="w-full h-full bg-black" controlsList="nodownload" />;
+}
+
+// ─── Mobile Player ────────────────────────────────────────────────────────────
+
+function MobilePlayer({ version }: { version: Version | null }) {
+  const [signedUrl, setSignedUrl] = useState<string | null>(null);
+  const [signError, setSignError] = useState(false);
+
+  useEffect(() => {
+    if (!version?.drive_url) { setSignedUrl(null); setSignError(false); return; }
+    const key = version.drive_url.startsWith("b2://") ? version.drive_url.slice(5) : version.drive_url;
+    setSignedUrl(null); setSignError(false);
+    fetch(`/api/upload/sign?key=${encodeURIComponent(key)}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => setSignedUrl(d.url))
+      .catch(() => setSignError(true));
+  }, [version?.id]);
+
+  return (
+    <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0" style={{ height: "max(240px, 56.25vw)" }}>
+      {!version ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <p className="text-white/25 text-xs">No file selected</p>
+        </div>
+      ) : signError ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <p className="text-rose-400/70 text-xs">Could not load video</p>
+        </div>
+      ) : !signedUrl ? (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin"/>
+        </div>
+      ) : (
+        <video key={signedUrl} src={signedUrl} controls controlsList="nodownload" className="w-full h-full bg-black" />
+      )}
+    </div>
+  );
 }
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
@@ -942,42 +977,10 @@ export default function ReviewClient({
           )}
         </div>
 
-        {currentVer?.drive_url && (
-          <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
-            className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 shrink-0">
-            <ExternalLink size={13} />
-          </a>
-        )}
       </header>
 
-      {/* Player — poster card until user taps Play, then loads Drive iframe.
-           This avoids Drive's double-control mobile UI showing immediately. */}
-      <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0" style={{ height: "max(240px, 56.25vw)" }}>
-        <div className="w-full h-full flex flex-col items-center justify-center gap-3 relative">
-          {/* subtle grid background */}
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
-          {/* Open in Drive — native player, no iframe double-control issue */}
-          <a
-            href={selectedVersion?.drive_url ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`relative z-10 w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all active:scale-95 active:bg-white/15 ${!selectedVersion?.drive_url ? "opacity-30 pointer-events-none" : ""}`}>
-            <Play size={28} className="text-white ml-1.5" fill="white" />
-          </a>
-          {selectedVersion ? (
-            <div className="relative z-10 text-center px-6">
-              <p className="text-white/50 text-xs font-medium">{selectedVersion.version_name}</p>
-              {selectedVersion.department && (
-                <p className="text-white/25 text-[10px] mt-0.5">{selectedVersion.department}</p>
-              )}
-              <p className="text-white/20 text-[10px] mt-2">Tap to open in Google Drive</p>
-            </div>
-          ) : (
-            <p className="relative z-10 text-white/25 text-xs">No file selected</p>
-          )}
-        </div>
-      </div>
+      {/* Player */}
+      <MobilePlayer version={selectedVersion} />
 
       {/* Version / department picker — always visible, horizontal scroll */}
       <div className="px-4 pb-3 bg-[#080808]">
@@ -1171,12 +1174,6 @@ export default function ReviewClient({
                 className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
                 <Download size={13} />
               </button>
-              {currentVer?.drive_url && (
-                <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
-                  <ExternalLink size={13} />
-                </a>
-              )}
               <button onClick={() => setCinemaMode(true)}
                 className="flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
                 <Maximize2 size={11} />Cinema
