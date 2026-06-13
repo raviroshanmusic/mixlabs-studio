@@ -950,10 +950,10 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — min 290px so Drive's top scrubber + bottom control pill don't
-           eat the entire iframe. Pure 16:9 (56.25vw) = 219px on a 390px phone,
-           leaving only ~120px for actual video. 290px gives ~200px of video area. */}
-      <div className="w-full bg-black shrink-0" style={{ height: "max(290px, 56.25vw)" }}>
+      {/* Player — overflow-hidden clips the Drive embed inside a clean card.
+           min 290px gives Drive's scrubber+controls room (pure 16:9 = only 219px
+           on a 390px phone, leaving ~120px of video). */}
+      <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-black shrink-0" style={{ height: "max(290px, 56.25vw)" }}>
         <Player version={selectedVersion} />
       </div>
 
