@@ -757,6 +757,7 @@ export default function ReviewClient({
   const [timecodeInput, setTimecodeInput]     = useState("");
   const [submitting, setSubmitting]           = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile]                 = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   // Collapse notes panel by default on mobile; keep open on desktop
   const [panelCollapsed, setPanelCollapsed]     = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [cinemaMode, setCinemaMode]             = useState(false);
@@ -899,11 +900,12 @@ export default function ReviewClient({
   const userInitials = userName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", paddingBottom: "env(safe-area-inset-bottom)", color: "var(--text-1)" }}>
+    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
 
-      {/* pb-[68px] reserves space for the fixed mobile bottom nav */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden pb-[68px] md:pb-0">
+      {/* On mobile: reserve space for fixed bottom nav (56px) + device safe-area-inset-bottom (0–34px on iPhone) */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden"
+        style={isMobile ? { paddingBottom: "calc(56px + env(safe-area-inset-bottom))" } : {}}>
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
