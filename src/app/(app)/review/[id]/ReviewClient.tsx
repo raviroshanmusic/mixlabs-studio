@@ -957,11 +957,6 @@ export default function ReviewClient({
         <Player version={selectedVersion} />
       </div>
 
-      {/* Timecode Rail */}
-      <div className="px-4 py-2 bg-[#080808]">
-        <TimecodeRail comments={allVisible} onSeek={handleTimecodeClick} />
-      </div>
-
       {/* Version / department picker — always visible, horizontal scroll */}
       <div className="px-4 pb-3 bg-[#080808]">
         {allVersions.length > 0 && (
