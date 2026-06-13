@@ -4,12 +4,13 @@ import {
   ArrowLeft, Plus, ExternalLink, ChevronDown, ChevronRight,
   Music, Palette, Scissors, Wand2, Zap, Volume2,
   Settings, Users, FileText, Trash2, Check, Link,
-  PlayCircle, Calendar, TrendingUp, Activity,
+  PlayCircle, Calendar, TrendingUp, Activity, Package,
   ShieldCheck, Eye, Pencil, Crown, AlertCircle,
   Clock, FolderOpen, RefreshCw, Dot,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
+import DeliveryTab, { Delivery } from "./Delivery";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -752,14 +753,15 @@ function SettingsTab({ project, onProjectUpdate, canManage }: { project: Project
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Tab = "files" | "team" | "settings" | "timeline";
+type Tab = "files" | "timeline" | "delivery" | "team" | "settings";
 
-export default function ProjectClient({ project: initialProject, versions, members, milestones, currentUserId }: {
-  project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; currentUserId: string;
+export default function ProjectClient({ project: initialProject, versions, members, milestones, deliveries: initialDeliveries, currentUserId }: {
+  project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; deliveries: Delivery[]; currentUserId: string;
 }) {
   const [project, setProject] = useState(initialProject);
   const [status, setStatus]   = useState(initialProject.status);
   const [activeTab, setActiveTab] = useState<Tab>("files");
+  const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
   const userRole = useMemo<UserRole>(() => {
     if (project.owner_id === currentUserId) return "owner";
@@ -781,15 +783,17 @@ export default function ProjectClient({ project: initialProject, versions, membe
     });
   }
 
-  const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number }[] = [
+  const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number; accent?: string }[] = [
     { id: "files",    label: "Files",    icon: <FileText size={12}/>, count: versions.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
+    { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
     { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: members.length },
     { id: "settings", label: "Settings", icon: <Settings size={12}/> },
   ];
 
   const primaryHex = DEPT_META[project.departments[0]]?.hex ?? "#ffffff";
   const isTimeline = activeTab === "timeline";
+  const isFullWidth = activeTab === "timeline";
 
   return (
     <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
@@ -876,6 +880,9 @@ export default function ProjectClient({ project: initialProject, versions, membe
                       {tab.count}
                     </span>
                   )}
+                  {tab.accent && (
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: tab.accent }}/>
+                  )}
                 </button>
               ))}
             </div>
@@ -884,7 +891,6 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
         {/* ══ Scrollable Body ══ */}
         {isTimeline ? (
-          // Timeline gets full width, internal scroll handled inside Timeline component
           <div className="flex-1 overflow-hidden px-9 py-6">
             <Timeline project={project} initialMilestones={milestones}/>
           </div>
@@ -893,6 +899,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             {/* Left — main tab content, scrolls independently */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-9 py-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
+              {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
               {activeTab === "team"     && <TeamTab project={project} members={members} canManage={canManage}/>}
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}
             </div>

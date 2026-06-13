@@ -46,12 +46,19 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .eq("project_id", id)
     .order("start_date", { ascending: true });
 
+  const { data: deliveries } = await supabase
+    .from("project_deliveries")
+    .select("*")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
+
   return (
     <ProjectClient
       project={{ ...project, departments: project.departments ?? [], owner_id: project.owner_id }}
       versions={versions ?? []}
       members={members ?? []}
       milestones={milestones ?? []}
+      deliveries={deliveries ?? []}
       currentUserId={user.id}
     />
   );
