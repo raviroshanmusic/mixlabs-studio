@@ -134,18 +134,15 @@ export default function Sidebar({
     >
 
       {/* ── Logo ── */}
-      <div className="flex items-center h-14 px-3 shrink-0">
-        {/* icon: 32px wide, px-3 → starts at 12px left → centered in 56px */}
-        <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "var(--bg-surface-4)" }}>
-          <span style={{ color: "var(--text-1)" }}>
-            <MixLabsLogo size={18} />
-          </span>
+      <div className="flex items-center h-16 px-3 shrink-0">
+        {/* Logo bare — 32px wide, centered in 56px collapsed rail */}
+        <span className="shrink-0 flex items-center justify-center w-8" style={{ color: "var(--text-1)" }}>
+          <MixLabsLogo size={32} />
         </span>
         <div className="ml-3 overflow-hidden"
           style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms 40ms", whiteSpace: "nowrap" }}>
-          <p className="text-[11px] font-semibold leading-tight" style={{ color: "var(--text-1)" }}>MixLabs</p>
-          <p className="text-[9px] leading-tight tracking-widest uppercase" style={{ color: "var(--text-3)" }}>Workspace</p>
+          <p className="text-[13px] font-semibold leading-tight tracking-wide" style={{ color: "var(--text-1)" }}>MixLabs</p>
+          <p className="text-[9px] leading-tight tracking-[0.25em] uppercase" style={{ color: "var(--text-3)" }}>Workspace</p>
         </div>
       </div>
 
