@@ -542,20 +542,12 @@ function VersionStatusPicker({ version, onUpdate }: { version: Version | null; o
 
 // ─── Player ───────────────────────────────────────────────────────────────────
 
+function mediaUrl(driveUrl: string) {
+  const key = driveUrl.startsWith("b2://") ? driveUrl.slice(5) : driveUrl;
+  return `/api/media?key=${encodeURIComponent(key)}`;
+}
+
 function Player({ version }: { version: Version | null }) {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [signError, setSignError] = useState(false);
-
-  useEffect(() => {
-    if (!version?.drive_url) { setSignedUrl(null); setSignError(false); return; }
-    const key = version.drive_url.startsWith("b2://") ? version.drive_url.slice(5) : version.drive_url;
-    setSignedUrl(null); setSignError(false);
-    fetch(`/api/upload/sign?key=${encodeURIComponent(key)}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => setSignedUrl(d.url))
-      .catch(() => setSignError(true));
-  }, [version?.id]);
-
   if (!version) {
     return (
       <div className="w-full h-full flex flex-col items-center justify-center gap-6">
@@ -573,53 +565,26 @@ function Player({ version }: { version: Version | null }) {
     );
   }
 
-  if (signError) return (
+  if (!version.drive_url) return (
     <div className="w-full h-full flex items-center justify-center">
-      <p className="text-rose-400/70 text-sm">Could not load video — try refreshing</p>
+      <p className="text-white/30 text-sm">No file attached</p>
     </div>
   );
 
-  if (!signedUrl) return (
-    <div className="w-full h-full flex items-center justify-center">
-      <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin"/>
-    </div>
-  );
-
-  return <video key={signedUrl} src={signedUrl} controls className="w-full h-full bg-black" controlsList="nodownload" />;
+  return <video key={version.id} src={mediaUrl(version.drive_url)} controls className="w-full h-full bg-black" controlsList="nodownload" />;
 }
 
 // ─── Mobile Player ────────────────────────────────────────────────────────────
 
 function MobilePlayer({ version }: { version: Version | null }) {
-  const [signedUrl, setSignedUrl] = useState<string | null>(null);
-  const [signError, setSignError] = useState(false);
-
-  useEffect(() => {
-    if (!version?.drive_url) { setSignedUrl(null); setSignError(false); return; }
-    const key = version.drive_url.startsWith("b2://") ? version.drive_url.slice(5) : version.drive_url;
-    setSignedUrl(null); setSignError(false);
-    fetch(`/api/upload/sign?key=${encodeURIComponent(key)}`)
-      .then(r => r.ok ? r.json() : Promise.reject())
-      .then(d => setSignedUrl(d.url))
-      .catch(() => setSignError(true));
-  }, [version?.id]);
-
   return (
     <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0" style={{ height: "max(240px, 56.25vw)" }}>
-      {!version ? (
+      {!version || !version.drive_url ? (
         <div className="w-full h-full flex items-center justify-center">
           <p className="text-white/25 text-xs">No file selected</p>
         </div>
-      ) : signError ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <p className="text-rose-400/70 text-xs">Could not load video</p>
-        </div>
-      ) : !signedUrl ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white/60 animate-spin"/>
-        </div>
       ) : (
-        <video key={signedUrl} src={signedUrl} controls controlsList="nodownload" className="w-full h-full bg-black" />
+        <video key={version.id} src={mediaUrl(version.drive_url)} controls controlsList="nodownload" className="w-full h-full bg-black" />
       )}
     </div>
   );
