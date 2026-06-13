@@ -31,6 +31,15 @@
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
+/* ── Sidebar responsive — using plain CSS to avoid Tailwind purge issues ── */
+.sidebar-desktop { display: none; }
+.sidebar-mobile  { display: flex; }
+
+@media (min-width: 768px) {
+  .sidebar-desktop { display: flex; }
+  .sidebar-mobile  { display: none; }
+}
+
 /* ── Film grain ── */
 @keyframes grain {
   0%,100% { transform:translate(0,0); } 10% { transform:translate(-2%,-3%); }

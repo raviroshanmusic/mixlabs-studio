@@ -246,7 +246,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
               <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase mb-1">
                 {profile?.company || "MixLabs Studio"}
               </p>
-              <h1 className="text-white text-2xl md:text-3xl font-light tracking-wide">
+              <h1 className="text-white text-xl md:text-3xl font-light tracking-wide leading-tight">
                 {greeting(displayName)}
               </h1>
               <p className="text-white/25 text-xs md:text-sm mt-1">
@@ -254,10 +254,9 @@ export default function DashboardClient({ user, projects, profile, activity, sta
               </p>
             </div>
             <button onClick={() => setShowNewProject(true)}
-              className="flex items-center gap-2 bg-white text-black rounded-xl px-4 md:px-5 py-2.5 text-xs md:text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5 shrink-0">
-              <Plus size={14} />
-              <span className="hidden sm:inline">New Project</span>
-              <span className="sm:hidden">New</span>
+              className="flex items-center gap-1.5 bg-white text-black rounded-xl px-3 md:px-5 py-2 md:py-2.5 text-xs md:text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5 shrink-0 whitespace-nowrap">
+              <Plus size={13} />
+              <span>New Project</span>
             </button>
           </div>
 
