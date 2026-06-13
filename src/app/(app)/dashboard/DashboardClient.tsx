@@ -233,12 +233,12 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const inReviewProjects = projects.filter(p => p.status === "in review");
 
   return (
-    <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
+    <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
       <Sidebar active="dashboard" />
 
       <main className="flex-1 overflow-y-auto scrollbar-hide">
-        {/* Extra bottom padding on mobile so bottom nav doesn't cover content */}
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10 pb-24 md:pb-10">
+        {/* Extra bottom padding on mobile so bottom nav doesn't cover content + safe area */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10 pb-28 md:pb-10">
 
           {/* ── Header ── */}
           <div className="flex items-start justify-between gap-4 mb-7 md:mb-10">
@@ -280,17 +280,17 @@ export default function DashboardClient({ user, projects, profile, activity, sta
           <AttentionBanner projects={inReviewProjects} />
 
           {/* ── Search + Filter ── */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mb-5">
-            <div className="flex items-center gap-2 flex-1 bg-white/[0.04] border border-white/8 rounded-xl px-3 py-2.5 focus-within:border-white/15 transition-colors">
+          <div className="flex flex-col gap-2.5 mb-5 min-w-0">
+            <div className="flex items-center gap-2 bg-white/[0.04] border border-white/8 rounded-xl px-3 py-2.5 focus-within:border-white/15 transition-colors">
               <Search size={13} className="text-white/20 shrink-0" />
               <input
                 placeholder="Search projects…"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full"
+                className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full min-w-0"
               />
             </div>
-            {/* Horizontal scroll filter on mobile */}
+            {/* Horizontal scroll filter — works on all screen sizes */}
             <div className="flex items-center gap-1 bg-white/[0.03] border border-white/8 rounded-xl p-1 overflow-x-auto scrollbar-hide">
               {STATUS_TABS.map(tab => (
                 <button key={tab} onClick={() => setFilter(tab)}

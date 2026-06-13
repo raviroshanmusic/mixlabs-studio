@@ -46,7 +46,8 @@ export default function Sidebar({ active }: { active?: string }) {
       </aside>
 
       {/* ── Mobile: fixed bottom nav bar ── */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 py-2 border-t border-white/[0.07] bg-[#0A0A0A]/95 backdrop-blur-xl">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around px-2 pt-2 border-t border-white/[0.07] bg-[#0A0A0A]/95 backdrop-blur-xl"
+        style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
         {NAV.map(({ href, label, icon: Icon, key }) => {
           const isActive = pathname.startsWith(href) || active === key;
           return (

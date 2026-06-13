@@ -971,7 +971,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const isFullWidth = activeTab === "timeline";
 
   return (
-    <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
+    <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
       <Sidebar active="dashboard"/>
 
       {/* ── Main area: fixed header + scrollable body ── */}

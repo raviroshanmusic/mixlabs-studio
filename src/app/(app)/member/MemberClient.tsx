@@ -256,23 +256,23 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   const allProjects = [...ownedProjects, ...memberProjects];
 
   return (
-    <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
+    <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
       <Sidebar active="member"/>
 
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* ── Fixed Header ── */}
         <div className="shrink-0 border-b border-white/[0.04]">
-          <div className="px-9 py-6 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar name={displayName} size={44}/>
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="text-white/82 text-lg font-light tracking-wide">{displayName}</h1>
+          <div className="px-4 md:px-9 py-4 md:py-6 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <Avatar name={displayName} size={40}/>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-white/82 text-base md:text-lg font-light tracking-wide truncate">{displayName}</h1>
                   {profile.profession && (() => {
                     const pd = PROFESSIONS.find(p => p.label === profile.profession);
                     return (
-                      <span className="flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-light"
+                      <span className="hidden sm:flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-light shrink-0"
                         style={{ color: pd?.accent ?? "#94a3b8", borderColor: (pd?.accent ?? "#94a3b8") + "30", background: (pd?.accent ?? "#94a3b8") + "10" }}>
                         {pd?.icon}
                         {profile.profession}
@@ -280,27 +280,24 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                     );
                   })()}
                 </div>
-                <div className="flex items-center gap-2.5 mt-0.5">
-                  <span className="text-white/28 text-xs font-light">{user.email}</span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-white/28 text-xs font-light truncate">{user.email}</span>
                   {profile.company && (
-                    <>
-                      <span className="text-white/12">·</span>
-                      <span className="text-white/22 text-xs font-light">{profile.company}</span>
-                    </>
+                    <span className="hidden sm:inline text-white/22 text-xs font-light">· {profile.company}</span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* Stats inline */}
-            <div className="flex items-center gap-6">
+            {/* Stats inline — hide on very small screens */}
+            <div className="flex items-center gap-3 md:gap-6 shrink-0">
               {[
                 { icon: <FolderOpen size={13}/>, value: stats.projects, label: "projects" },
                 { icon: <FileText size={13}/>,   value: stats.files,    label: "files"    },
                 { icon: <MessageSquare size={13}/>, value: stats.comments, label: "notes"  },
-              ].map(s => (
-                <div key={s.label} className="flex items-center gap-2 text-right">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/25">{s.icon}</div>
+              ].map((s, i) => (
+                <div key={s.label} className={`flex items-center gap-1.5 text-right ${i > 0 ? 'hidden sm:flex' : ''}`}>
+                  <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/25">{s.icon}</div>
                   <div>
                     <p className="text-white/70 text-sm font-light leading-none tabular-nums">{s.value}</p>
                     <p className="text-white/20 text-[9px] font-light mt-0.5">{s.label}</p>
@@ -318,7 +315,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
           </div>
 
           {/* Tab nav */}
-          <div className="flex items-center gap-0 px-9">
+          <div className="flex items-center gap-0 px-4 md:px-9 overflow-x-auto scrollbar-hide">
             {NAV.map(n => (
               <button key={n.id} onClick={() => setSection(n.id)}
                 className={`flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-wide transition-all -mb-px border-b-2 font-light ${
@@ -341,7 +338,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
         </div>
 
         {/* ── Scrollable Body ── */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide px-9 py-7">
+        <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-5 md:py-7 pb-28 md:pb-7">
 
           {/* ══ OVERVIEW ══ */}
           {section === "overview" && (
