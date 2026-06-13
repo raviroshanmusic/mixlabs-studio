@@ -795,7 +795,7 @@ export default function ReviewClient({
   const currentVer = allVersions.find(v => v.id === selectedVersion?.id) ?? selectedVersion;
 
   return (
-    <div className="flex flex-col h-screen bg-[#080808] overflow-hidden text-white">
+    <div className="flex flex-col h-screen bg-[#080808] overflow-hidden" style={{ color: "var(--text-1)" }}>
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
