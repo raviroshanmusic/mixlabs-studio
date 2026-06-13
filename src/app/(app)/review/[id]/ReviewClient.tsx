@@ -655,10 +655,14 @@ function CommentCard({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+type ProjectStub = { id: string; name: string; status: string; departments: string[] };
+
 export default function ReviewClient({
-  project, versions, comments: initialComments, currentUser, initialDept,
+  project, versions, comments: initialComments, currentUser, initialDept, allProjects,
 }: {
-  project: Project; versions: Version[]; comments: Comment[]; currentUser: CurrentUser; initialDept?: string | null;
+  project: Project; versions: Version[]; comments: Comment[];
+  currentUser: CurrentUser; initialDept?: string | null;
+  allProjects?: ProjectStub[];
 }) {
   const firstVersion = initialDept
     ? (versions.find(v => v.department === initialDept) ?? versions[0] ?? null)
@@ -675,9 +679,35 @@ export default function ReviewClient({
   const [panelCollapsed, setPanelCollapsed]     = useState(false);
   const [cinemaMode, setCinemaMode]             = useState(false);
   const [refreshing, setRefreshing]             = useState(false);
+  const [showProjectMenu, setShowProjectMenu]   = useState(false);
 
-  const commentsEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef    = useRef<HTMLTextAreaElement>(null);
+  // Derived: unique departments for this project's versions
+  const departments = useMemo(() =>
+    [...new Set(allVersions.map(v => v.department).filter(Boolean))] as string[],
+    [allVersions]
+  );
+  // Derived: versions for the currently selected department
+  const deptVersions = useMemo(() =>
+    selectedVersion?.department
+      ? allVersions.filter(v => v.department === selectedVersion.department)
+      : allVersions,
+    [allVersions, selectedVersion]
+  );
+
+  const commentsEndRef   = useRef<HTMLDivElement>(null);
+  const textareaRef      = useRef<HTMLTextAreaElement>(null);
+  const projectMenuRef   = useRef<HTMLDivElement>(null);
+
+  // Close project menu on outside click
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (projectMenuRef.current && !projectMenuRef.current.contains(e.target as Node)) {
+        setShowProjectMenu(false);
+      }
+    }
+    if (showProjectMenu) document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showProjectMenu]);
   const { toasts, add: addToast, remove: removeToast } = useToasts();
 
   // Auto-poll
@@ -808,23 +838,101 @@ export default function ReviewClient({
       {/* ── Top Bar ── */}
       {!cinemaMode && (
         <header className="shrink-0 flex items-center gap-3 px-5 py-3 border-b border-white/[0.08] bg-[#0a0a0a]">
-          {/* Left */}
+          {/* Left — back + project/dept/version switcher */}
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <a href={`/project/${project.id}`}
               className="flex items-center gap-1.5 text-white/35 hover:text-white/70 text-[10px] tracking-[0.18em] uppercase transition-colors shrink-0">
               <ArrowLeft size={11} />
               Back
             </a>
-            <div className="w-px h-4 bg-white/10" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold">Review Room</span>
-                {project.client && (
-                  <span className="text-[9px] text-white/25 border border-white/10 px-1.5 py-0.5 rounded-md font-medium">{project.client}</span>
-                )}
-              </div>
-              <p className="text-white/75 text-sm font-semibold truncate">{project.name}</p>
+            <div className="w-px h-4 bg-white/10 shrink-0" />
+
+            {/* Project switcher */}
+            <div className="relative min-w-0" ref={projectMenuRef}>
+              <button
+                onClick={() => setShowProjectMenu(p => !p)}
+                className="flex items-center gap-1.5 group min-w-0"
+              >
+                <div className="min-w-0 text-left">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold">Project</span>
+                    {project.client && (
+                      <span className="text-[9px] text-white/25 border border-white/10 px-1.5 py-0.5 rounded-md font-medium">{project.client}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <p className="text-white/80 text-sm font-semibold truncate group-hover:text-white transition-colors">{project.name}</p>
+                    {allProjects && allProjects.length > 1 && (
+                      <ChevronDown size={12} className={`text-white/30 shrink-0 transition-transform duration-150 ${showProjectMenu ? "rotate-180" : ""}`} />
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {/* Project dropdown */}
+              {showProjectMenu && allProjects && allProjects.length > 1 && (
+                <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-[#141414] border border-white/12 rounded-2xl shadow-2xl py-1.5 overflow-hidden">
+                  <p className="text-[9px] tracking-[0.25em] uppercase text-white/30 font-semibold px-4 pt-2 pb-1.5">Switch Project</p>
+                  {allProjects.map(p => (
+                    <a key={p.id} href={`/review/${p.id}`}
+                      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors ${p.id === project.id ? "bg-white/[0.04]" : ""}`}
+                      onClick={() => setShowProjectMenu(false)}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.id === project.id ? "bg-emerald-400" : "bg-white/20"}`} />
+                      <div className="min-w-0">
+                        <p className={`text-xs font-medium truncate ${p.id === project.id ? "text-white/90" : "text-white/55"}`}>{p.name}</p>
+                        {p.departments?.length > 0 && (
+                          <p className="text-[10px] text-white/25 truncate">{p.departments.join(" · ")}</p>
+                        )}
+                      </div>
+                      {p.id === project.id && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 ml-auto" />}
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {/* Dept switcher */}
+            {departments.length > 1 && (
+              <>
+                <div className="w-px h-4 bg-white/10 shrink-0" />
+                <div className="flex items-center gap-1 shrink-0">
+                  {departments.map(dept => (
+                    <button key={dept}
+                      onClick={() => {
+                        const v = allVersions.find(v => v.department === dept);
+                        if (v) setSelectedVersion(v);
+                      }}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
+                        selectedVersion?.department === dept
+                          ? "bg-white/10 border-white/20 text-white/85"
+                          : "border-transparent text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
+                      }`}>
+                      {dept}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Version switcher */}
+            {deptVersions.length > 1 && (
+              <>
+                <div className="w-px h-4 bg-white/10 shrink-0" />
+                <div className="flex items-center gap-1 shrink-0">
+                  {deptVersions.map(v => (
+                    <button key={v.id}
+                      onClick={() => setSelectedVersion(v)}
+                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
+                        selectedVersion?.id === v.id
+                          ? "bg-white/10 border-white/20 text-white/85"
+                          : "border-transparent text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
+                      }`}>
+                      {v.version_name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Center: version + status */}

@@ -43,6 +43,24 @@ export default async function ReviewPage({
     .eq("id", user.id)
     .single();
 
+  // Fetch all projects the user owns or is a member of — for the project switcher
+  const { data: memberRows } = await supabase
+    .from("project_members")
+    .select("project_id")
+    .eq("user_id", user.id);
+
+  const memberIds = memberRows?.map(r => r.project_id) ?? [];
+
+  const { data: allProjects } = await supabase
+    .from("projects")
+    .select("id, name, status, departments")
+    .or(
+      memberIds.length > 0
+        ? `owner_id.eq.${user.id},id.in.(${memberIds.join(",")})`
+        : `owner_id.eq.${user.id}`
+    )
+    .order("updated_at", { ascending: false });
+
   return (
     <ReviewClient
       project={{ ...project, departments: project.departments ?? [] }}
@@ -50,6 +68,7 @@ export default async function ReviewPage({
       comments={comments ?? []}
       currentUser={{ id: user.id, full_name: profile?.full_name ?? null, email: user.email ?? "" }}
       initialDept={dept ?? null}
+      allProjects={allProjects ?? []}
     />
   );
 }
