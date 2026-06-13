@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   if (!b2Res.ok && b2Res.status !== 206) {
     const body = await b2Res.text();
     console.error("[media] B2 error response:", b2Res.status, body);
-    return new NextResponse(`Storage error: ${b2Res.status}`, { status: 502 });
+    return new NextResponse(`B2 ${b2Res.status}: ${body}`, { status: 502 });
   }
 
   const resHeaders = new Headers();
