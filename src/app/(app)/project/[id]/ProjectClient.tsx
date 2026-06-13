@@ -375,6 +375,12 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
     setTitle(""); setFileKey(""); setUploaded(false); setAddError(""); setLoading(false); setAddingFile(false);
   }
 
+  async function handleDelete(fileId: string) {
+    if (!confirm("Delete this file? This cannot be undone.")) return;
+    setLocalFiles(prev => prev.filter(f => f.id !== fileId));
+    await fetch(`/api/projects/${project.id}/versions/${fileId}`, { method: "DELETE" });
+  }
+
   async function handleStatusChange(fileId: string, newStatus: string) {
     setUpdatingId(fileId); setStatusMenu(null);
     setLocalFiles(prev => prev.map(f => f.id === fileId ? { ...f, status: newStatus } : f));
@@ -546,7 +552,14 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                   <span className="text-white/20 text-[11px] font-light">
                     {new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
-                  <div className="flex justify-end"/>
+                  <div className="flex justify-end">
+                    {canEdit && (
+                      <button onClick={e => { e.stopPropagation(); handleDelete(f.id); }}
+                        className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-white/20 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
+                        <Trash2 size={11}/>
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })}
