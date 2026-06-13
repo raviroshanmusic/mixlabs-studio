@@ -6,7 +6,7 @@ import NewProjectModal from "@/components/ui/NewProjectModal";
 import {
   Plus, Search, Volume2, Music, Palette, Scissors, Wand2, Zap,
   MessageSquare, FileText, Users, PlayCircle, ArrowUpRight,
-  Clock, ChevronRight, SlidersHorizontal,
+  Clock, ChevronRight,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -25,12 +25,12 @@ type Profile = { id: string; full_name: string | null; email: string | null; com
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, { dot: string; text: string; bg: string; border: string; label: string }> = {
-  "active":    { dot: "bg-emerald-400", text: "text-emerald-400", bg: "bg-emerald-400/8",  border: "border-emerald-400/20", label: "Active"    },
-  "in review": { dot: "bg-amber-400",   text: "text-amber-400",   bg: "bg-amber-400/8",    border: "border-amber-400/20",   label: "In Review" },
-  "ready":     { dot: "bg-blue-400",    text: "text-blue-400",    bg: "bg-blue-400/8",     border: "border-blue-400/20",    label: "Ready"     },
-  "paused":    { dot: "bg-zinc-500",    text: "text-zinc-400",    bg: "bg-zinc-400/5",     border: "border-zinc-600",       label: "Paused"    },
-  "delivered": { dot: "bg-violet-400",  text: "text-violet-400",  bg: "bg-violet-400/8",   border: "border-violet-400/20",  label: "Delivered" },
+const STATUS_CONFIG: Record<string, { dot: string; text: string; bg: string; border: string; label: string; hex: string }> = {
+  "active":    { dot: "bg-emerald-400", text: "text-emerald-400", bg: "bg-emerald-400/8",  border: "border-emerald-400/20", label: "Active",    hex: "#34d399" },
+  "in review": { dot: "bg-amber-400",   text: "text-amber-400",   bg: "bg-amber-400/8",    border: "border-amber-400/20",   label: "In Review", hex: "#fbbf24" },
+  "ready":     { dot: "bg-blue-400",    text: "text-blue-400",    bg: "bg-blue-400/8",     border: "border-blue-400/20",    label: "Ready",     hex: "#60a5fa" },
+  "paused":    { dot: "bg-zinc-500",    text: "text-zinc-400",    bg: "bg-zinc-400/5",     border: "border-zinc-600",       label: "Paused",    hex: "#71717a" },
+  "delivered": { dot: "bg-violet-400",  text: "text-violet-400",  bg: "bg-violet-400/8",   border: "border-violet-400/20",  label: "Delivered", hex: "#a78bfa" },
 };
 
 const DEPT_META: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
@@ -78,14 +78,11 @@ function ProjectCard({ project }: { project: Project }) {
   const depts = project.departments ?? [];
 
   return (
-    <div className="group relative flex flex-col gap-0 rounded-2xl border border-white/[0.07] hover:border-white/14 bg-[#111] hover:bg-[#141414] transition-all overflow-hidden">
-
+    <div className="group relative flex flex-col rounded-2xl border border-white/[0.07] hover:border-white/14 bg-[#111] hover:bg-[#141414] transition-all overflow-hidden">
       {/* Status accent bar */}
-      <div className={`h-px w-full ${st.dot.replace("bg-", "bg-")}`}
-        style={{ background: st.dot.includes("emerald") ? "#34d399" : st.dot.includes("amber") ? "#fbbf24" : st.dot.includes("blue") ? "#60a5fa" : st.dot.includes("violet") ? "#a78bfa" : "#71717a" }}
-      />
+      <div className="h-px w-full" style={{ background: st.hex }} />
 
-      <div className="p-5 flex flex-col gap-4 flex-1">
+      <div className="p-4 md:p-5 flex flex-col gap-3 flex-1">
         {/* Top: name + status */}
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
@@ -117,31 +114,33 @@ function ProjectCard({ project }: { project: Project }) {
         )}
 
         {/* Stats row */}
-        <div className="flex items-center gap-4 pt-1 border-t border-white/[0.05]">
+        <div className="flex items-center gap-3 pt-1 border-t border-white/[0.05]">
           {project.memberCount > 0 && (
-            <span className="flex items-center gap-1.5 text-white/25 text-[10px]">
+            <span className="flex items-center gap-1 text-white/25 text-[10px]">
               <Users size={10} /> {project.memberCount}
             </span>
           )}
           {project.fileCount > 0 && (
-            <span className="flex items-center gap-1.5 text-white/25 text-[10px]">
+            <span className="flex items-center gap-1 text-white/25 text-[10px]">
               <FileText size={10} /> {project.fileCount}
             </span>
           )}
-          <span className="flex items-center gap-1.5 text-white/20 text-[10px] ml-auto">
+          <span className="flex items-center gap-1 text-white/20 text-[10px] ml-auto">
             <Clock size={9} /> {timeAgo(project.updated_at)}
           </span>
         </div>
       </div>
 
-      {/* Hover actions */}
-      <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all bg-black/60 backdrop-blur-sm rounded-2xl">
+      {/* Tap/hover actions — on mobile always visible at bottom, on desktop overlay */}
+      <div className="md:absolute md:inset-0 flex items-center justify-center gap-2
+        md:opacity-0 md:group-hover:opacity-100 md:transition-all md:bg-black/60 md:backdrop-blur-sm md:rounded-2xl
+        border-t border-white/[0.04] md:border-0 px-4 py-3 md:py-0 md:px-0 bg-transparent">
         <a href={`/project/${project.id}`}
-          className="flex items-center gap-1.5 bg-white text-black text-xs font-medium px-4 py-2 rounded-xl hover:bg-white/90 transition-all">
+          className="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white text-black text-xs font-medium px-4 py-2 rounded-xl hover:bg-white/90 transition-all">
           Open <ArrowUpRight size={12} />
         </a>
         <a href={`/review/${project.id}`}
-          className="flex items-center gap-1.5 bg-white/10 text-white text-xs px-4 py-2 rounded-xl hover:bg-white/15 transition-all border border-white/10">
+          className="flex-1 md:flex-none flex items-center justify-center gap-1.5 bg-white/[0.06] text-white/70 text-xs px-4 py-2 rounded-xl hover:bg-white/10 transition-all border border-white/10">
           <PlayCircle size={12} /> Review
         </a>
       </div>
@@ -154,48 +153,33 @@ function ProjectCard({ project }: { project: Project }) {
 function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 gap-2">
+      <div className="flex flex-col items-center justify-center py-10 gap-2">
         <Clock size={20} className="text-white/10" />
         <p className="text-white/15 text-xs">No activity yet</p>
       </div>
     );
   }
-
   return (
     <div className="flex flex-col">
       {items.map((item, i) => (
         <a key={item.id}
           href={item.type === "comment" ? `/review/${item.projectId}` : `/project/${item.projectId}`}
-          className={`flex items-start gap-3 py-3 px-3 -mx-3 rounded-xl hover:bg-white/[0.03] transition-colors group ${i < items.length - 1 ? "border-b border-white/[0.04]" : ""}`}>
-
-          {/* Icon */}
+          className={`flex items-start gap-3 py-3 px-2 -mx-2 rounded-xl hover:bg-white/[0.03] transition-colors group ${i < items.length - 1 ? "border-b border-white/[0.04]" : ""}`}>
           <div className={`w-6 h-6 rounded-lg shrink-0 flex items-center justify-center mt-0.5 ${item.type === "comment" ? "bg-violet-400/10" : "bg-blue-400/10"}`}>
             {item.type === "comment"
               ? <MessageSquare size={10} className="text-violet-400/60" />
               : <FileText size={10} className="text-blue-400/60" />}
           </div>
-
           <div className="flex-1 min-w-0">
-            <p className="text-white/60 text-xs leading-relaxed line-clamp-1 group-hover:text-white/80 transition-colors">
-              {item.text}
-            </p>
+            <p className="text-white/60 text-xs leading-relaxed line-clamp-1 group-hover:text-white/80 transition-colors">{item.text}</p>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className="text-white/20 text-[10px] truncate">{item.projectName}</span>
               {item.timecode != null && (
-                <>
-                  <span className="text-white/10 text-[10px]">·</span>
-                  <span className="text-white/20 text-[10px] font-mono">{fmtTimecode(item.timecode)}</span>
-                </>
-              )}
-              {item.author && (
-                <>
-                  <span className="text-white/10 text-[10px]">·</span>
-                  <span className="text-white/20 text-[10px]">{item.author}</span>
-                </>
+                <><span className="text-white/10 text-[10px]">·</span>
+                <span className="text-white/20 text-[10px] font-mono">{fmtTimecode(item.timecode)}</span></>
               )}
             </div>
           </div>
-
           <span className="text-white/15 text-[10px] shrink-0 mt-0.5">{timeAgo(item.date)}</span>
         </a>
       ))}
@@ -203,12 +187,12 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
   );
 }
 
-// ─── Needs Attention Banner ───────────────────────────────────────────────────
+// ─── Attention Banner ─────────────────────────────────────────────────────────
 
 function AttentionBanner({ projects }: { projects: Project[] }) {
   if (projects.length === 0) return null;
   return (
-    <div className="mb-6 p-4 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04]">
+    <div className="mb-5 p-4 rounded-2xl border border-amber-400/15 bg-amber-400/[0.04]">
       <div className="flex items-center gap-2 mb-3">
         <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
         <p className="text-amber-400/80 text-[10px] tracking-[0.2em] uppercase font-medium">
@@ -252,40 +236,42 @@ export default function DashboardClient({ user, projects, profile, activity, sta
     <div className="flex h-screen bg-[#0A0A0A] overflow-hidden">
       <Sidebar active="dashboard" />
 
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-8 py-10">
+      <main className="flex-1 overflow-y-auto scrollbar-hide">
+        {/* Extra bottom padding on mobile so bottom nav doesn't cover content */}
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-6 md:py-10 pb-24 md:pb-10">
 
-          {/* ── Top Header ── */}
-          <div className="flex items-start justify-between mb-10">
+          {/* ── Header ── */}
+          <div className="flex items-start justify-between gap-4 mb-7 md:mb-10">
             <div>
               <p className="text-white/20 text-[10px] tracking-[0.3em] uppercase mb-1">
                 {profile?.company || "MixLabs Studio"}
               </p>
-              <h1 className="text-white text-3xl font-light tracking-wide">
+              <h1 className="text-white text-2xl md:text-3xl font-light tracking-wide">
                 {greeting(displayName)}
               </h1>
-              <p className="text-white/25 text-sm mt-1">
+              <p className="text-white/25 text-xs md:text-sm mt-1">
                 {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
               </p>
             </div>
             <button onClick={() => setShowNewProject(true)}
-              className="flex items-center gap-2 bg-white text-black rounded-xl px-5 py-2.5 text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5">
-              <Plus size={15} />
-              New Project
+              className="flex items-center gap-2 bg-white text-black rounded-xl px-4 md:px-5 py-2.5 text-xs md:text-sm font-medium hover:bg-white/90 transition-all shadow-lg shadow-white/5 shrink-0">
+              <Plus size={14} />
+              <span className="hidden sm:inline">New Project</span>
+              <span className="sm:hidden">New</span>
             </button>
           </div>
 
           {/* ── Stats Strip ── */}
-          <div className="grid grid-cols-4 gap-3 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 mb-6 md:mb-8">
             {[
-              { label: "Total Projects", value: stats.total, color: "text-white" },
-              { label: "Active",         value: stats.active,    color: "text-emerald-400" },
-              { label: "In Review",      value: stats.inReview,  color: "text-amber-400"   },
-              { label: "Delivered",      value: stats.delivered, color: "text-violet-400"   },
+              { label: "Total",     value: stats.total,     color: "text-white"       },
+              { label: "Active",    value: stats.active,    color: "text-emerald-400" },
+              { label: "In Review", value: stats.inReview,  color: "text-amber-400"   },
+              { label: "Delivered", value: stats.delivered, color: "text-violet-400"  },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-5 py-4">
-                <p className={`text-3xl font-light tabular-nums ${s.color}`}>{s.value}</p>
-                <p className="text-white/25 text-[10px] tracking-widest uppercase mt-1">{s.label}</p>
+              <div key={s.label} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5">
+                <p className={`text-2xl md:text-3xl font-light tabular-nums ${s.color}`}>{s.value}</p>
+                <p className="text-white/25 text-[9px] tracking-widest uppercase mt-1">{s.label}</p>
               </div>
             ))}
           </div>
@@ -293,45 +279,43 @@ export default function DashboardClient({ user, projects, profile, activity, sta
           {/* ── Needs Attention ── */}
           <AttentionBanner projects={inReviewProjects} />
 
-          {/* ── Main Content: Projects + Activity ── */}
-          <div className="flex gap-6">
+          {/* ── Search + Filter ── */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 mb-5">
+            <div className="flex items-center gap-2 flex-1 bg-white/[0.04] border border-white/8 rounded-xl px-3 py-2.5 focus-within:border-white/15 transition-colors">
+              <Search size={13} className="text-white/20 shrink-0" />
+              <input
+                placeholder="Search projects…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full"
+              />
+            </div>
+            {/* Horizontal scroll filter on mobile */}
+            <div className="flex items-center gap-1 bg-white/[0.03] border border-white/8 rounded-xl p-1 overflow-x-auto scrollbar-hide">
+              {STATUS_TABS.map(tab => (
+                <button key={tab} onClick={() => setFilter(tab)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] tracking-wide transition-all whitespace-nowrap shrink-0 ${filter === tab ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"}`}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
 
-            {/* Projects Column */}
+          <p className="text-white/20 text-[10px] tracking-widest uppercase mb-4">
+            {filtered.length} {filtered.length === 1 ? "project" : "projects"}
+            {search && ` matching "${search}"`}
+          </p>
+
+          {/* ── Main Grid: Projects + Activity ── */}
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* Projects */}
             <div className="flex-1 min-w-0">
-
-              {/* Search + Filter bar */}
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-2 flex-1 bg-white/[0.04] border border-white/8 rounded-xl px-3 py-2.5 focus-within:border-white/15 transition-colors">
-                  <Search size={13} className="text-white/20 shrink-0" />
-                  <input
-                    placeholder="Search projects…"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="bg-transparent text-sm text-white placeholder-white/20 outline-none w-full"
-                  />
-                </div>
-                <div className="flex items-center gap-1 bg-white/[0.03] border border-white/8 rounded-xl p-1">
-                  {STATUS_TABS.map(tab => (
-                    <button key={tab} onClick={() => setFilter(tab)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] tracking-wide transition-all whitespace-nowrap ${filter === tab ? "bg-white/10 text-white" : "text-white/30 hover:text-white/60"}`}>
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Project count */}
-              <p className="text-white/20 text-[10px] tracking-widest uppercase mb-4">
-                {filtered.length} {filtered.length === 1 ? "project" : "projects"}
-                {search && ` matching "${search}"`}
-              </p>
-
-              {/* Grid */}
               {filtered.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
                   {search ? (
                     <>
-                      <p className="text-white/20 text-sm">No projects match "{search}"</p>
+                      <p className="text-white/20 text-sm">No projects match &quot;{search}&quot;</p>
                       <button onClick={() => setSearch("")} className="text-white/30 hover:text-white/60 text-xs transition-colors">Clear search</button>
                     </>
                   ) : (
@@ -345,39 +329,37 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                   )}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
                   {filtered.map(p => <ProjectCard key={p.id} project={p} />)}
                 </div>
               )}
             </div>
 
-            {/* Activity Sidebar */}
-            <div className="w-72 shrink-0 flex flex-col gap-6">
+            {/* Activity sidebar — full width on mobile, fixed width on desktop */}
+            <div className="w-full lg:w-72 lg:shrink-0 flex flex-col gap-4 md:gap-6">
 
               {/* Activity feed */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 md:p-5">
                 <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase mb-4">Recent Activity</p>
                 <ActivityFeed items={activity} />
               </div>
 
-              {/* Quick links */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase mb-3">Quick Access</p>
-                <div className="flex flex-col gap-1">
-                  {projects.filter(p => p.status !== "delivered").slice(0, 4).map(p => (
-                    <a key={p.id} href={`/review/${p.id}`}
-                      className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/[0.05] transition-colors group">
-                      <PlayCircle size={13} className="text-white/20 group-hover:text-white/50 shrink-0 transition-colors" />
-                      <span className="text-white/50 text-xs truncate group-hover:text-white/80 transition-colors">{p.name}</span>
-                      <ChevronRight size={10} className="text-white/10 ml-auto group-hover:text-white/30 shrink-0 transition-colors" />
-                    </a>
-                  ))}
-                  {projects.length === 0 && (
-                    <p className="text-white/15 text-xs py-2 px-2">No active projects</p>
-                  )}
+              {/* Quick access */}
+              {projects.filter(p => p.status !== "delivered").length > 0 && (
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 md:p-5">
+                  <p className="text-white/20 text-[9px] tracking-[0.25em] uppercase mb-3">Quick Access</p>
+                  <div className="flex flex-col gap-1">
+                    {projects.filter(p => p.status !== "delivered").slice(0, 4).map(p => (
+                      <a key={p.id} href={`/review/${p.id}`}
+                        className="flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/[0.05] transition-colors group">
+                        <PlayCircle size={13} className="text-white/20 group-hover:text-white/50 shrink-0 transition-colors" />
+                        <span className="text-white/50 text-xs truncate group-hover:text-white/80 transition-colors">{p.name}</span>
+                        <ChevronRight size={10} className="text-white/10 ml-auto group-hover:text-white/30 shrink-0 transition-colors" />
+                      </a>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
+              )}
             </div>
           </div>
         </div>
