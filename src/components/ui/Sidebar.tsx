@@ -9,7 +9,10 @@ import {
   LogOut,
   Bell,
   Plus,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 
 /* ─── Nav config ────────────────────────────────────────────────── */
 const NAV = [
@@ -41,6 +44,8 @@ export default function Sidebar({
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  const { theme, toggle } = useTheme();
 
   async function signOut() {
     await fetch("/api/auth/signout", { method: "POST" });
@@ -174,7 +179,7 @@ export default function Sidebar({
                 padding: "9px 0",
                 background: isActive ? glow : "transparent",
               }}
-              onMouseEnter={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}
+              onMouseEnter={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "var(--bg-card-hover)"; }}
               onMouseLeave={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "transparent"; }}
             >
               {/* left accent bar */}
@@ -190,7 +195,7 @@ export default function Sidebar({
               <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg transition-colors duration-200"
                 style={{
                   background: isActive ? color + "22" : "transparent",
-                  color: isActive ? color : "rgba(255,255,255,0.25)",
+                  color: isActive ? color : "var(--text-3)",
                 }}>
                 <Icon size={15} strokeWidth={isActive ? 2 : 1.5} />
               </span>
@@ -199,10 +204,10 @@ export default function Sidebar({
               <div className="overflow-hidden ml-3"
                 style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0, flex: 1 }}>
                 <p className="text-[12px] font-medium whitespace-nowrap leading-snug"
-                  style={{ color: isActive ? "#fff" : "rgba(255,255,255,0.5)" }}>
+                  style={{ color: isActive ? "var(--text-1)" : "var(--text-2)" }}>
                   {label}
                 </p>
-                <p className="text-[10px] whitespace-nowrap leading-snug text-white/20">{sub}</p>
+                <p className="text-[10px] whitespace-nowrap leading-snug" style={{ color: "var(--text-3)" }}>{sub}</p>
               </div>
             </a>
           );
@@ -215,11 +220,30 @@ export default function Sidebar({
         {/* thin rule */}
         <div className="mb-2 h-px bg-white/[0.05]" />
 
+        {/* Theme toggle */}
+        <button
+          onClick={toggle}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden w-full"
+          style={{ padding: "9px 0" }}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-card-hover)"}
+          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
+        >
+          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                           text-white/25 group-hover:text-white/60 transition-colors duration-200">
+            {theme === "dark" ? <Sun size={15} strokeWidth={1.5} /> : <Moon size={15} strokeWidth={1.5} />}
+          </span>
+          <span className="overflow-hidden ml-3 whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
+            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms" }}>
+            {theme === "dark" ? "Light mode" : "Dark mode"}
+          </span>
+        </button>
+
         {/* Notifications — links to member page */}
         <a href="/member"
           className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
           style={{ padding: "9px 0" }}
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"}
+          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-card-hover)"}
           onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
         >
           <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg

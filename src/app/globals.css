@@ -2,14 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Variables ── */
+/* ── CSS Variables (dark = default) ── */
 :root {
   --bg-base:         #000000;
   --bg-app:          #0A0A0A;
   --bg-sidebar:      #060606;
   --bg-card:         rgba(255,255,255,0.03);
-  --bg-card-hover:   rgba(255,255,255,0.06);
+  --bg-card-hover:   rgba(255,255,255,0.05);
   --bg-input:        rgba(255,255,255,0.04);
+  --bg-surface:      #111111;
+  --bg-surface-hover:#141414;
   --border-subtle:   rgba(255,255,255,0.05);
   --border-medium:   rgba(255,255,255,0.09);
   --text-1:          rgba(255,255,255,0.88);
@@ -19,12 +21,14 @@
 }
 
 html.light {
-  --bg-base:         #EBEBEB;
-  --bg-app:          #F0F0F0;
-  --bg-sidebar:      #FAFAFA;
-  --bg-card:         rgba(0,0,0,0.03);
-  --bg-card-hover:   rgba(0,0,0,0.05);
-  --bg-input:        rgba(0,0,0,0.04);
+  --bg-base:         #E8E8E8;
+  --bg-app:          #EFEFEF;
+  --bg-sidebar:      #F8F8F8;
+  --bg-card:         rgba(0,0,0,0.025);
+  --bg-card-hover:   rgba(0,0,0,0.045);
+  --bg-input:        rgba(0,0,0,0.035);
+  --bg-surface:      #FFFFFF;
+  --bg-surface-hover:#F5F5F5;
   --border-subtle:   rgba(0,0,0,0.07);
   --border-medium:   rgba(0,0,0,0.12);
   --text-1:          rgba(0,0,0,0.88);
@@ -52,7 +56,8 @@ html.light {
 
   ::-webkit-scrollbar { width: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+  html.light ::-webkit-scrollbar-thumb { background: #c8c8c8; }
 }
 
 @layer utilities {
@@ -61,74 +66,106 @@ html.light {
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
-/* ── App surface utility ── */
-.bg-app   { background-color: var(--bg-app) !important; }
-.bg-sidebar-surface { background-color: var(--bg-sidebar) !important; }
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   ─ Target every Tailwind white-opacity utility used in this app
+═══════════════════════════════════════════════════════════════ */
 
-/* ── Light mode: flip Tailwind white utilities ── */
-html.light .text-white                { color: rgba(0,0,0,0.88) !important; }
-html.light .text-white\/90            { color: rgba(0,0,0,0.90) !important; }
-html.light .text-white\/82            { color: rgba(0,0,0,0.82) !important; }
-html.light .text-white\/80            { color: rgba(0,0,0,0.80) !important; }
-html.light .text-white\/75            { color: rgba(0,0,0,0.75) !important; }
-html.light .text-white\/72            { color: rgba(0,0,0,0.72) !important; }
-html.light .text-white\/70            { color: rgba(0,0,0,0.70) !important; }
-html.light .text-white\/60            { color: rgba(0,0,0,0.60) !important; }
-html.light .text-white\/50            { color: rgba(0,0,0,0.50) !important; }
-html.light .text-white\/45            { color: rgba(0,0,0,0.45) !important; }
-html.light .text-white\/40            { color: rgba(0,0,0,0.40) !important; }
-html.light .text-white\/30            { color: rgba(0,0,0,0.30) !important; }
-html.light .text-white\/25            { color: rgba(0,0,0,0.25) !important; }
-html.light .text-white\/20            { color: rgba(0,0,0,0.20) !important; }
-html.light .text-white\/18            { color: rgba(0,0,0,0.18) !important; }
-html.light .text-white\/15            { color: rgba(0,0,0,0.15) !important; }
-html.light .text-white\/10            { color: rgba(0,0,0,0.10) !important; }
+/* ── Text ── */
+html.light .text-white              { color: rgba(0,0,0,0.88) !important; }
+html.light .text-white\/90          { color: rgba(0,0,0,0.90) !important; }
+html.light .text-white\/82          { color: rgba(0,0,0,0.82) !important; }
+html.light .text-white\/80          { color: rgba(0,0,0,0.80) !important; }
+html.light .text-white\/78          { color: rgba(0,0,0,0.78) !important; }
+html.light .text-white\/75          { color: rgba(0,0,0,0.75) !important; }
+html.light .text-white\/72          { color: rgba(0,0,0,0.72) !important; }
+html.light .text-white\/70          { color: rgba(0,0,0,0.70) !important; }
+html.light .text-white\/60          { color: rgba(0,0,0,0.60) !important; }
+html.light .text-white\/55          { color: rgba(0,0,0,0.55) !important; }
+html.light .text-white\/50          { color: rgba(0,0,0,0.50) !important; }
+html.light .text-white\/45          { color: rgba(0,0,0,0.45) !important; }
+html.light .text-white\/40          { color: rgba(0,0,0,0.40) !important; }
+html.light .text-white\/30          { color: rgba(0,0,0,0.30) !important; }
+html.light .text-white\/28          { color: rgba(0,0,0,0.28) !important; }
+html.light .text-white\/25          { color: rgba(0,0,0,0.25) !important; }
+html.light .text-white\/22          { color: rgba(0,0,0,0.22) !important; }
+html.light .text-white\/20          { color: rgba(0,0,0,0.20) !important; }
+html.light .text-white\/18          { color: rgba(0,0,0,0.18) !important; }
+html.light .text-white\/15          { color: rgba(0,0,0,0.15) !important; }
+html.light .text-white\/12          { color: rgba(0,0,0,0.12) !important; }
+html.light .text-white\/10          { color: rgba(0,0,0,0.10) !important; }
 
-/* borders */
-html.light .border-white\/5           { border-color: rgba(0,0,0,0.07) !important; }
-html.light .border-white\/\[0\.04\]   { border-color: rgba(0,0,0,0.06) !important; }
-html.light .border-white\/\[0\.05\]   { border-color: rgba(0,0,0,0.07) !important; }
-html.light .border-white\/\[0\.06\]   { border-color: rgba(0,0,0,0.08) !important; }
-html.light .border-white\/\[0\.07\]   { border-color: rgba(0,0,0,0.09) !important; }
-html.light .border-white\/\[0\.08\]   { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/\[0\.09\]   { border-color: rgba(0,0,0,0.11) !important; }
-html.light .border-white\/10          { border-color: rgba(0,0,0,0.10) !important; }
-html.light .border-white\/20          { border-color: rgba(0,0,0,0.15) !important; }
+/* ── Borders ── */
+html.light .border-white\/3         { border-color: rgba(0,0,0,0.05) !important; }
+html.light .border-white\/5         { border-color: rgba(0,0,0,0.07) !important; }
+html.light .border-white\/7         { border-color: rgba(0,0,0,0.08) !important; }
+html.light .border-white\/8         { border-color: rgba(0,0,0,0.09) !important; }
+html.light .border-white\/10        { border-color: rgba(0,0,0,0.10) !important; }
+html.light .border-white\/12        { border-color: rgba(0,0,0,0.11) !important; }
+html.light .border-white\/14        { border-color: rgba(0,0,0,0.12) !important; }
+html.light .border-white\/15        { border-color: rgba(0,0,0,0.12) !important; }
+html.light .border-white\/16        { border-color: rgba(0,0,0,0.13) !important; }
+html.light .border-white\/20        { border-color: rgba(0,0,0,0.15) !important; }
+html.light .border-white\/30        { border-color: rgba(0,0,0,0.18) !important; }
+html.light .border-white\/\[0\.03\] { border-color: rgba(0,0,0,0.05) !important; }
+html.light .border-white\/\[0\.04\] { border-color: rgba(0,0,0,0.06) !important; }
+html.light .border-white\/\[0\.05\] { border-color: rgba(0,0,0,0.07) !important; }
+html.light .border-white\/\[0\.06\] { border-color: rgba(0,0,0,0.08) !important; }
+html.light .border-white\/\[0\.07\] { border-color: rgba(0,0,0,0.09) !important; }
+html.light .border-white\/\[0\.08\] { border-color: rgba(0,0,0,0.09) !important; }
+html.light .border-white\/\[0\.09\] { border-color: rgba(0,0,0,0.10) !important; }
+html.light .border-white\/\[0\.10\] { border-color: rgba(0,0,0,0.10) !important; }
 
-/* backgrounds */
-html.light .bg-white\/5               { background-color: rgba(0,0,0,0.04) !important; }
-html.light .bg-white\/8               { background-color: rgba(0,0,0,0.06) !important; }
-html.light .bg-white\/10              { background-color: rgba(0,0,0,0.08) !important; }
-html.light .bg-white\/20              { background-color: rgba(0,0,0,0.12) !important; }
-html.light .bg-white\/\[0\.03\]       { background-color: rgba(0,0,0,0.03) !important; }
-html.light .bg-white\/\[0\.04\]       { background-color: rgba(0,0,0,0.04) !important; }
-html.light .bg-white\/\[0\.05\]       { background-color: rgba(0,0,0,0.04) !important; }
-html.light .bg-white\/\[0\.06\]       { background-color: rgba(0,0,0,0.05) !important; }
-html.light .bg-white\/\[0\.08\]       { background-color: rgba(0,0,0,0.06) !important; }
+/* ── Backgrounds (white opacity variants) ── */
+html.light .bg-white\/\[0\.015\]    { background-color: rgba(255,255,255,0.80) !important; }
+html.light .bg-white\/\[0\.025\]    { background-color: rgba(255,255,255,0.70) !important; }
+html.light .bg-white\/\[0\.03\]     { background-color: rgba(0,0,0,0.025)     !important; }
+html.light .bg-white\/\[0\.04\]     { background-color: rgba(0,0,0,0.03)      !important; }
+html.light .bg-white\/\[0\.05\]     { background-color: rgba(0,0,0,0.035)     !important; }
+html.light .bg-white\/\[0\.06\]     { background-color: rgba(0,0,0,0.04)      !important; }
+html.light .bg-white\/\[0\.08\]     { background-color: rgba(0,0,0,0.05)      !important; }
+html.light .bg-white\/5             { background-color: rgba(0,0,0,0.035)     !important; }
+html.light .bg-white\/8             { background-color: rgba(0,0,0,0.05)      !important; }
+html.light .bg-white\/10            { background-color: rgba(0,0,0,0.07)      !important; }
+html.light .bg-white\/20            { background-color: rgba(0,0,0,0.10)      !important; }
 
-/* main page surfaces */
-html.light .bg-\[\#0A0A0A\]           { background-color: var(--bg-app)     !important; }
-html.light .bg-\[\#060606\]           { background-color: var(--bg-sidebar)  !important; }
-html.light .bg-\[\#000\]              { background-color: var(--bg-base)     !important; }
-html.light .bg-\[\#000000\]           { background-color: var(--bg-base)     !important; }
+/* ── Specific dark surface backgrounds ── */
+html.light .bg-\[\#0A0A0A\]         { background-color: var(--bg-app)          !important; }
+html.light .bg-\[\#060606\]         { background-color: var(--bg-sidebar)      !important; }
+html.light .bg-\[\#000\]            { background-color: var(--bg-base)         !important; }
+html.light .bg-\[\#000000\]         { background-color: var(--bg-base)         !important; }
+html.light .bg-\[\#111\]            { background-color: var(--bg-surface)      !important; }
+html.light .bg-\[\#111111\]         { background-color: var(--bg-surface)      !important; }
+html.light .bg-\[\#141414\]         { background-color: var(--bg-surface-hover)!important; }
+html.light .bg-\[\#1a1a1a\]         { background-color: #E0E0E0                !important; }
+html.light .bg-\[\#1a1a1a\]\/90     { background-color: rgba(240,240,240,0.92) !important; }
 
-/* glass card in light */
+/* Project card hover */
+html.light .hover\:bg-\[\#141414\]:hover { background-color: #F0F0F0 !important; }
+
+/* ── Placeholder text ── */
+html.light .placeholder-white\/14::placeholder { color: rgba(0,0,0,0.25) !important; }
+html.light .placeholder-white\/20::placeholder { color: rgba(0,0,0,0.30) !important; }
+
+/* ── Glass cards in light ── */
 html.light .glass {
-  background: rgba(255,255,255,0.6) !important;
-  border-color: rgba(0,0,0,0.07) !important;
+  background: rgba(255,255,255,0.65) !important;
+  border-color: rgba(0,0,0,0.07)    !important;
   backdrop-filter: blur(12px);
 }
 
-/* scrollbar in light mode */
-html.light ::-webkit-scrollbar-thumb { background: #d4d4d4; }
-
-/* sidebar bottom nav in light */
+/* ── Sidebar bottom nav in light ── */
 html.light nav.fixed {
-  background-color: rgba(250,250,250,0.95) !important;
   border-color: rgba(0,0,0,0.08) !important;
 }
 
-/* ── Sidebar responsive — using plain CSS to avoid Tailwind purge issues ── */
+/* ── Input fields in light ── */
+html.light input,
+html.light textarea {
+  color: rgba(0,0,0,0.80) !important;
+}
+
+/* ── Sidebar responsive ── */
 .sidebar-desktop { display: none; }
 .sidebar-mobile  { display: flex; }
 
