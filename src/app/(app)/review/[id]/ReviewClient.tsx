@@ -912,10 +912,36 @@ export default function ReviewClient({
           <ArrowLeft size={11} />Back
         </a>
         <div className="w-px h-4 bg-white/10 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold leading-none mb-0.5">Project</p>
-          <p className="text-white/80 text-sm font-semibold truncate leading-tight">{project.name}</p>
+
+        {/* Project switcher — tappable dropdown */}
+        <div className="relative min-w-0 flex-1" ref={projectMenuRef}>
+          <button onClick={() => setShowProjectMenu(p => !p)} className="flex items-center gap-1 min-w-0 w-full text-left">
+            <div className="min-w-0">
+              <p className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold leading-none mb-0.5">Project</p>
+              <div className="flex items-center gap-1">
+                <p className="text-white/80 text-sm font-semibold truncate leading-tight">{project.name}</p>
+                {allProjects && allProjects.length > 1 && (
+                  <ChevronDown size={12} className={`text-white/30 shrink-0 transition-transform ${showProjectMenu ? "rotate-180" : ""}`} />
+                )}
+              </div>
+            </div>
+          </button>
+          {showProjectMenu && allProjects && allProjects.length > 1 && (
+            <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-[#141414] border border-white/12 rounded-2xl shadow-2xl py-1.5 overflow-hidden">
+              <p className="text-[9px] tracking-[0.25em] uppercase text-white/30 font-semibold px-4 pt-2 pb-1.5">Switch Project</p>
+              {allProjects.map(p => (
+                <a key={p.id} href={`/review/${p.id}`}
+                  className={`flex items-center gap-3 px-4 py-2.5 transition-colors ${p.id === project.id ? "bg-white/[0.04]" : "hover:bg-white/[0.06]"}`}
+                  onClick={() => setShowProjectMenu(false)}>
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.id === project.id ? "bg-emerald-400" : "bg-white/20"}`} />
+                  <p className={`text-xs font-medium truncate ${p.id === project.id ? "text-white/90" : "text-white/55"}`}>{p.name}</p>
+                  {p.id === project.id && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 ml-auto" />}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
+
         {currentVer?.drive_url && (
           <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
             className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 shrink-0">
@@ -924,8 +950,8 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — 16:9 aspect ratio, no fixed height math */}
-      <div className="w-full aspect-video bg-black overflow-hidden">
+      {/* Player — 16:9 aspect ratio. No overflow-hidden so native player controls aren't clipped */}
+      <div className="w-full aspect-video bg-black">
         <Player version={selectedVersion} />
       </div>
 
@@ -934,20 +960,9 @@ export default function ReviewClient({
         <TimecodeRail comments={allVisible} onSeek={handleTimecodeClick} />
       </div>
 
-      {/* File meta + version chips */}
+      {/* Version / department picker — always visible, horizontal scroll */}
       <div className="px-4 pb-3 bg-[#080808]">
-        {selectedVersion && (
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-white/35 text-[10px] font-medium">{selectedVersion.version_name}</span>
-            {selectedVersion.department && (
-              <span className="text-[10px] text-white/25 border border-white/8 px-1.5 py-0.5 rounded-md font-medium">
-                {selectedVersion.department}
-              </span>
-            )}
-          </div>
-        )}
-        {/* Version picker chips */}
-        {allVersions.length > 1 && (
+        {allVersions.length > 0 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
             {allVersions.map(v => (
               <button key={v.id} onClick={() => setSelectedVersion(v)}
@@ -958,6 +973,7 @@ export default function ReviewClient({
                 }`}>
                 {DEPT_ICON[v.department ?? ""] ?? <FileText size={10} />}
                 <span className="truncate max-w-[100px]">{v.version_name}</span>
+                {v.department && <span className="text-white/20 text-[9px]">{v.department}</span>}
               </button>
             ))}
           </div>
