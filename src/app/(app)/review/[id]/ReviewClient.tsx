@@ -587,7 +587,7 @@ function Player({ version }: { version: Version | null }) {
     );
   }
 
-  return <iframe key={embedUrl} src={embedUrl} className="w-full h-full" allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />;
+  return <iframe key={embedUrl} src={embedUrl} className="w-full h-full" allow="autoplay; fullscreen" allowFullScreen />;
 }
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
