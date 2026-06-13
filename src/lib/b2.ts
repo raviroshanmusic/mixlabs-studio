@@ -7,6 +7,7 @@ export const b2 = new S3Client({
     accessKeyId:     process.env.B2_KEY_ID!,
     secretAccessKey: process.env.B2_APPLICATION_KEY!,
   },
+  forcePathStyle: true,
 });
 
 export const B2_BUCKET = process.env.B2_BUCKET_NAME!;
