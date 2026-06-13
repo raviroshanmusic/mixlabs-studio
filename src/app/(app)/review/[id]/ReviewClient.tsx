@@ -681,18 +681,6 @@ export default function ReviewClient({
   const [refreshing, setRefreshing]             = useState(false);
   const [showProjectMenu, setShowProjectMenu]   = useState(false);
 
-  // Derived: unique departments for this project's versions
-  const departments = useMemo(() =>
-    [...new Set(allVersions.map(v => v.department).filter(Boolean))] as string[],
-    [allVersions]
-  );
-  // Derived: versions for the currently selected department
-  const deptVersions = useMemo(() =>
-    selectedVersion?.department
-      ? allVersions.filter(v => v.department === selectedVersion.department)
-      : allVersions,
-    [allVersions, selectedVersion]
-  );
 
   const commentsEndRef   = useRef<HTMLDivElement>(null);
   const textareaRef      = useRef<HTMLTextAreaElement>(null);
@@ -891,48 +879,6 @@ export default function ReviewClient({
               )}
             </div>
 
-            {/* Dept switcher */}
-            {departments.length > 1 && (
-              <>
-                <div className="w-px h-4 bg-white/10 shrink-0" />
-                <div className="flex items-center gap-1 shrink-0">
-                  {departments.map(dept => (
-                    <button key={dept}
-                      onClick={() => {
-                        const v = allVersions.find(v => v.department === dept);
-                        if (v) setSelectedVersion(v);
-                      }}
-                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
-                        selectedVersion?.department === dept
-                          ? "bg-white/10 border-white/20 text-white/85"
-                          : "border-transparent text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
-                      }`}>
-                      {dept}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {/* Version switcher */}
-            {deptVersions.length > 1 && (
-              <>
-                <div className="w-px h-4 bg-white/10 shrink-0" />
-                <div className="flex items-center gap-1 shrink-0">
-                  {deptVersions.map(v => (
-                    <button key={v.id}
-                      onClick={() => setSelectedVersion(v)}
-                      className={`text-[10px] px-2.5 py-1 rounded-lg border transition-all font-medium ${
-                        selectedVersion?.id === v.id
-                          ? "bg-white/10 border-white/20 text-white/85"
-                          : "border-transparent text-white/35 hover:text-white/65 hover:bg-white/[0.04]"
-                      }`}>
-                      {v.version_name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
 
           {/* Center: version + status */}
