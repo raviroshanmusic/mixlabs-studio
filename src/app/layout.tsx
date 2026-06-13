@@ -16,10 +16,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        {/* Apply saved theme before first paint — prevents flash */}
+        {/* Apply saved theme before first paint — only on authenticated app routes */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('ml-theme');if(t==='light')document.documentElement.classList.add('light');}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('ml-theme');var p=window.location.pathname;var isApp=/^\/(dashboard|project|review|member)/.test(p);if(t==='light'&&isApp)document.documentElement.classList.add('light');}catch(e){}})();`,
           }}
         />
       </head>
