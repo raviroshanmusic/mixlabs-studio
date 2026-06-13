@@ -113,7 +113,8 @@ function getEmbedUrl(url: string): string | null {
   const vm = url.match(/vimeo\.com\/(\d+)/);
   if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1&color=ffffff`;
   const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
+  // rm=minimal hides Drive's top toolbar, giving more room to the actual video controls
+  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview?rm=minimal`;
   if (url.includes("dropbox.com"))
     return url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
   return url;
@@ -950,11 +951,10 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — padding-bottom trick gives reliable 16:9 on all mobile browsers including Safari */}
-      <div className="w-full relative bg-black" style={{ paddingBottom: "56.25%" }}>
-        <div className="absolute inset-0">
-          <Player version={selectedVersion} />
-        </div>
+      {/* Player — height:56.25vw is the most reliable 16:9 on mobile Safari
+           (vw is an absolute viewport unit, no percentage-of-what? ambiguity) */}
+      <div className="w-full bg-black shrink-0" style={{ height: "56.25vw" }}>
+        <Player version={selectedVersion} />
       </div>
 
       {/* Timecode Rail */}
