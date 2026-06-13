@@ -899,11 +899,11 @@ export default function ReviewClient({
   const userInitials = userName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   return (
-    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
+    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", paddingBottom: "env(safe-area-inset-bottom)", color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
 
-      {/* On mobile the sidebar is a fixed bottom nav (~64px), so leave room for it */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden pb-[64px] md:pb-0">
+      {/* pb-[68px] reserves space for the fixed mobile bottom nav */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden pb-[68px] md:pb-0">
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
@@ -1007,7 +1007,7 @@ export default function ReviewClient({
 
         {/* Version Sidebar — desktop only */}
         {!cinemaMode && (
-          <div className="hidden md:flex md:flex-col">
+          <div className="hidden md:contents">
             <VersionSidebar
               versions={allVersions} comments={comments} selected={selectedVersion}
               collapsed={sidebarCollapsed}
