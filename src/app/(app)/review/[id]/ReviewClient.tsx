@@ -950,9 +950,11 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — 16:9 aspect ratio. No overflow-hidden so native player controls aren't clipped */}
-      <div className="w-full aspect-video bg-black">
-        <Player version={selectedVersion} />
+      {/* Player — padding-bottom trick gives reliable 16:9 on all mobile browsers including Safari */}
+      <div className="w-full relative bg-black" style={{ paddingBottom: "56.25%" }}>
+        <div className="absolute inset-0">
+          <Player version={selectedVersion} />
+        </div>
       </div>
 
       {/* Timecode Rail */}
