@@ -113,8 +113,7 @@ function getEmbedUrl(url: string): string | null {
   const vm = url.match(/vimeo\.com\/(\d+)/);
   if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1&color=ffffff`;
   const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  // rm=minimal hides Drive's top toolbar, giving more room to the actual video controls
-  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview?rm=minimal`;
+  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
   if (url.includes("dropbox.com"))
     return url.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "");
   return url;
