@@ -757,7 +757,8 @@ export default function ReviewClient({
   const [timecodeInput, setTimecodeInput]     = useState("");
   const [submitting, setSubmitting]           = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [panelCollapsed, setPanelCollapsed]     = useState(false);
+  // Collapse notes panel by default on mobile; keep open on desktop
+  const [panelCollapsed, setPanelCollapsed]     = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   const [cinemaMode, setCinemaMode]             = useState(false);
   const [refreshing, setRefreshing]             = useState(false);
   const [showProjectMenu, setShowProjectMenu]   = useState(false);
@@ -901,7 +902,8 @@ export default function ReviewClient({
     <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
 
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+      {/* On mobile the sidebar is a fixed bottom nav (~64px), so leave room for it */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden pb-[64px] md:pb-0">
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
       {/* ── Top Bar ── */}
@@ -1005,7 +1007,7 @@ export default function ReviewClient({
 
         {/* Version Sidebar — desktop only */}
         {!cinemaMode && (
-          <div className="hidden md:contents">
+          <div className="hidden md:flex md:flex-col">
             <VersionSidebar
               versions={allVersions} comments={comments} selected={selectedVersion}
               collapsed={sidebarCollapsed}
@@ -1060,7 +1062,7 @@ export default function ReviewClient({
 
         {/* Comments Panel */}
         {!cinemaMode && (
-          <div className={`shrink-0 border-t md:border-t-0 md:border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "md:w-12 h-12 md:h-auto" : "md:w-[340px] h-[45vh] md:h-auto"}`}>
+          <div className={`shrink-0 border-t md:border-t-0 md:border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "h-12 md:w-12 md:h-auto" : "h-[50vh] md:h-auto md:w-[340px]"}`}>
 
             {panelCollapsed ? (
               <div className="flex md:flex-col items-center md:pt-4 gap-3 h-full md:h-auto px-4 md:px-0">
