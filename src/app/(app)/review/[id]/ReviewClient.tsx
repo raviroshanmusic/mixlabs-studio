@@ -950,11 +950,14 @@ export default function ReviewClient({
         )}
       </header>
 
-      {/* Player — overflow-hidden clips the Drive embed inside a clean card.
-           min 290px gives Drive's scrubber+controls room (pure 16:9 = only 219px
-           on a 390px phone, leaving ~120px of video). */}
+      {/* Player — Drive's /preview shows a top mini-scrubber bar (~44px) that
+           bleeds into our header. We shift the iframe up 44px inside an
+           overflow-hidden container to clip that top bar, while the full
+           bottom timeline (timestamps + controls) remains visible. */}
       <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-black shrink-0" style={{ height: "max(290px, 56.25vw)" }}>
-        <Player version={selectedVersion} />
+        <div style={{ marginTop: "-44px", height: "calc(100% + 44px)" }}>
+          <Player version={selectedVersion} />
+        </div>
       </div>
 
       {/* Version / department picker — always visible, horizontal scroll */}
