@@ -594,45 +594,64 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                       className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/78 placeholder-white/14 outline-none focus:border-white/16 transition-colors font-light"/>
                     <p className="text-white/16 text-[10px] font-light mt-1.5">Shown on your profile and project pages</p>
                   </div>
-                  {/* Profession picker */}
+                  {/* Profession picker — single select */}
                   <div>
-                    <label className="text-white/28 text-xs mb-3 block font-light">Your role</label>
-                    {(["Direction","Music","Sound","Picture","Other"] as const).map(cat => {
-                      const roles = PROFESSIONS.filter(p => p.category === cat);
-                      return (
-                        <div key={cat} className="mb-4">
-                          <p className="text-white/14 text-[9px] tracking-[0.2em] uppercase font-light mb-2">{cat}</p>
-                          <div className="flex flex-wrap gap-2">
-                            {roles.map(p => {
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-white/28 text-xs font-light">Your role <span className="text-white/14 font-light">(pick one)</span></label>
+                      {profession && (
+                        <button type="button" onClick={() => setProfession("")}
+                          className="text-[10px] text-white/22 hover:text-white/50 font-light transition-colors">
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="rounded-2xl border border-white/[0.06] overflow-hidden">
+                      {(["Direction","Music","Sound","Picture","Other"] as const).map((cat, ci) => {
+                        const roles = PROFESSIONS.filter(p => p.category === cat);
+                        return (
+                          <div key={cat}>
+                            {ci > 0 && <div className="h-px bg-white/[0.04]"/>}
+                            <div className="px-4 pt-3 pb-1">
+                              <p className="text-white/14 text-[9px] tracking-[0.2em] uppercase font-light">{cat}</p>
+                            </div>
+                            {roles.map((p, ri) => {
                               const selected = profession === p.label;
                               return (
                                 <button key={p.label} type="button"
-                                  onClick={() => setProfession(selected ? "" : p.label)}
-                                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[11px] font-light transition-all"
-                                  style={selected ? {
-                                    color: p.accent,
-                                    borderColor: p.accent + "50",
-                                    background: p.accent + "15",
-                                  } : {
-                                    color: "rgba(255,255,255,0.35)",
-                                    borderColor: "rgba(255,255,255,0.07)",
-                                    background: "rgba(255,255,255,0.02)",
-                                  }}>
-                                  <span style={{ color: selected ? p.accent : "rgba(255,255,255,0.22)" }}>{p.icon}</span>
-                                  {p.label}
-                                  {selected && <Check size={9}/>}
+                                  onClick={() => setProfession(p.label)}
+                                  className="w-full flex items-center gap-3 px-4 py-2.5 transition-all text-left"
+                                  style={selected ? { background: p.accent + "10" } : {}}>
+                                  {/* Radio dot */}
+                                  <span className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
+                                    style={selected
+                                      ? { borderColor: p.accent, background: p.accent + "20" }
+                                      : { borderColor: "rgba(255,255,255,0.12)" }}>
+                                    {selected && <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.accent }}/>}
+                                  </span>
+                                  {/* Icon */}
+                                  <span className="shrink-0 transition-colors"
+                                    style={{ color: selected ? p.accent : "rgba(255,255,255,0.2)" }}>
+                                    {p.icon}
+                                  </span>
+                                  {/* Label */}
+                                  <span className="text-[12px] font-light transition-colors flex-1"
+                                    style={{ color: selected ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.38)" }}>
+                                    {p.label}
+                                  </span>
+                                  {selected && (
+                                    <span className="text-[9px] font-light px-1.5 py-0.5 rounded-full"
+                                      style={{ color: p.accent, background: p.accent + "15" }}>
+                                      selected
+                                    </span>
+                                  )}
                                 </button>
                               );
                             })}
+                            <div className="pb-2"/>
                           </div>
-                        </div>
-                      );
-                    })}
-                    {profession && (
-                      <p className="text-white/22 text-[10px] font-light mt-1">
-                        Selected: <span className="text-white/45">{profession}</span> — shown on your profile
-                      </p>
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
 
                   <div>
