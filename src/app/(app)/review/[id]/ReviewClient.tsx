@@ -763,8 +763,6 @@ export default function ReviewClient({
   const [cinemaMode, setCinemaMode]             = useState(false);
   const [refreshing, setRefreshing]             = useState(false);
   const [showProjectMenu, setShowProjectMenu]   = useState(false);
-  // Mobile: show poster card by default, load iframe only when user taps Play
-  const [mobilePlayerActive, setMobilePlayerActive] = useState(false);
 
 
   const commentsEndRef   = useRef<HTMLDivElement>(null);
@@ -791,9 +789,6 @@ export default function ReviewClient({
     }, 45000);
     return () => clearInterval(iv);
   }, [project.id]);
-
-  // Reset mobile poster when version changes
-  useEffect(() => { setMobilePlayerActive(false); }, [selectedVersion?.id]);
 
   // Esc = exit cinema
   useEffect(() => {
@@ -958,32 +953,30 @@ export default function ReviewClient({
       {/* Player — poster card until user taps Play, then loads Drive iframe.
            This avoids Drive's double-control mobile UI showing immediately. */}
       <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0" style={{ height: "max(240px, 56.25vw)" }}>
-        {mobilePlayerActive ? (
-          <Player version={selectedVersion} />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 relative">
-            {/* subtle grid background */}
-            <div className="absolute inset-0 opacity-[0.03]"
-              style={{ backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
-            <button
-              onClick={() => setMobilePlayerActive(true)}
-              disabled={!selectedVersion?.drive_url}
-              className="relative z-10 w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all active:scale-95 active:bg-white/15 disabled:opacity-30">
-              <Play size={28} className="text-white ml-1.5" fill="white" />
-            </button>
-            {selectedVersion ? (
-              <div className="relative z-10 text-center px-6">
-                <p className="text-white/50 text-xs font-medium">{selectedVersion.version_name}</p>
-                {selectedVersion.department && (
-                  <p className="text-white/25 text-[10px] mt-0.5">{selectedVersion.department}</p>
-                )}
-                <p className="text-white/20 text-[10px] mt-2">Tap to load player</p>
-              </div>
-            ) : (
-              <p className="relative z-10 text-white/25 text-xs">No file selected</p>
-            )}
-          </div>
-        )}
+        <div className="w-full h-full flex flex-col items-center justify-center gap-3 relative">
+          {/* subtle grid background */}
+          <div className="absolute inset-0 opacity-[0.03]"
+            style={{ backgroundImage: "linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)", backgroundSize: "32px 32px" }} />
+          {/* Open in Drive — native player, no iframe double-control issue */}
+          <a
+            href={selectedVersion?.drive_url ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`relative z-10 w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center transition-all active:scale-95 active:bg-white/15 ${!selectedVersion?.drive_url ? "opacity-30 pointer-events-none" : ""}`}>
+            <Play size={28} className="text-white ml-1.5" fill="white" />
+          </a>
+          {selectedVersion ? (
+            <div className="relative z-10 text-center px-6">
+              <p className="text-white/50 text-xs font-medium">{selectedVersion.version_name}</p>
+              {selectedVersion.department && (
+                <p className="text-white/25 text-[10px] mt-0.5">{selectedVersion.department}</p>
+              )}
+              <p className="text-white/20 text-[10px] mt-2">Tap to open in Google Drive</p>
+            </div>
+          ) : (
+            <p className="relative z-10 text-white/25 text-xs">No file selected</p>
+          )}
+        </div>
       </div>
 
       {/* Version / department picker — always visible, horizontal scroll */}
