@@ -34,12 +34,12 @@ const STATUS_CONFIG: Record<string, { dot: string; text: string; bg: string; bor
 };
 
 const DEPT_META: Record<string, { icon: React.ReactNode; accent: string; bg: string }> = {
-  Sound:     { icon: <Volume2 size={10} />,  accent: "#F59E0B", bg: "rgba(245,158,11,0.10)" },
-  Score:     { icon: <Music size={10} />,    accent: "#A855F7", bg: "rgba(168,85,247,0.10)" },
-  Color:     { icon: <Palette size={10} />,  accent: "#EC4899", bg: "rgba(236,72,153,0.10)" },
-  Edit:      { icon: <Scissors size={10} />, accent: "#3B82F6", bg: "rgba(59,130,246,0.10)" },
-  Animation: { icon: <Wand2 size={10} />,    accent: "#22C55E", bg: "rgba(34,197,94,0.10)"  },
-  VFX:       { icon: <Zap size={10} />,      accent: "#F97316", bg: "rgba(249,115,22,0.10)" },
+  Sound:     { icon: <Volume2 size={10} />,  accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
+  Score:     { icon: <Music size={10} />,    accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
+  Color:     { icon: <Palette size={10} />,  accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
+  Edit:      { icon: <Scissors size={10} />, accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
+  Animation: { icon: <Wand2 size={10} />,    accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
+  VFX:       { icon: <Zap size={10} />,      accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)" },
 };
 
 const STATUS_TABS = ["All", "Active", "In Review", "Ready", "Paused", "Delivered"] as const;
@@ -105,7 +105,7 @@ function ProjectCard({ project }: { project: Project }) {
               const m = DEPT_META[d];
               return m ? (
                 <span key={d} className="flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border"
-                  style={{ color: m.accent, borderColor: m.accent + "25", background: m.bg }}>
+                  style={{ color: m.accent, borderColor: "rgba(255,255,255,0.08)", background: m.bg }}>
                   {m.icon} {d}
                 </span>
               ) : null;

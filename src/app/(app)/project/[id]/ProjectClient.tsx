@@ -24,12 +24,12 @@ const STATUS_STYLES: Record<string, { dot: string; label: string; border: string
 };
 
 const DEPT_META: Record<string, { icon: React.ReactNode; accent: string; bg: string; hex: string }> = {
-  Sound:     { icon: <Volume2 size={13}/>,  accent: "#F59E0B", bg: "rgba(245,158,11,0.08)",  hex: "#F59E0B" },
-  Score:     { icon: <Music size={13}/>,    accent: "#A855F7", bg: "rgba(168,85,247,0.08)",  hex: "#A855F7" },
-  Color:     { icon: <Palette size={13}/>,  accent: "#EC4899", bg: "rgba(236,72,153,0.08)",  hex: "#EC4899" },
-  Edit:      { icon: <Scissors size={13}/>, accent: "#3B82F6", bg: "rgba(59,130,246,0.08)",  hex: "#3B82F6" },
-  Animation: { icon: <Wand2 size={13}/>,    accent: "#22C55E", bg: "rgba(34,197,94,0.08)",   hex: "#22C55E" },
-  VFX:       { icon: <Zap size={13}/>,      accent: "#F97316", bg: "rgba(249,115,22,0.08)",  hex: "#F97316" },
+  Sound:     { icon: <Volume2 size={13}/>,  accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#F59E0B" },
+  Score:     { icon: <Music size={13}/>,    accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#A855F7" },
+  Color:     { icon: <Palette size={13}/>,  accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#EC4899" },
+  Edit:      { icon: <Scissors size={13}/>, accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#3B82F6" },
+  Animation: { icon: <Wand2 size={13}/>,    accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#22C55E" },
+  VFX:       { icon: <Zap size={13}/>,      accent: "rgba(255,255,255,0.45)", bg: "rgba(255,255,255,0.05)", hex: "#F97316" },
 };
 
 const MEMBER_ROLES = ["viewer", "editor", "admin"];
@@ -1007,7 +1007,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
                       const m = DEPT_META[d];
                       return (
                         <span key={d} className="flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light"
-                          style={{ color: m?.accent ?? "#9ca3af", borderColor: (m?.accent ?? "#9ca3af") + "25", background: m?.bg ?? "transparent" }}>
+                          style={{ color: m?.accent ?? "rgba(255,255,255,0.45)", borderColor: "rgba(255,255,255,0.08)", background: m?.bg ?? "rgba(255,255,255,0.05)" }}>
                           {m?.icon}{d}
                         </span>
                       );
