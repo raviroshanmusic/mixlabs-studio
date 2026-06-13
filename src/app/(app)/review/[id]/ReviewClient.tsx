@@ -899,306 +899,418 @@ export default function ReviewClient({
   const userName     = currentUser.full_name || currentUser.email.split("@")[0];
   const userInitials = userName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
-  return (
-    <div className="flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
+  // ─── MOBILE LAYOUT (< 768px) — scrollable page, aspect-ratio player ───────
+  const mobileLayout = (
+    <div className="md:hidden flex flex-col bg-[#080808] pb-28" style={{ color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
-
-      {/* On mobile: reserve space for fixed bottom nav (56px) + device safe-area-inset-bottom (0–34px on iPhone) */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden"
-        style={isMobile ? { paddingBottom: "calc(80px + env(safe-area-inset-bottom))" } : {}}>
       <ToastStack toasts={toasts} onRemove={removeToast} />
 
-      {/* ── Top Bar ── */}
-      {!cinemaMode && (
-        <header className="shrink-0 flex items-center gap-2 md:gap-3 px-3 md:px-5 py-2.5 md:py-3 border-b border-white/[0.08] bg-[#0a0a0a]">
-          {/* Left — back + project/dept/version switcher */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <a href={`/project/${project.id}`}
-              className="flex items-center gap-1.5 text-white/35 hover:text-white/70 text-[10px] tracking-[0.18em] uppercase transition-colors shrink-0">
-              <ArrowLeft size={11} />
-              Back
-            </a>
-            <div className="w-px h-4 bg-white/10 shrink-0" />
+      {/* Sticky top bar */}
+      <header className="sticky top-0 z-30 shrink-0 flex items-center gap-3 px-3 py-2.5 border-b border-white/[0.08] bg-[#0a0a0a]">
+        <a href={`/project/${project.id}`}
+          className="flex items-center gap-1.5 text-white/35 hover:text-white/70 text-[10px] tracking-[0.18em] uppercase transition-colors shrink-0">
+          <ArrowLeft size={11} />Back
+        </a>
+        <div className="w-px h-4 bg-white/10 shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold leading-none mb-0.5">Project</p>
+          <p className="text-white/80 text-sm font-semibold truncate leading-tight">{project.name}</p>
+        </div>
+        {currentVer?.drive_url && (
+          <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
+            className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 shrink-0">
+            <ExternalLink size={13} />
+          </a>
+        )}
+      </header>
 
-            {/* Project switcher */}
-            <div className="relative min-w-0" ref={projectMenuRef}>
-              <button
-                onClick={() => setShowProjectMenu(p => !p)}
-                className="flex items-center gap-1.5 group min-w-0"
-              >
-                <div className="min-w-0 text-left">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold">Project</span>
-                    {project.client && (
-                      <span className="text-[9px] text-white/25 border border-white/10 px-1.5 py-0.5 rounded-md font-medium">{project.client}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <p className="text-white/80 text-sm font-semibold truncate group-hover:text-white transition-colors">{project.name}</p>
-                    {allProjects && allProjects.length > 1 && (
-                      <ChevronDown size={12} className={`text-white/30 shrink-0 transition-transform duration-150 ${showProjectMenu ? "rotate-180" : ""}`} />
-                    )}
-                  </div>
-                </div>
-              </button>
+      {/* Player — 16:9 aspect ratio, no fixed height math */}
+      <div className="w-full aspect-video bg-black overflow-hidden">
+        <Player version={selectedVersion} />
+      </div>
 
-              {/* Project dropdown */}
-              {showProjectMenu && allProjects && allProjects.length > 1 && (
-                <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-[#141414] border border-white/12 rounded-2xl shadow-2xl py-1.5 overflow-hidden">
-                  <p className="text-[9px] tracking-[0.25em] uppercase text-white/30 font-semibold px-4 pt-2 pb-1.5">Switch Project</p>
-                  {allProjects.map(p => (
-                    <a key={p.id} href={`/review/${p.id}`}
-                      className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors ${p.id === project.id ? "bg-white/[0.04]" : ""}`}
-                      onClick={() => setShowProjectMenu(false)}>
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.id === project.id ? "bg-emerald-400" : "bg-white/20"}`} />
-                      <div className="min-w-0">
-                        <p className={`text-xs font-medium truncate ${p.id === project.id ? "text-white/90" : "text-white/55"}`}>{p.name}</p>
-                        {p.departments?.length > 0 && (
-                          <p className="text-[10px] text-white/25 truncate">{p.departments.join(" · ")}</p>
-                        )}
-                      </div>
-                      {p.id === project.id && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 ml-auto" />}
-                    </a>
-                  ))}
-                </div>
-              )}
-            </div>
+      {/* Timecode Rail */}
+      <div className="px-4 py-2 bg-[#080808]">
+        <TimecodeRail comments={allVisible} onSeek={handleTimecodeClick} />
+      </div>
 
-          </div>
-
-          {/* Center: version + status */}
-          {currentVer && (
-            <div className="hidden md:flex items-center gap-3 shrink-0">
-              <div className="flex items-center gap-2 text-white/45">
-                {DEPT_ICON[currentVer.department ?? ""] ?? <FileText size={13} />}
-                <span className="text-white/60 text-xs font-medium">{currentVer.version_name}</span>
-              </div>
-              <VersionStatusPicker version={currentVer} onUpdate={handleVersionStatus} />
-            </div>
-          )}
-
-          {/* Right */}
-          <div className="flex items-center gap-1.5 shrink-0 flex-1 justify-end">
-            <button onClick={handleRefresh}
-              className={`hidden md:flex w-8 h-8 rounded-xl border border-white/10 items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all ${refreshing ? "animate-spin" : ""}`}
-              title="Refresh notes">
-              <RefreshCw size={13} />
-            </button>
-            <button onClick={() => exportNotes(visibleComments, project, selectedVersion)}
-              className="hidden md:flex w-8 h-8 rounded-xl border border-white/10 items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all"
-              title="Export notes">
-              <Download size={13} />
-            </button>
-            {currentVer?.drive_url && (
-              <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
-                className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
-                <ExternalLink size={13} />
-              </a>
+      {/* File meta + version chips */}
+      <div className="px-4 pb-3 bg-[#080808]">
+        {selectedVersion && (
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-white/35 text-[10px] font-medium">{selectedVersion.version_name}</span>
+            {selectedVersion.department && (
+              <span className="text-[10px] text-white/25 border border-white/8 px-1.5 py-0.5 rounded-md font-medium">
+                {selectedVersion.department}
+              </span>
             )}
-            <button onClick={() => setCinemaMode(true)}
-              className="hidden md:flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
-              <Maximize2 size={11} />
-              Cinema
-            </button>
-          </div>
-        </header>
-      )}
-
-      {/* ── Body ── */}
-      <div className="flex flex-col md:flex-row flex-1 min-h-0">
-
-        {/* Version Sidebar — desktop only */}
-        {!cinemaMode && (
-          <div className="hidden md:contents">
-            <VersionSidebar
-              versions={allVersions} comments={comments} selected={selectedVersion}
-              collapsed={sidebarCollapsed}
-              onSelect={setSelectedVersion}
-              onCollapse={() => setSidebarCollapsed(p => !p)}
-            />
           </div>
         )}
-
-        {/* Center: Player */}
-        <div className="flex-1 min-w-0 flex flex-col relative">
-          {cinemaMode && (
-            <div className="absolute top-4 right-4 z-50">
-              <button onClick={() => setCinemaMode(false)}
-                className="flex items-center gap-2 bg-black/75 hover:bg-black border border-white/12 rounded-xl px-3.5 py-2 text-xs text-white/60 hover:text-white/90 transition-all backdrop-blur-sm shadow-xl">
-                <Minimize2 size={11} />
-                Exit Cinema  <span className="text-white/25 text-[10px]">Esc</span>
+        {/* Version picker chips */}
+        {allVersions.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+            {allVersions.map(v => (
+              <button key={v.id} onClick={() => setSelectedVersion(v)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[10px] font-medium transition-all ${
+                  selectedVersion?.id === v.id
+                    ? "bg-white/10 border-white/20 text-white/80"
+                    : "border-white/8 text-white/35 hover:border-white/15 hover:text-white/55"
+                }`}>
+                {DEPT_ICON[v.department ?? ""] ?? <FileText size={10} />}
+                <span className="truncate max-w-[100px]">{v.version_name}</span>
               </button>
-            </div>
-          )}
-
-          {/* Player */}
-          <div className={`flex-1 min-h-0 ${cinemaMode ? "" : "p-3 md:p-4 pb-2"}`}>
-            <div className={`w-full h-full overflow-hidden bg-black ${cinemaMode ? "" : "rounded-2xl border border-white/[0.06]"}`}>
-              <Player version={selectedVersion} />
-            </div>
-          </div>
-
-          {/* Timecode Rail */}
-          {!cinemaMode && (
-            <div className="px-6 pb-1">
-              <TimecodeRail comments={allVisible} onSeek={handleTimecodeClick} />
-            </div>
-          )}
-
-          {/* File meta */}
-          {!cinemaMode && selectedVersion && (
-            <div className="shrink-0 px-5 pb-3 flex items-center gap-3">
-              <span className="text-white/35 text-[10px] font-medium truncate">{selectedVersion.version_name}</span>
-              {selectedVersion.department && (
-                <span className="text-[10px] text-white/25 border border-white/8 px-1.5 py-0.5 rounded-md font-medium">
-                  {selectedVersion.department}
-                </span>
-              )}
-              <div className="ml-auto flex items-center gap-1.5 text-white/20 text-[10px]">
-                <Eye size={10} />
-                <span>Live · refreshes every 45s</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Comments Panel */}
-        {!cinemaMode && (
-          <div className={`shrink-0 border-t md:border-t-0 md:border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "h-12 md:w-12 md:h-auto" : "h-[50vh] md:h-auto md:w-[340px]"}`}>
-
-            {panelCollapsed ? (
-              <div className="flex md:flex-col items-center md:pt-4 gap-3 h-full md:h-auto px-4 md:px-0">
-                <button onClick={() => setPanelCollapsed(false)} className="flex items-center gap-2 text-white/35 hover:text-white/70 transition-colors md:flex-col" title="Show notes">
-                  <MessageSquare size={15} />
-                  <span className="md:hidden text-[10px] text-white/30">Notes</span>
-                </button>
-                {openCount > 0 && (
-                  <span className="min-w-[22px] h-[22px] rounded-full bg-amber-500/25 border border-amber-400/30 text-amber-300 text-[10px] flex items-center justify-center font-bold px-1">
-                    {openCount}
-                  </span>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* Panel header */}
-                <div className="shrink-0 border-b border-white/[0.07]">
-                  <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare size={13} className="text-white/40" />
-                      <span className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-semibold">Notes</span>
-                    </div>
-                    <button onClick={() => setPanelCollapsed(true)} className="text-white/25 hover:text-white/60 transition-colors">
-                      <ChevronLeft size={13} />
-                    </button>
-                  </div>
-
-                  {/* Progress bar */}
-                  <ProgressBar total={totalCount} resolved={resolvedCount} />
-
-                  {/* Filter tabs */}
-                  <div className="flex px-3 py-2 gap-1">
-                    {(["all", "open", "resolved"] as FilterTab[]).map(tab => {
-                      const cnt = tab === "all" ? totalCount : tab === "open" ? openCount : resolvedCount;
-                      const active = filterTab === tab;
-                      return (
-                        <button key={tab} onClick={() => setFilterTab(tab)}
-                          className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] transition-all capitalize font-medium ${
-                            active ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60 hover:bg-white/5"
-                          }`}>
-                          {tab}
-                          {cnt > 0 && (
-                            <span className={`px-1.5 py-px rounded-full text-[9px] font-bold ${
-                              active && tab === "open"     ? "bg-amber-500/25 text-amber-300" :
-                              active && tab === "resolved" ? "bg-emerald-500/25 text-emerald-300" :
-                                                             "bg-white/10 text-white/40"
-                            }`}>
-                              {cnt}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Comments */}
-                <div className="flex-1 overflow-y-auto">
-                  {visibleComments.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
-                      <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
-                        {filterTab === "resolved"
-                          ? <CheckCircle2 size={22} className="text-white/15" />
-                          : <MessageSquare size={22} className="text-white/15" />}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white/40 text-sm font-medium">
-                          {filterTab === "resolved" ? "No resolved notes yet" :
-                           filterTab === "open"     ? "All notes resolved 🎉" :
-                                                      "No notes yet"}
-                        </p>
-                        {filterTab === "all" && (
-                          <p className="text-white/25 text-xs mt-1.5 leading-relaxed">
-                            Add a timecoded note below<br />to start the feedback loop.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div>
-                      {visibleComments.map(c => (
-                        <CommentCard
-                          key={c.id} comment={c} currentUserId={currentUser.id}
-                          onTimecodeClick={handleTimecodeClick}
-                          onResolve={handleResolve}
-                          onDelete={handleDelete}
-                        />
-                      ))}
-                      <div ref={commentsEndRef} className="h-3" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Add Note Form */}
-                <div className="shrink-0 border-t border-white/[0.08] p-4 bg-[#0c0c0c]">
-                  {selectedVersion && (
-                    <div className="flex items-center gap-1.5 mb-3">
-                      <span className="text-white/30 text-[10px]">On</span>
-                      <span className="text-white/55 text-[10px] border border-white/10 bg-white/5 px-2 py-0.5 rounded-lg truncate max-w-[180px] font-medium">
-                        {selectedVersion.version_name}
-                      </span>
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-                    <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
-
-                    <textarea
-                      ref={textareaRef}
-                      placeholder="Leave a note… (⌘↵ to send)"
-                      value={body}
-                      onChange={e => setBody(e.target.value)}
-                      onKeyDown={handleKeyDown}
-                      rows={3}
-                      className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white/75 placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all resize-none"
-                    />
-
-                    <button type="submit" disabled={submitting || !body.trim()}
-                      className="flex items-center justify-center gap-2 w-full bg-white text-black text-xs font-bold py-3 rounded-xl hover:bg-white/90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-white/5">
-                      <Send size={12} />
-                      {submitting ? "Sending…" : "Send Note"}
-                    </button>
-                  </form>
-
-                  <p className="text-white/20 text-[9px] text-center mt-2.5">
-                    Click any timecode badge to jump to that moment
-                  </p>
-                </div>
-              </>
-            )}
+            ))}
           </div>
         )}
       </div>
-      </div>{/* /.flex-col inner */}
+
+      {/* ── Notes section — full natural height, page scrolls ── */}
+      <div className="flex flex-col bg-[#090909] border-t border-white/[0.07]">
+
+        {/* Notes header */}
+        <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+          <div className="flex items-center gap-2">
+            <MessageSquare size={13} className="text-white/40" />
+            <span className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-semibold">Notes</span>
+            {openCount > 0 && (
+              <span className="min-w-[20px] h-5 rounded-full bg-amber-500/25 border border-amber-400/30 text-amber-300 text-[10px] flex items-center justify-center font-semibold px-1">
+                {openCount}
+              </span>
+            )}
+          </div>
+          <div className="text-white/20 text-[9px]">{resolvedCount}/{totalCount} resolved</div>
+        </div>
+
+        {/* Progress bar */}
+        <ProgressBar total={totalCount} resolved={resolvedCount} />
+
+        {/* Filter tabs */}
+        <div className="flex px-3 py-2 gap-1">
+          {(["all", "open", "resolved"] as FilterTab[]).map(tab => {
+            const cnt = tab === "all" ? totalCount : tab === "open" ? openCount : resolvedCount;
+            const active = filterTab === tab;
+            return (
+              <button key={tab} onClick={() => setFilterTab(tab)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] transition-all capitalize font-medium ${
+                  active ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60 hover:bg-white/5"
+                }`}>
+                {tab}
+                {cnt > 0 && (
+                  <span className={`px-1.5 py-px rounded-full text-[9px] font-bold ${
+                    active && tab === "open"     ? "bg-amber-500/25 text-amber-300" :
+                    active && tab === "resolved" ? "bg-emerald-500/25 text-emerald-300" :
+                                                   "bg-white/10 text-white/40"
+                  }`}>{cnt}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Comments — no overflow-y-auto, page scrolls naturally */}
+        <div className="border-t border-white/[0.04]">
+          {visibleComments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 px-6">
+              <MessageSquare size={24} className="text-white/15" />
+              <p className="text-white/30 text-sm text-center font-light">
+                {filterTab === "resolved" ? "No resolved notes" :
+                 filterTab === "open"     ? "All notes resolved 🎉" :
+                                            "No notes yet"}
+              </p>
+            </div>
+          ) : (
+            visibleComments.map(c => (
+              <CommentCard key={c.id} comment={c} currentUserId={currentUser.id}
+                onTimecodeClick={handleTimecodeClick} onResolve={handleResolve} onDelete={handleDelete} />
+            ))
+          )}
+        </div>
+
+        {/* Add Note Form — always visible, page scrolls to it */}
+        <div className="p-4 bg-[#0c0c0c] border-t border-white/[0.08]">
+          {selectedVersion && (
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-white/30 text-[10px]">On</span>
+              <span className="text-white/55 text-[10px] border border-white/10 bg-white/5 px-2 py-0.5 rounded-lg truncate max-w-[200px] font-medium">
+                {selectedVersion.version_name}
+              </span>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+            <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
+            <textarea
+              ref={textareaRef}
+              placeholder="Leave a note…"
+              value={body}
+              onChange={e => setBody(e.target.value)}
+              onKeyDown={handleKeyDown}
+              rows={3}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white/75 placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all resize-none"
+            />
+            <button type="submit" disabled={submitting || !body.trim()}
+              className="flex items-center justify-center gap-2 w-full bg-white text-black text-xs font-bold py-3 rounded-xl hover:bg-white/90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-white/5">
+              <Send size={12} />
+              {submitting ? "Sending…" : "Send Note"}
+            </button>
+          </form>
+          <p className="text-white/20 text-[9px] text-center mt-2.5">
+            Tap any timecode badge to jump to that moment
+          </p>
+        </div>
+      </div>
     </div>
+  );
+
+  // ─── DESKTOP LAYOUT (>= 768px) — fixed height panels ───────────────────────
+  const desktopLayout = (
+    <div className="hidden md:flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
+      <Sidebar active="review" userName={userName} userInitials={userInitials} />
+
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <ToastStack toasts={toasts} onRemove={removeToast} />
+
+        {/* ── Top Bar ── */}
+        {!cinemaMode && (
+          <header className="shrink-0 flex items-center gap-3 px-5 py-3 border-b border-white/[0.08] bg-[#0a0a0a]">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <a href={`/project/${project.id}`}
+                className="flex items-center gap-1.5 text-white/35 hover:text-white/70 text-[10px] tracking-[0.18em] uppercase transition-colors shrink-0">
+                <ArrowLeft size={11} />Back
+              </a>
+              <div className="w-px h-4 bg-white/10 shrink-0" />
+              <div className="relative min-w-0" ref={projectMenuRef}>
+                <button onClick={() => setShowProjectMenu(p => !p)} className="flex items-center gap-1.5 group min-w-0">
+                  <div className="min-w-0 text-left">
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 font-semibold">Project</span>
+                      {project.client && (
+                        <span className="text-[9px] text-white/25 border border-white/10 px-1.5 py-0.5 rounded-md font-medium">{project.client}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <p className="text-white/80 text-sm font-semibold truncate group-hover:text-white transition-colors">{project.name}</p>
+                      {allProjects && allProjects.length > 1 && (
+                        <ChevronDown size={12} className={`text-white/30 shrink-0 transition-transform ${showProjectMenu ? "rotate-180" : ""}`} />
+                      )}
+                    </div>
+                  </div>
+                </button>
+                {showProjectMenu && allProjects && allProjects.length > 1 && (
+                  <div className="absolute top-full left-0 mt-2 z-50 w-64 bg-[#141414] border border-white/12 rounded-2xl shadow-2xl py-1.5 overflow-hidden">
+                    <p className="text-[9px] tracking-[0.25em] uppercase text-white/30 font-semibold px-4 pt-2 pb-1.5">Switch Project</p>
+                    {allProjects.map(p => (
+                      <a key={p.id} href={`/review/${p.id}`}
+                        className={`flex items-center gap-3 px-4 py-2.5 hover:bg-white/[0.06] transition-colors ${p.id === project.id ? "bg-white/[0.04]" : ""}`}
+                        onClick={() => setShowProjectMenu(false)}>
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${p.id === project.id ? "bg-emerald-400" : "bg-white/20"}`} />
+                        <div className="min-w-0">
+                          <p className={`text-xs font-medium truncate ${p.id === project.id ? "text-white/90" : "text-white/55"}`}>{p.name}</p>
+                          {p.departments?.length > 0 && (
+                            <p className="text-[10px] text-white/25 truncate">{p.departments.join(" · ")}</p>
+                          )}
+                        </div>
+                        {p.id === project.id && <CheckCircle2 size={12} className="text-emerald-400 shrink-0 ml-auto" />}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {currentVer && (
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 text-white/45">
+                  {DEPT_ICON[currentVer.department ?? ""] ?? <FileText size={13} />}
+                  <span className="text-white/60 text-xs font-medium">{currentVer.version_name}</span>
+                </div>
+                <VersionStatusPicker version={currentVer} onUpdate={handleVersionStatus} />
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button onClick={handleRefresh}
+                className={`w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all ${refreshing ? "animate-spin" : ""}`}>
+                <RefreshCw size={13} />
+              </button>
+              <button onClick={() => exportNotes(visibleComments, project, selectedVersion)}
+                className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
+                <Download size={13} />
+              </button>
+              {currentVer?.drive_url && (
+                <a href={currentVer.drive_url} target="_blank" rel="noopener noreferrer"
+                  className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
+                  <ExternalLink size={13} />
+                </a>
+              )}
+              <button onClick={() => setCinemaMode(true)}
+                className="flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
+                <Maximize2 size={11} />Cinema
+              </button>
+            </div>
+          </header>
+        )}
+
+        {/* ── Body ── */}
+        <div className="flex flex-row flex-1 min-h-0">
+
+          {/* Version Sidebar */}
+          {!cinemaMode && (
+            <div className="hidden md:contents">
+              <VersionSidebar
+                versions={allVersions} comments={comments} selected={selectedVersion}
+                collapsed={sidebarCollapsed}
+                onSelect={setSelectedVersion}
+                onCollapse={() => setSidebarCollapsed(p => !p)}
+              />
+            </div>
+          )}
+
+          {/* Center: Player */}
+          <div className="flex-1 min-w-0 flex flex-col relative">
+            {cinemaMode && (
+              <div className="absolute top-4 right-4 z-50">
+                <button onClick={() => setCinemaMode(false)}
+                  className="flex items-center gap-2 bg-black/75 hover:bg-black border border-white/12 rounded-xl px-3.5 py-2 text-xs text-white/60 hover:text-white/90 transition-all backdrop-blur-sm shadow-xl">
+                  <Minimize2 size={11} />
+                  Exit Cinema <span className="text-white/25 text-[10px]">Esc</span>
+                </button>
+              </div>
+            )}
+            <div className={`flex-1 min-h-0 ${cinemaMode ? "" : "p-4 pb-2"}`}>
+              <div className={`w-full h-full overflow-hidden bg-black ${cinemaMode ? "" : "rounded-2xl border border-white/[0.06]"}`}>
+                <Player version={selectedVersion} />
+              </div>
+            </div>
+            {!cinemaMode && (
+              <div className="px-6 pb-1">
+                <TimecodeRail comments={allVisible} onSeek={handleTimecodeClick} />
+              </div>
+            )}
+            {!cinemaMode && selectedVersion && (
+              <div className="shrink-0 px-5 pb-3 flex items-center gap-3">
+                <span className="text-white/35 text-[10px] font-medium truncate">{selectedVersion.version_name}</span>
+                {selectedVersion.department && (
+                  <span className="text-[10px] text-white/25 border border-white/8 px-1.5 py-0.5 rounded-md font-medium">
+                    {selectedVersion.department}
+                  </span>
+                )}
+                <div className="ml-auto flex items-center gap-1.5 text-white/20 text-[10px]">
+                  <Eye size={10} /><span>Live · refreshes every 45s</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Comments Panel */}
+          {!cinemaMode && (
+            <div className={`shrink-0 border-l border-white/[0.07] flex flex-col bg-[#090909] transition-all duration-200 ${panelCollapsed ? "w-12" : "w-[340px]"}`}>
+              {panelCollapsed ? (
+                <div className="flex flex-col items-center pt-4 gap-3">
+                  <button onClick={() => setPanelCollapsed(false)} className="text-white/35 hover:text-white/70 transition-colors p-1">
+                    <MessageSquare size={15} />
+                  </button>
+                  {openCount > 0 && (
+                    <span className="min-w-[22px] h-[22px] rounded-full bg-amber-500/25 border border-amber-400/30 text-amber-300 text-[10px] flex items-center justify-center font-bold px-1">
+                      {openCount}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="shrink-0 border-b border-white/[0.07]">
+                    <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare size={13} className="text-white/40" />
+                        <span className="text-[10px] tracking-[0.2em] uppercase text-white/40 font-semibold">Notes</span>
+                      </div>
+                      <button onClick={() => setPanelCollapsed(true)} className="text-white/25 hover:text-white/60 transition-colors">
+                        <ChevronLeft size={13} />
+                      </button>
+                    </div>
+                    <ProgressBar total={totalCount} resolved={resolvedCount} />
+                    <div className="flex px-3 py-2 gap-1">
+                      {(["all", "open", "resolved"] as FilterTab[]).map(tab => {
+                        const cnt = tab === "all" ? totalCount : tab === "open" ? openCount : resolvedCount;
+                        const active = filterTab === tab;
+                        return (
+                          <button key={tab} onClick={() => setFilterTab(tab)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-[10px] transition-all capitalize font-medium ${
+                              active ? "bg-white/10 text-white/80" : "text-white/35 hover:text-white/60 hover:bg-white/5"
+                            }`}>
+                            {tab}
+                            {cnt > 0 && (
+                              <span className={`px-1.5 py-px rounded-full text-[9px] font-bold ${
+                                active && tab === "open"     ? "bg-amber-500/25 text-amber-300" :
+                                active && tab === "resolved" ? "bg-emerald-500/25 text-emerald-300" :
+                                                               "bg-white/10 text-white/40"
+                              }`}>{cnt}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto">
+                    {visibleComments.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full gap-4 px-6">
+                        <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+                          {filterTab === "resolved" ? <CheckCircle2 size={22} className="text-white/15" /> : <MessageSquare size={22} className="text-white/15" />}
+                        </div>
+                        <div className="text-center">
+                          <p className="text-white/40 text-sm font-medium">
+                            {filterTab === "resolved" ? "No resolved notes yet" : filterTab === "open" ? "All notes resolved 🎉" : "No notes yet"}
+                          </p>
+                          {filterTab === "all" && (
+                            <p className="text-white/25 text-xs mt-1.5 leading-relaxed">Add a timecoded note below<br />to start the feedback loop.</p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        {visibleComments.map(c => (
+                          <CommentCard key={c.id} comment={c} currentUserId={currentUser.id}
+                            onTimecodeClick={handleTimecodeClick} onResolve={handleResolve} onDelete={handleDelete} />
+                        ))}
+                        <div ref={commentsEndRef} className="h-3" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="shrink-0 border-t border-white/[0.08] p-4 bg-[#0c0c0c]">
+                    {selectedVersion && (
+                      <div className="flex items-center gap-1.5 mb-3">
+                        <span className="text-white/30 text-[10px]">On</span>
+                        <span className="text-white/55 text-[10px] border border-white/10 bg-white/5 px-2 py-0.5 rounded-lg truncate max-w-[180px] font-medium">
+                          {selectedVersion.version_name}
+                        </span>
+                      </div>
+                    )}
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+                      <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
+                      <textarea ref={textareaRef} placeholder="Leave a note… (⌘↵ to send)" value={body}
+                        onChange={e => setBody(e.target.value)} onKeyDown={handleKeyDown} rows={3}
+                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white/75 placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all resize-none" />
+                      <button type="submit" disabled={submitting || !body.trim()}
+                        className="flex items-center justify-center gap-2 w-full bg-white text-black text-xs font-bold py-3 rounded-xl hover:bg-white/90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-white/5">
+                        <Send size={12} />{submitting ? "Sending…" : "Send Note"}
+                      </button>
+                    </form>
+                    <p className="text-white/20 text-[9px] text-center mt-2.5">Click any timecode badge to jump to that moment</p>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {mobileLayout}
+      {desktopLayout}
+    </>
   );
 }
