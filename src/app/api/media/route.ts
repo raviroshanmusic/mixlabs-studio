@@ -28,18 +28,20 @@ export async function GET(req: NextRequest) {
   const range = req.headers.get("range");
   if (range) reqHeaders["Range"] = range;
 
+  const keyIdDebug = { len: process.env.B2_KEY_ID?.length, val: process.env.B2_KEY_ID };
+
   let b2Res: Response;
   try {
     b2Res = await fetch(signedUrl, { headers: reqHeaders });
   } catch (err) {
     console.error("[media] B2 fetch error:", err);
-    return new NextResponse(JSON.stringify({error: "fetch failed", detail: String(err), signedUrl}), { status: 502 });
+    return new NextResponse(JSON.stringify({error: "fetch failed", detail: String(err), signedUrl, keyIdDebug}), { status: 502 });
   }
 
   if (!b2Res.ok && b2Res.status !== 206) {
     const body = await b2Res.text();
     console.error("[media] B2 error response:", b2Res.status, body);
-    return new NextResponse(JSON.stringify({error: b2Res.status, detail: body, signedUrl}), { status: 502 });
+    return new NextResponse(JSON.stringify({error: b2Res.status, detail: body, signedUrl, keyIdDebug}), { status: 502 });
   }
 
   const resHeaders = new Headers();
