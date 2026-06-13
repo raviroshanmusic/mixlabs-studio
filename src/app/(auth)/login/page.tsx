@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import MixLabsLogo from "@/components/ui/MixLabsLogo";
 
 // ─── Role options (mirrors MemberClient PROFESSIONS) ─────────────────────────
 
@@ -237,8 +238,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center px-4 py-12">
       {/* Logo */}
       <div className="mb-10 flex items-center gap-3">
-        <div className="w-8 h-8 rounded bg-white/10 flex items-center justify-center text-xs font-bold tracking-widest text-white">
-          ML
+        <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white">
+          <MixLabsLogo size={18} />
         </div>
         <span className="text-white/40 text-xs tracking-[0.3em] uppercase">MixLabs</span>
       </div>

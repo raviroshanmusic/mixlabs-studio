@@ -5,6 +5,7 @@ import {
   useScroll, useTransform, useSpring,
   motion, AnimatePresence,
 } from "framer-motion";
+import MixLabsLogo from "@/components/ui/MixLabsLogo";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
@@ -216,8 +217,8 @@ function Nav() {
       }`}
     >
       <div className="flex items-center gap-3">
-        <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.09] flex items-center justify-center">
-          <span className="text-[9px] font-semibold tracking-tight text-white/60">ML</span>
+        <div className="w-7 h-7 rounded-lg bg-white/[0.06] border border-white/[0.09] flex items-center justify-center text-white/60">
+          <MixLabsLogo size={16} />
         </div>
         <span className="text-white/40 text-[11px] tracking-[0.32em] uppercase font-light">MixLabs</span>
       </div>
@@ -955,8 +956,8 @@ export default function HomePage() {
       <footer className="px-8 md:px-20 py-10 border-t border-white/[0.04] max-w-[1400px] mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
-              <span className="text-[8px] font-semibold text-white/35">ML</span>
+            <div className="w-6 h-6 rounded-lg bg-white/[0.04] border border-white/[0.07] flex items-center justify-center text-white/35">
+              <MixLabsLogo size={14} />
             </div>
             <span className="text-white/18 text-[10px] tracking-[0.3em] uppercase font-light">MixLabs Studio</span>
           </div>

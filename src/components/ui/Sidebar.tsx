@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import MixLabsLogo from "@/components/ui/MixLabsLogo";
 import {
   LayoutDashboard,
   FolderOpen,
@@ -135,15 +136,16 @@ export default function Sidebar({
       {/* ── Logo ── */}
       <div className="flex items-center h-14 px-3 shrink-0">
         {/* icon: 32px wide, px-3 → starts at 12px left → centered in 56px */}
-        <span className="w-8 h-8 rounded-xl bg-white flex items-center justify-center
-                         text-[10px] font-black text-black shrink-0
-                         shadow-[0_0_16px_rgba(255,255,255,0.12)]">
-          ML
+        <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+              style={{ background: "var(--bg-surface-4)" }}>
+          <span style={{ color: "var(--text-1)" }}>
+            <MixLabsLogo size={18} />
+          </span>
         </span>
         <div className="ml-3 overflow-hidden"
           style={{ opacity: expanded ? 1 : 0, transition: "opacity 180ms 40ms", whiteSpace: "nowrap" }}>
-          <p className="text-[11px] font-semibold text-white leading-tight">MixLabs</p>
-          <p className="text-[9px] text-white/30 leading-tight tracking-widest uppercase">Studio OS</p>
+          <p className="text-[11px] font-semibold leading-tight" style={{ color: "var(--text-1)" }}>MixLabs</p>
+          <p className="text-[9px] leading-tight tracking-widest uppercase" style={{ color: "var(--text-3)" }}>Workspace</p>
         </div>
       </div>
 
