@@ -9,7 +9,7 @@ export default async function MemberPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, full_name, email, company")
+    .select("id, full_name, email, company, profession")
     .eq("id", user.id)
     .single();
 
@@ -69,7 +69,7 @@ export default async function MemberPage() {
   return (
     <MemberClient
       user={{ id: user.id, email: user.email ?? "" }}
-      profile={profile ?? { id: user.id, full_name: null, email: null, company: null }}
+      profile={profile ?? { id: user.id, full_name: null, email: null, company: null, profession: null }}
       ownedProjects={ownedProjects ?? []}
       memberProjects={memberProjects ?? []}
       memberRows={memberRows ?? []}

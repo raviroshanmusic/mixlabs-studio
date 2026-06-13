@@ -4,14 +4,15 @@ import {
   Check, LogOut, Music, Palette, Scissors, Wand2, Zap, Volume2,
   FileText, MessageSquare, FolderOpen, ChevronRight,
   Eye, Edit3, Shield, KeyRound, User, Activity,
-  Bell, Layers, Crown, Lock, AlertCircle, Copy,
-  TrendingUp, Clock, Briefcase, Mail,
+  Layers, Crown, Lock, AlertCircle, Copy,
+  Briefcase, Mail, Mic, Film, Sliders, Clapperboard,
+  MonitorPlay, Sparkles, Headphones, Radio, Star,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Profile  = { id: string; full_name: string | null; email: string | null; company: string | null };
+type Profile  = { id: string; full_name: string | null; email: string | null; company: string | null; profession: string | null };
 type Project  = { id: string; name: string; client: string | null; status: string; departments: string[]; created_at: string; updated_at: string };
 type MemberRow = { project_id: string; role: string | null; department: string | null };
 type Stats    = { projects: number; comments: number; files: number };
@@ -48,6 +49,33 @@ const ROLE_META: Record<string, { icon: React.ReactNode; label: string; color: s
 
 const AVATAR_COLORS = [
   "#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#f97316","#14b8a6",
+];
+
+type ProfessionDef = { label: string; icon: React.ReactNode; accent: string; category: string };
+const PROFESSIONS: ProfessionDef[] = [
+  // Direction & Production
+  { label: "Director",               icon: <Clapperboard size={14}/>,  accent: "#f43f5e", category: "Direction" },
+  { label: "Producer",               icon: <Star size={14}/>,          accent: "#f59e0b", category: "Direction" },
+  { label: "Executive Producer",     icon: <Crown size={14}/>,         accent: "#f59e0b", category: "Direction" },
+  { label: "Post Production Supervisor", icon: <MonitorPlay size={14}/>, accent: "#f97316", category: "Direction" },
+  // Music
+  { label: "Composer",               icon: <Music size={14}/>,         accent: "#a855f7", category: "Music"     },
+  { label: "Music Editor",           icon: <Scissors size={14}/>,      accent: "#a855f7", category: "Music"     },
+  { label: "Music Supervisor",       icon: <Headphones size={14}/>,    accent: "#8b5cf6", category: "Music"     },
+  // Sound
+  { label: "Sound Designer",        icon: <Wand2 size={14}/>,          accent: "#f59e0b", category: "Sound"     },
+  { label: "Re-recording Mixer",    icon: <Sliders size={14}/>,        accent: "#f59e0b", category: "Sound"     },
+  { label: "Supervising Sound Editor", icon: <Volume2 size={14}/>,     accent: "#f59e0b", category: "Sound"     },
+  { label: "Foley Artist",          icon: <Radio size={14}/>,           accent: "#fbbf24", category: "Sound"     },
+  { label: "ADR / Voice Artist",    icon: <Mic size={14}/>,            accent: "#fbbf24", category: "Sound"     },
+  // Picture
+  { label: "Video Editor",          icon: <Film size={14}/>,            accent: "#3b82f6", category: "Picture"  },
+  { label: "Colorist",              icon: <Palette size={14}/>,         accent: "#ec4899", category: "Picture"  },
+  { label: "VFX Artist",            icon: <Zap size={14}/>,             accent: "#f97316", category: "Picture"  },
+  { label: "Motion Designer",       icon: <Sparkles size={14}/>,        accent: "#22c55e", category: "Picture"  },
+  // Other
+  { label: "Client",                icon: <Briefcase size={14}/>,       accent: "#94a3b8", category: "Other"    },
+  { label: "Agency",                icon: <User size={14}/>,            accent: "#94a3b8", category: "Other"    },
 ];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -152,10 +180,11 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   const [section, setSection]   = useState<Section>("overview");
 
   // Profile edit
-  const [fullName, setFullName] = useState(initialProfile.full_name ?? "");
-  const [company,  setCompany]  = useState(initialProfile.company ?? "");
-  const [saving,   setSaving]   = useState(false);
-  const [saved,    setSaved]    = useState(false);
+  const [fullName,   setFullName]   = useState(initialProfile.full_name ?? "");
+  const [company,    setCompany]    = useState(initialProfile.company ?? "");
+  const [profession, setProfession] = useState(initialProfile.profession ?? "");
+  const [saving,     setSaving]     = useState(false);
+  const [saved,      setSaved]      = useState(false);
 
   // Password
   const [newPw,     setNewPw]     = useState("");
@@ -182,10 +211,10 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
     e.preventDefault(); setSaving(true);
     const res = await fetch("/api/profile", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ full_name: fullName.trim(), company: company.trim() }),
+      body: JSON.stringify({ full_name: fullName.trim(), company: company.trim(), profession: profession.trim() }),
     });
     if (res.ok) {
-      setProfile(p => ({ ...p, full_name: fullName.trim() || null, company: company.trim() || null }));
+      setProfile(p => ({ ...p, full_name: fullName.trim() || null, company: company.trim() || null, profession: profession.trim() || null }));
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
@@ -238,7 +267,19 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
             <div className="flex items-center gap-4">
               <Avatar name={displayName} size={44}/>
               <div>
-                <h1 className="text-white/82 text-lg font-light tracking-wide">{displayName}</h1>
+                <div className="flex items-center gap-2.5">
+                  <h1 className="text-white/82 text-lg font-light tracking-wide">{displayName}</h1>
+                  {profile.profession && (() => {
+                    const pd = PROFESSIONS.find(p => p.label === profile.profession);
+                    return (
+                      <span className="flex items-center gap-1 text-[9px] px-2 py-1 rounded-full border font-light"
+                        style={{ color: pd?.accent ?? "#94a3b8", borderColor: (pd?.accent ?? "#94a3b8") + "30", background: (pd?.accent ?? "#94a3b8") + "10" }}>
+                        {pd?.icon}
+                        {profile.profession}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <div className="flex items-center gap-2.5 mt-0.5">
                   <span className="text-white/28 text-xs font-light">{user.email}</span>
                   {profile.company && (
@@ -373,6 +414,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                       { icon: <User size={11}/>,     label: "Name",    value: profile.full_name || "—" },
                       { icon: <Mail size={11}/>,     label: "Email",   value: user.email },
                       { icon: <Briefcase size={11}/>,label: "Company", value: profile.company || "—" },
+                      { icon: <Star size={11}/>,     label: "Role",    value: profile.profession || "—" },
                     ].map(r => (
                       <div key={r.label} className="flex items-center gap-2.5 py-1.5">
                         <span className="text-white/22 shrink-0">{r.icon}</span>
@@ -552,6 +594,47 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                       className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/78 placeholder-white/14 outline-none focus:border-white/16 transition-colors font-light"/>
                     <p className="text-white/16 text-[10px] font-light mt-1.5">Shown on your profile and project pages</p>
                   </div>
+                  {/* Profession picker */}
+                  <div>
+                    <label className="text-white/28 text-xs mb-3 block font-light">Your role</label>
+                    {(["Direction","Music","Sound","Picture","Other"] as const).map(cat => {
+                      const roles = PROFESSIONS.filter(p => p.category === cat);
+                      return (
+                        <div key={cat} className="mb-4">
+                          <p className="text-white/14 text-[9px] tracking-[0.2em] uppercase font-light mb-2">{cat}</p>
+                          <div className="flex flex-wrap gap-2">
+                            {roles.map(p => {
+                              const selected = profession === p.label;
+                              return (
+                                <button key={p.label} type="button"
+                                  onClick={() => setProfession(selected ? "" : p.label)}
+                                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl border text-[11px] font-light transition-all"
+                                  style={selected ? {
+                                    color: p.accent,
+                                    borderColor: p.accent + "50",
+                                    background: p.accent + "15",
+                                  } : {
+                                    color: "rgba(255,255,255,0.35)",
+                                    borderColor: "rgba(255,255,255,0.07)",
+                                    background: "rgba(255,255,255,0.02)",
+                                  }}>
+                                  <span style={{ color: selected ? p.accent : "rgba(255,255,255,0.22)" }}>{p.icon}</span>
+                                  {p.label}
+                                  {selected && <Check size={9}/>}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {profession && (
+                      <p className="text-white/22 text-[10px] font-light mt-1">
+                        Selected: <span className="text-white/45">{profession}</span> — shown on your profile
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <label className="text-white/28 text-xs mb-2 block font-light">Email address</label>
                     <input value={user.email} disabled
