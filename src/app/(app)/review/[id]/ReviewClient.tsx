@@ -78,12 +78,13 @@ function parseTimecode(str: string): number | null {
 
 function parseFilmTC(str: string) {
   const parts = str.split(":").map(Number);
-  if (parts.length === 3) return { h: parts[0] ?? 0, m: parts[1] ?? 0, s: parts[2] ?? 0 };
-  if (parts.length === 2) return { h: 0, m: parts[0] ?? 0, s: parts[1] ?? 0 };
-  return { h: 0, m: 0, s: 0 };
+  if (parts.length === 4) return { h: parts[0] ?? 0, m: parts[1] ?? 0, s: parts[2] ?? 0, f: parts[3] ?? 0 };
+  if (parts.length === 3) return { h: parts[0] ?? 0, m: parts[1] ?? 0, s: parts[2] ?? 0, f: 0 };
+  if (parts.length === 2) return { h: 0, m: parts[0] ?? 0, s: parts[1] ?? 0, f: 0 };
+  return { h: 0, m: 0, s: 0, f: 0 };
 }
-function fmtFilm(h: number, m: number, s: number) {
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+function fmtFilm(h: number, m: number, s: number, f: number) {
+  return `${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`;
 }
 
 function timeAgo(d: string): string {
@@ -202,11 +203,70 @@ function Drum({ value, max, onChange }: { value: number; max: number; onChange: 
   );
 }
 
+/* ── Mobile scroll-based single-field timecode input ── */
+function MobileTimecodeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { h, m, s, f } = parseFilmTC(value);
+  const hasValue = value.length > 0 && !value.startsWith("00:00:00:00");
+
+  function scrollField(
+    field: "h" | "m" | "s" | "f",
+    delta: number,
+    cur: { h: number; m: number; s: number; f: number }
+  ) {
+    const wrap = (v: number, max: number) => ((v % (max + 1)) + (max + 1)) % (max + 1);
+    const n = { ...cur };
+    if (field === "h") n.h = wrap(n.h + delta, 23);
+    if (field === "m") n.m = wrap(n.m + delta, 59);
+    if (field === "s") n.s = wrap(n.s + delta, 59);
+    if (field === "f") n.f = wrap(n.f + delta, 23);
+    onChange(fmtFilm(n.h, n.m, n.s, n.f));
+  }
+
+  const fields: { key: "h" | "m" | "s" | "f"; label: string }[] = [
+    { key: "h", label: "HR" },
+    { key: "m", label: "MN" },
+    { key: "s", label: "SC" },
+    { key: "f", label: "FR" },
+  ];
+  const vals = { h, m, s, f };
+
+  return (
+    <div className="flex items-center gap-1">
+      {fields.map((field, i) => (
+        <div key={field.key} className="flex items-center gap-1">
+          {i > 0 && <span className="text-white/20 text-xs font-mono">:</span>}
+          <div className="flex flex-col items-center"
+            onTouchStart={e => e.currentTarget.dataset.startY = String(e.touches[0].clientY)}
+            onTouchEnd={e => {
+              const startY = Number(e.currentTarget.dataset.startY ?? 0);
+              const delta = startY - e.changedTouches[0].clientY;
+              if (Math.abs(delta) > 8) scrollField(field.key, delta > 0 ? 1 : -1, vals);
+            }}>
+            <span className="text-[8px] text-white/25 tracking-wider font-semibold mb-0.5">{field.label}</span>
+            <span className="text-white/85 text-sm font-mono tabular-nums bg-white/8 rounded-lg px-2 py-1 min-w-[32px] text-center">
+              {pad(vals[field.key])}
+            </span>
+          </div>
+        </div>
+      ))}
+      {hasValue && (
+        <button type="button" onClick={() => onChange("")}
+          className="ml-1 text-white/30 hover:text-white/70 transition-colors text-base leading-none">×</button>
+      )}
+    </div>
+  );
+}
+
 function TimecodeRoller({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { h, m, s } = parseFilmTC(value);
-  const hasValue = value.length > 0 && value !== "00:00:00";
+  const { h, m, s, f } = parseFilmTC(value);
+  const hasValue = value.length > 0 && !value.startsWith("00:00:00:00");
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -215,36 +275,57 @@ function TimecodeRoller({ value, onChange }: { value: string; onChange: (v: stri
     return () => document.removeEventListener("mousedown", fn);
   }, [open]);
 
+  // Mobile: render inline scroll strips instead of a popout
+  if (isMobile) {
+    return (
+      <div className="flex items-center gap-2">
+        {!hasValue && !open && (
+          <button type="button" onClick={() => { onChange(fmtFilm(0, 0, 0, 0)); setOpen(true); }}
+            className="flex items-center gap-1 text-[10px] text-white/35 hover:text-white/65 transition-colors">
+            <Clock size={10} />
+            <span>timecode</span>
+          </button>
+        )}
+        {(hasValue || open) && (
+          <MobileTimecodeInput value={value || fmtFilm(0,0,0,0)} onChange={onChange} />
+        )}
+      </div>
+    );
+  }
+
+  // Desktop: roller popout
   return (
     <div ref={ref} className="relative inline-block">
       <button type="button"
-        onClick={() => { if (!value) onChange("00:00:00"); setOpen(p => !p); }}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-mono transition-all ${
+        onClick={() => { if (!value) onChange(fmtFilm(0, 0, 0, 0)); setOpen(p => !p); }}
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-mono transition-all ${
           hasValue
-            ? "bg-amber-500/15 border-amber-400/40 text-amber-200 shadow-sm shadow-amber-500/10"
-            : "bg-white/5 border-white/12 text-white/45 hover:border-white/25 hover:text-white/65"
+            ? "bg-amber-500/10 border-amber-400/30 text-amber-300"
+            : "bg-white/[0.04] border-white/10 text-white/35 hover:border-white/20 hover:text-white/55"
         }`}>
-        <Clock size={11} className={hasValue ? "text-amber-400" : "text-white/35"} />
-        <span>{hasValue ? value : "add timecode"}</span>
+        <Clock size={10} className={hasValue ? "text-amber-400/70" : "text-white/25"} />
+        <span>{hasValue ? value : "timecode"}</span>
         {hasValue && (
           <span onClick={e => { e.stopPropagation(); onChange(""); }}
-            className="text-white/40 hover:text-white/80 ml-0.5 cursor-pointer text-sm leading-none">×</span>
+            className="text-white/30 hover:text-white/70 ml-0.5 cursor-pointer leading-none">×</span>
         )}
       </button>
 
       {open && (
-        <div className="absolute bottom-full mb-2.5 left-0 z-50 bg-[#141414] border border-white/15 rounded-2xl shadow-2xl shadow-black/60 p-5">
-          <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 text-center mb-4 font-semibold">HH : MM : SS</p>
-          <div className="flex items-center gap-1.5">
-            <Drum value={h} max={23} onChange={v => onChange(fmtFilm(v, m, s))} />
-            <span className="text-white/30 text-lg font-mono pb-1">:</span>
-            <Drum value={m} max={59} onChange={v => onChange(fmtFilm(h, v, s))} />
-            <span className="text-white/30 text-lg font-mono pb-1">:</span>
-            <Drum value={s} max={59} onChange={v => onChange(fmtFilm(h, m, v))} />
+        <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#161616] border border-white/10 rounded-xl shadow-xl shadow-black/50 p-3">
+          <p className="text-[8px] tracking-[0.25em] uppercase text-white/25 text-center mb-2.5 font-semibold">HH : MM : SS : FF</p>
+          <div className="flex items-center gap-1">
+            <Drum value={h} max={23} onChange={v => onChange(fmtFilm(v, m, s, f))} />
+            <span className="text-white/20 font-mono text-sm mb-0.5">:</span>
+            <Drum value={m} max={59} onChange={v => onChange(fmtFilm(h, v, s, f))} />
+            <span className="text-white/20 font-mono text-sm mb-0.5">:</span>
+            <Drum value={s} max={59} onChange={v => onChange(fmtFilm(h, m, v, f))} />
+            <span className="text-white/20 font-mono text-sm mb-0.5">:</span>
+            <Drum value={f} max={23} onChange={v => onChange(fmtFilm(h, m, s, v))} />
           </div>
           <button type="button" onClick={() => setOpen(false)}
-            className="mt-4 w-full text-[10px] text-white/40 hover:text-white/70 transition-colors border border-white/8 rounded-lg py-1.5">
-            Confirm
+            className="mt-2.5 w-full text-[9px] text-white/30 hover:text-white/60 transition-colors border border-white/[0.07] rounded-lg py-1">
+            Done
           </button>
         </div>
       )}
@@ -803,7 +884,7 @@ export default function ReviewClient({
   }
 
   function handleTimecodeClick(sec: number) {
-    setTimecodeInput(fmtFilm(Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), Math.floor(sec % 60)));
+    setTimecodeInput(fmtFilm(Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), Math.floor(sec % 60), 0));
     if (!panelCollapsed) setTimeout(() => textareaRef.current?.focus(), 50);
   }
 
