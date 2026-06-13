@@ -28,7 +28,12 @@ export async function GET(req: NextRequest) {
   const range = req.headers.get("range");
   if (range) reqHeaders["Range"] = range;
 
-  const keyIdDebug = { len: process.env.B2_KEY_ID?.length, val: process.env.B2_KEY_ID };
+  const appKey = process.env.B2_APPLICATION_KEY ?? "";
+  const keyIdDebug = {
+    keyId: process.env.B2_KEY_ID,
+    appKeyLen: appKey.length,
+    appKeyPrefix: appKey.slice(0, 6), // just first 6 chars to confirm which key it is
+  };
 
   let b2Res: Response;
   try {
