@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Check, LogOut, Music, Palette, Scissors, Wand2, Zap, Volume2,
   FileText, MessageSquare, FolderOpen, ChevronRight,
@@ -7,6 +7,7 @@ import {
   Layers, Crown, Lock, AlertCircle, Copy,
   Briefcase, Mail, Mic, Film, Sliders, Clapperboard,
   MonitorPlay, Sparkles, Headphones, Radio, Star,
+  Camera, Trash2, Bell, Monitor, Smartphone, Calendar, Clock,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
 
@@ -18,8 +19,10 @@ type MemberRow = { project_id: string; role: string | null; department: string |
 type Stats    = { projects: number; comments: number; files: number };
 type RecentComment = { id: string; body: string; created_at: string; project_id: string; timecode: number | null; projectName: string };
 type RecentFile    = { id: string; version_name: string; department: string; created_at: string; project_id: string; projectName: string };
+type Notifications = { notify_new_comment: boolean; notify_new_version: boolean; notify_mention: boolean; notify_email_digest: boolean };
+type SessionInfo   = { lastSignInAt: string | null; createdAt: string | null };
 
-type Section = "overview" | "projects" | "activity" | "profile" | "security";
+type Section = "overview" | "projects" | "activity" | "profile" | "notifications" | "security";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -94,6 +97,16 @@ function timeAgo(d: string): string {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+function fmtDate(d: string | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function fmtDateTime(d: string | null): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
 function fmtTimecode(sec: number | null): string {
   if (sec == null) return "";
   const m = Math.floor((sec % 3600) / 60), s = Math.floor(sec % 60);
@@ -104,15 +117,55 @@ function initials(name: string): string {
   return name.split(" ").map(w => w[0]).join("").slice(0,2).toUpperCase() || "?";
 }
 
+function parseDevice(ua: string): { browser: string; os: string; mobile: boolean } {
+  let os = "Unknown device";
+  if (/Windows/.test(ua)) os = "Windows";
+  else if (/Macintosh|Mac OS X/.test(ua)) os = "macOS";
+  else if (/iPhone|iPad|iPod/.test(ua)) os = "iOS";
+  else if (/Android/.test(ua)) os = "Android";
+  else if (/Linux/.test(ua)) os = "Linux";
+  let browser = "Browser";
+  if (/Edg\//.test(ua)) browser = "Edge";
+  else if (/OPR\/|Opera/.test(ua)) browser = "Opera";
+  else if (/Chrome\//.test(ua)) browser = "Chrome";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  else if (/Safari\//.test(ua)) browser = "Safari";
+  const mobile = /iPhone|iPad|iPod|Android/.test(ua);
+  return { browser, os, mobile };
+}
+
+function mediaUrl(key: string): string {
+  return `/api/media?key=${encodeURIComponent(key)}`;
+}
+
 // ─── Avatar ───────────────────────────────────────────────────────────────────
 
-function Avatar({ name, size = 48 }: { name: string; size?: number }) {
+function Avatar({ name, src, size = 48 }: { name: string; src?: string | null; size?: number }) {
   const col = avatarColor(name);
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={mediaUrl(src)} alt={name}
+        className="rounded-2xl object-cover shrink-0"
+        style={{ width: size, height: size, border: `1.5px solid ${col}35` }}/>
+    );
+  }
   return (
     <div className="rounded-2xl flex items-center justify-center font-medium text-white shrink-0"
       style={{ width: size, height: size, background: col + "25", border: `1.5px solid ${col}35`, color: col, fontSize: size * 0.35 }}>
       {initials(name)}
     </div>
+  );
+}
+
+// ─── Toggle ───────────────────────────────────────────────────────────────────
+
+function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; disabled?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} disabled={disabled}
+      className={`relative w-9 h-5 rounded-full transition-colors shrink-0 disabled:opacity-40 ${on ? "bg-white/80" : "bg-white/10"}`}>
+      <span className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${on ? "left-[18px] bg-black" : "left-0.5 bg-white/60"}`}/>
+    </button>
   );
 }
 
@@ -164,11 +217,54 @@ function ProjectCard({ project, role, isOwner }: { project: Project; role?: stri
   );
 }
 
+// ─── Activity Row ─────────────────────────────────────────────────────────────
+
+type ActivityItem = { type: "comment" | "file"; id: string; text: string; sub: string; project: string; projectId: string; date: string };
+
+function ActivityTimeline({ items }: { items: ActivityItem[] }) {
+  return (
+    <div className="flex flex-col">
+      {items.map((item, i) => (
+        <a key={item.id} href={item.type === "comment" ? `/review/${item.projectId}` : `/project/${item.projectId}`}
+          className="flex gap-4 group">
+          <div className="flex flex-col items-center">
+            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${item.type === "comment" ? "bg-violet-500/10" : "bg-blue-500/10"}`}>
+              {item.type === "comment"
+                ? <MessageSquare size={12} className="text-violet-400/70"/>
+                : <FileText size={12} className="text-blue-400/70"/>}
+            </div>
+            {i < items.length - 1 && <div className="w-px flex-1 bg-white/[0.04] my-1.5"/>}
+          </div>
+          <div className={`flex-1 min-w-0 ${i < items.length - 1 ? "pb-5" : ""}`}>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-white/62 text-[13px] font-light group-hover:text-white/85 transition-colors truncate">{item.text}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-white/30 text-[10px] font-light">{item.type === "comment" ? "Comment on" : "File in"}</span>
+                  <span className="text-white/45 text-[10px] font-light">{item.project}</span>
+                  {item.sub && <><span className="text-white/12">·</span><span className="text-white/25 text-[10px] font-light">{item.sub}</span></>}
+                </div>
+              </div>
+              <span className="text-white/18 text-[10px] font-light shrink-0">{timeAgo(item.date)}</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function MemberClient({ user, profile: initialProfile, ownedProjects, memberProjects, memberRows, stats, recentComments, recentFiles }: {
+export default function MemberClient({
+  user, profile: initialProfile, avatarUrl: initialAvatar, notifications: initialNotif, session,
+  ownedProjects, memberProjects, memberRows, stats, recentComments, recentFiles,
+}: {
   user: { id: string; email: string };
   profile: Profile;
+  avatarUrl: string | null;
+  notifications: Notifications;
+  session: SessionInfo;
   ownedProjects: Project[];
   memberProjects: Project[];
   memberRows: MemberRow[];
@@ -178,6 +274,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
 }) {
   const [profile, setProfile]   = useState(initialProfile);
   const [section, setSection]   = useState<Section>("overview");
+  const [avatar,  setAvatar]    = useState<string | null>(initialAvatar);
 
   // Profile edit
   const [fullName,   setFullName]   = useState(initialProfile.full_name ?? "");
@@ -185,6 +282,15 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   const [profession, setProfession] = useState(initialProfile.profession ?? "");
   const [saving,     setSaving]     = useState(false);
   const [saved,      setSaved]      = useState(false);
+
+  // Avatar
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const [avatarErr,  setAvatarErr]  = useState<string | null>(null);
+
+  // Notifications
+  const [notif, setNotif] = useState<Notifications>(initialNotif);
+  const [notifErr, setNotifErr] = useState<string | null>(null);
 
   // Password
   const [newPw,     setNewPw]     = useState("");
@@ -195,18 +301,36 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   // Copy
   const [copied, setCopied] = useState(false);
 
+  // Device (client-only)
+  const [device, setDevice] = useState<{ browser: string; os: string; mobile: boolean } | null>(null);
+  useEffect(() => { setDevice(parseDevice(navigator.userAgent)); }, []);
+
   const displayName = profile.full_name || user.email.split("@")[0];
-  const initials = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-  const col = avatarColor(displayName);
+  const initialsStr = displayName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
   function getMemberRole(pid: string) {
     return memberRows.find(r => r.project_id === pid)?.role ?? null;
   }
 
-  const allActivity = useMemo(() => [
+  const allActivity = useMemo<ActivityItem[]>(() => [
     ...recentComments.map(c => ({ type: "comment" as const, id: c.id, text: c.body, sub: c.timecode != null ? `at ${fmtTimecode(c.timecode)}` : "", project: c.projectName, projectId: c.project_id, date: c.created_at })),
     ...recentFiles.map(f => ({ type: "file" as const, id: f.id, text: f.version_name, sub: f.department, project: f.projectName, projectId: f.project_id, date: f.created_at })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), [recentComments, recentFiles]);
+
+  // Activity filters
+  const [actType, setActType]       = useState<"all" | "comment" | "file">("all");
+  const [actProject, setActProject] = useState<string>("all");
+
+  const activityProjects = useMemo(() => {
+    const seen = new Map<string, string>();
+    allActivity.forEach(a => { if (!seen.has(a.projectId)) seen.set(a.projectId, a.project); });
+    return Array.from(seen, ([id, name]) => ({ id, name }));
+  }, [allActivity]);
+
+  const filteredActivity = useMemo(() => allActivity.filter(a =>
+    (actType === "all" || a.type === actType) &&
+    (actProject === "all" || a.projectId === actProject)
+  ), [allActivity, actType, actProject]);
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault(); setSaving(true);
@@ -219,6 +343,41 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     }
     setSaving(false);
+  }
+
+  async function handleAvatarFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setAvatarErr(null); setAvatarBusy(true);
+    const fd = new FormData(); fd.append("file", file);
+    const res = await fetch("/api/profile/avatar", { method: "POST", body: fd });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) setAvatar(data.key);
+    else setAvatarErr(data.error || "Upload failed");
+    setAvatarBusy(false);
+  }
+
+  async function handleRemoveAvatar() {
+    setAvatarErr(null); setAvatarBusy(true);
+    const res = await fetch("/api/profile/avatar", { method: "DELETE" });
+    if (res.ok) setAvatar(null);
+    else { const d = await res.json().catch(() => ({})); setAvatarErr(d.error || "Failed"); }
+    setAvatarBusy(false);
+  }
+
+  async function toggleNotif(key: keyof Notifications) {
+    const next = { ...notif, [key]: !notif[key] };
+    setNotif(next); setNotifErr(null);
+    const res = await fetch("/api/profile", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [key]: next[key] }),
+    });
+    if (!res.ok) {
+      setNotif(notif); // revert
+      const d = await res.json().catch(() => ({}));
+      setNotifErr(d.error?.includes("column") ? "Run the member migration in Supabase to enable preferences." : (d.error || "Couldn't save"));
+    }
   }
 
   async function handlePasswordChange(e: React.FormEvent) {
@@ -236,8 +395,8 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
     setPwSaving(false);
   }
 
-  async function signOut() {
-    await fetch("/api/auth/signout", { method: "POST" });
+  async function signOut(global = false) {
+    await fetch(`/api/auth/signout${global ? "?scope=global" : ""}`, { method: "POST" });
     window.location.href = "/login";
   }
 
@@ -247,18 +406,26 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
   }
 
   const NAV: { id: Section; label: string; icon: React.ReactNode }[] = [
-    { id: "overview",  label: "Overview",  icon: <Layers size={13}/>    },
-    { id: "projects",  label: "Projects",  icon: <FolderOpen size={13}/> },
-    { id: "activity",  label: "Activity",  icon: <Activity size={13}/>  },
-    { id: "profile",   label: "Profile",   icon: <User size={13}/>      },
-    { id: "security",  label: "Security",  icon: <Lock size={13}/>      },
+    { id: "overview",      label: "Overview",      icon: <Layers size={13}/>      },
+    { id: "projects",      label: "Projects",      icon: <FolderOpen size={13}/>  },
+    { id: "activity",      label: "Activity",      icon: <Activity size={13}/>    },
+    { id: "profile",       label: "Profile",       icon: <User size={13}/>        },
+    { id: "notifications", label: "Notifications", icon: <Bell size={13}/>        },
+    { id: "security",      label: "Security",      icon: <Lock size={13}/>        },
   ];
 
   const allProjects = [...ownedProjects, ...memberProjects];
 
+  const NOTIF_DEFS: { key: keyof Notifications; icon: React.ReactNode; label: string; desc: string }[] = [
+    { key: "notify_new_comment",  icon: <MessageSquare size={13}/>, label: "New comments",       desc: "When someone leaves a note on a project you're in" },
+    { key: "notify_new_version",  icon: <FileText size={13}/>,      label: "New files & versions", desc: "When a new cut or version is uploaded" },
+    { key: "notify_mention",      icon: <User size={13}/>,          label: "Mentions",           desc: "When you're tagged directly in a note" },
+    { key: "notify_email_digest", icon: <Mail size={13}/>,          label: "Weekly email digest", desc: "A Monday summary of activity across your projects" },
+  ];
+
   return (
     <div className="flex bg-[#0A0A0A] overflow-hidden" style={{ height: '100dvh' }}>
-      <Sidebar active="member" userName={displayName} userInitials={initials} />
+      <Sidebar active="member" userName={displayName} userInitials={initialsStr} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -266,7 +433,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
         <div className="shrink-0 border-b border-white/[0.04]">
           <div className="px-4 md:px-9 py-4 md:py-6 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0 flex-1">
-              <Avatar name={displayName} size={40}/>
+              <Avatar name={displayName} src={avatar} size={40}/>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h1 className="text-white/82 text-base md:text-lg font-light tracking-wide truncate">{displayName}</h1>
@@ -308,7 +475,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
 
               <div className="w-px h-8 bg-white/[0.06]"/>
 
-              <button onClick={signOut}
+              <button onClick={() => signOut(false)}
                 className="flex items-center gap-1.5 text-[10px] text-white/25 hover:text-white/55 border border-white/8 hover:border-white/16 px-3 py-2 rounded-xl transition-all font-light">
                 <LogOut size={11}/> Sign out
               </button>
@@ -319,7 +486,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
           <div className="flex items-center gap-0 px-4 md:px-9 overflow-x-auto scrollbar-hide">
             {NAV.map(n => (
               <button key={n.id} onClick={() => setSection(n.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-wide transition-all -mb-px border-b-2 font-light ${
+                className={`flex items-center gap-2 px-4 py-2.5 text-[11px] tracking-wide transition-all -mb-px border-b-2 font-light shrink-0 ${
                   section === n.id ? "text-white/80 border-white/45" : "text-white/24 border-transparent hover:text-white/50"
                 }`}>
                 {n.icon}{n.label}
@@ -377,26 +544,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                   {allActivity.length === 0 ? (
                     <p className="text-white/16 text-sm py-6 text-center font-light">No activity yet</p>
                   ) : (
-                    <div className="flex flex-col gap-0">
-                      {allActivity.slice(0,5).map((item, i) => (
-                        <a key={item.id} href={item.type === "comment" ? `/review/${item.projectId}` : `/project/${item.projectId}`}
-                          className={`flex items-start gap-3 py-3 hover:bg-white/[0.025] px-3 -mx-3 rounded-xl transition-colors group ${i < Math.min(allActivity.length,5) - 1 ? "border-b border-white/[0.03]" : ""}`}>
-                          <div className={`w-7 h-7 rounded-xl shrink-0 flex items-center justify-center mt-0.5 ${item.type === "comment" ? "bg-violet-500/10" : "bg-blue-500/10"}`}>
-                            {item.type === "comment"
-                              ? <MessageSquare size={11} className="text-violet-400/70"/>
-                              : <FileText size={11} className="text-blue-400/70"/>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white/60 text-[13px] font-light truncate group-hover:text-white/80 transition-colors">{item.text}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-white/22 text-[10px] font-light truncate">{item.project}</span>
-                              {item.sub && <><span className="text-white/12 text-[9px]">·</span><span className="text-white/18 text-[10px] font-light">{item.sub}</span></>}
-                            </div>
-                          </div>
-                          <span className="text-white/18 text-[10px] font-light shrink-0 mt-0.5">{timeAgo(item.date)}</span>
-                        </a>
-                      ))}
-                    </div>
+                    <ActivityTimeline items={allActivity.slice(0, 5)}/>
                   )}
                 </div>
               </div>
@@ -522,41 +670,41 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
           {/* ══ ACTIVITY ══ */}
           {section === "activity" && (
             <div className="max-w-2xl">
-              <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-5 font-light">All Activity</p>
-              {allActivity.length === 0 ? (
+              <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
+                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase font-light">All Activity</p>
+                <div className="flex items-center gap-2">
+                  {/* Type filter */}
+                  <div className="flex items-center gap-0.5 p-0.5 rounded-xl border border-white/[0.06] bg-white/[0.015]">
+                    {([
+                      { id: "all" as const,     label: "All" },
+                      { id: "comment" as const, label: "Notes" },
+                      { id: "file" as const,    label: "Files" },
+                    ]).map(t => (
+                      <button key={t.id} onClick={() => setActType(t.id)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-light transition-all ${
+                          actType === t.id ? "bg-white/10 text-white/75" : "text-white/30 hover:text-white/55"
+                        }`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Project filter */}
+                  {activityProjects.length > 1 && (
+                    <select value={actProject} onChange={e => setActProject(e.target.value)}
+                      className="bg-white/[0.03] border border-white/[0.06] rounded-xl px-2.5 py-1.5 text-[10px] text-white/55 font-light outline-none focus:border-white/16 cursor-pointer max-w-[160px]">
+                      <option value="all">All projects</option>
+                      {activityProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    </select>
+                  )}
+                </div>
+              </div>
+              {filteredActivity.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3 border border-dashed border-white/[0.05] rounded-2xl">
                   <Activity size={28} className="text-white/10"/>
-                  <p className="text-white/22 text-sm font-light">No activity yet</p>
+                  <p className="text-white/22 text-sm font-light">{allActivity.length === 0 ? "No activity yet" : "Nothing matches these filters"}</p>
                 </div>
               ) : (
-                <div className="flex flex-col">
-                  {allActivity.map((item, i) => (
-                    <a key={item.id} href={item.type === "comment" ? `/review/${item.projectId}` : `/project/${item.projectId}`}
-                      className="flex gap-4 group">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${item.type === "comment" ? "bg-violet-500/10" : "bg-blue-500/10"}`}>
-                          {item.type === "comment"
-                            ? <MessageSquare size={12} className="text-violet-400/70"/>
-                            : <FileText size={12} className="text-blue-400/70"/>}
-                        </div>
-                        {i < allActivity.length - 1 && <div className="w-px flex-1 bg-white/[0.04] my-1.5"/>}
-                      </div>
-                      <div className={`flex-1 min-w-0 ${i < allActivity.length - 1 ? "pb-5" : ""}`}>
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-white/62 text-[13px] font-light group-hover:text-white/85 transition-colors truncate">{item.text}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              <span className="text-white/30 text-[10px] font-light">{item.type === "comment" ? "Comment on" : "File in"}</span>
-                              <span className="text-white/45 text-[10px] font-light">{item.project}</span>
-                              {item.sub && <><span className="text-white/12">·</span><span className="text-white/25 text-[10px] font-light">{item.sub}</span></>}
-                            </div>
-                          </div>
-                          <span className="text-white/18 text-[10px] font-light shrink-0">{timeAgo(item.date)}</span>
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
+                <ActivityTimeline items={filteredActivity}/>
               )}
             </div>
           )}
@@ -565,13 +713,34 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
           {section === "profile" && (
             <div className="max-w-lg flex flex-col gap-8">
 
-              {/* Avatar + identity */}
+              {/* Avatar + upload */}
               <div className="flex items-center gap-5 p-5 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
-                <Avatar name={displayName} size={56}/>
-                <div>
-                  <p className="text-white/72 text-base font-light">{displayName}</p>
-                  <p className="text-white/28 text-xs font-light mt-0.5">{user.email}</p>
-                  {profile.company && <p className="text-white/20 text-xs font-light mt-0.5">{profile.company}</p>}
+                <div className="relative shrink-0">
+                  <Avatar name={displayName} src={avatar} size={64}/>
+                  <button onClick={() => fileInputRef.current?.click()} disabled={avatarBusy}
+                    title="Change photo"
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#1a1a1a] border border-white/15 flex items-center justify-center text-white/55 hover:text-white hover:border-white/30 transition-all disabled:opacity-50">
+                    <Camera size={11}/>
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleAvatarFile} className="hidden"/>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-white/72 text-base font-light truncate">{displayName}</p>
+                  <p className="text-white/28 text-xs font-light mt-0.5 truncate">{user.email}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button onClick={() => fileInputRef.current?.click()} disabled={avatarBusy}
+                      className="text-[10px] text-white/40 hover:text-white/70 font-light transition-colors flex items-center gap-1 disabled:opacity-50">
+                      <Camera size={10}/> {avatarBusy ? "Working…" : avatar ? "Change photo" : "Upload photo"}
+                    </button>
+                    {avatar && (
+                      <button onClick={handleRemoveAvatar} disabled={avatarBusy}
+                        className="text-[10px] text-white/30 hover:text-red-400/80 font-light transition-colors flex items-center gap-1 disabled:opacity-50">
+                        <Trash2 size={10}/> Remove
+                      </button>
+                    )}
+                  </div>
+                  {avatarErr && <p className="text-red-400/75 text-[10px] font-light mt-1.5 flex items-center gap-1"><AlertCircle size={9}/> {avatarErr}</p>}
+                  <p className="text-white/16 text-[10px] font-light mt-1.5">JPG, PNG, WEBP or GIF · up to 5 MB</p>
                 </div>
               </div>
 
@@ -612,7 +781,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                             <div className="px-4 pt-3 pb-1">
                               <p className="text-white/14 text-[9px] tracking-[0.2em] uppercase font-light">{cat}</p>
                             </div>
-                            {roles.map((p, ri) => {
+                            {roles.map((p) => {
                               const selected = profession === p.label;
                               return (
                                 <button key={p.label} type="button"
@@ -667,24 +836,35 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                 </form>
               </div>
 
-              {/* Avatar color indicator */}
-              <div className="p-4 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
-                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-3 font-light">Avatar</p>
-                <div className="flex items-center gap-3">
-                  <Avatar name={displayName} size={36}/>
-                  <div>
-                    <p className="text-white/45 text-xs font-light">Auto-generated from your name</p>
-                    <p className="text-white/20 text-[10px] font-light mt-0.5">Changes automatically when you update your name</p>
-                  </div>
-                </div>
-                <div className="flex gap-1.5 mt-3">
-                  {AVATAR_COLORS.map(c => (
-                    <div key={c} className="w-5 h-5 rounded-full shrink-0 ring-1 ring-black/30 transition-transform hover:scale-110"
-                      style={{ background: c, outline: c === avatarColor(displayName) ? `2px solid ${c}` : "none", outlineOffset: 2 }}/>
-                  ))}
-                </div>
+            </div>
+          )}
+
+          {/* ══ NOTIFICATIONS ══ */}
+          {section === "notifications" && (
+            <div className="max-w-lg flex flex-col gap-6">
+              <div>
+                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-1.5 font-light">Notifications</p>
+                <p className="text-white/30 text-xs font-light">Choose what you want to hear about. Changes save automatically.</p>
               </div>
 
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] overflow-hidden">
+                {NOTIF_DEFS.map((n, i) => (
+                  <div key={n.key} className={`flex items-center gap-3.5 px-4 py-4 ${i < NOTIF_DEFS.length - 1 ? "border-b border-white/[0.04]" : ""}`}>
+                    <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 bg-white/[0.04] text-white/40">{n.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/70 text-[13px] font-light">{n.label}</p>
+                      <p className="text-white/28 text-[11px] font-light mt-0.5">{n.desc}</p>
+                    </div>
+                    <Toggle on={notif[n.key]} onClick={() => toggleNotif(n.key)}/>
+                  </div>
+                ))}
+              </div>
+
+              {notifErr && (
+                <p className="text-amber-400/75 text-[11px] font-light flex items-center gap-1.5">
+                  <AlertCircle size={11}/> {notifErr}
+                </p>
+              )}
             </div>
           )}
 
@@ -696,24 +876,57 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
               <div>
                 <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-4 font-light">Account Details</p>
                 <div className="flex flex-col gap-2">
-                  {[
-                    { label: "Email",    value: user.email,              mono: false },
-                    { label: "User ID",  value: user.id,                 mono: true  },
-                  ].map(r => (
-                    <div key={r.label} className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
-                      <div className="flex items-center gap-3">
-                        <span className="text-white/22 text-xs font-light w-16">{r.label}</span>
-                        <span className={`text-white/58 text-sm font-light ${r.mono ? "font-mono text-xs text-white/35" : ""} truncate max-w-xs`}>{r.value}</span>
-                      </div>
-                      {r.label === "User ID" && (
-                        <button onClick={copyUserId}
-                          className={`flex items-center gap-1 text-[10px] font-light transition-colors ${copied ? "text-emerald-400/70" : "text-white/22 hover:text-white/55"}`}>
-                          {copied ? <Check size={10}/> : <Copy size={10}/>}
-                          {copied ? "Copied" : "Copy"}
-                        </button>
-                      )}
+                  <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-white/22 text-xs font-light w-16 shrink-0">Email</span>
+                      <span className="text-white/58 text-sm font-light truncate">{user.email}</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-3.5 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-white/22 text-xs font-light w-16 shrink-0">User ID</span>
+                      <span className="text-white/35 text-xs font-mono font-light truncate max-w-[220px]">{user.id}</span>
+                    </div>
+                    <button onClick={copyUserId}
+                      className={`flex items-center gap-1 text-[10px] font-light transition-colors shrink-0 ${copied ? "text-emerald-400/70" : "text-white/22 hover:text-white/55"}`}>
+                      {copied ? <Check size={10}/> : <Copy size={10}/>}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="px-4 py-3.5 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
+                      <p className="text-white/22 text-[10px] font-light flex items-center gap-1.5 mb-1"><Calendar size={10}/> Joined</p>
+                      <p className="text-white/55 text-sm font-light">{fmtDate(session.createdAt)}</p>
+                    </div>
+                    <div className="px-4 py-3.5 rounded-2xl border border-white/[0.05] bg-white/[0.015]">
+                      <p className="text-white/22 text-[10px] font-light flex items-center gap-1.5 mb-1"><Clock size={10}/> Last sign-in</p>
+                      <p className="text-white/55 text-sm font-light">{fmtDateTime(session.lastSignInAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current session */}
+              <div>
+                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-4 font-light">Current Session</p>
+                <div className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 bg-emerald-500/10 text-emerald-400/70">
+                      {device?.mobile ? <Smartphone size={15}/> : <Monitor size={15}/>}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-white/62 text-sm font-light truncate">
+                        {device ? `${device.browser} on ${device.os}` : "This device"}
+                      </p>
+                      <p className="text-white/28 text-[11px] font-light flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"/> Active now
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={() => signOut(false)}
+                    className="flex items-center gap-1.5 text-[10px] text-white/28 hover:text-white/60 border border-white/8 hover:border-white/18 px-3 py-2 rounded-xl transition-all font-light shrink-0">
+                    <LogOut size={10}/> Sign out
+                  </button>
                 </div>
               </div>
 
@@ -752,7 +965,7 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
 
                   {confirmPw.length > 0 && newPw !== confirmPw && (
                     <p className="text-amber-400/70 text-[10px] font-light flex items-center gap-1.5">
-                      <AlertCircle size={10}/> Passwords don't match
+                      <AlertCircle size={10}/> Passwords don&apos;t match
                     </p>
                   )}
 
@@ -771,34 +984,16 @@ export default function MemberClient({ user, profile: initialProfile, ownedProje
                 </form>
               </div>
 
-              {/* Sessions */}
-              <div>
-                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-4 font-light">Sessions</p>
-                <div className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.06] bg-white/[0.015]">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"/>
-                    <div>
-                      <p className="text-white/58 text-sm font-light">Current session</p>
-                      <p className="text-white/22 text-xs font-light">Active now · this device</p>
-                    </div>
-                  </div>
-                  <button onClick={signOut}
-                    className="flex items-center gap-1.5 text-[10px] text-white/28 hover:text-white/60 border border-white/8 hover:border-white/18 px-3 py-2 rounded-xl transition-all font-light">
-                    <LogOut size={10}/> Sign out
-                  </button>
-                </div>
-              </div>
-
               {/* Danger */}
               <div className="border-t border-white/[0.04] pt-6">
                 <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-4 font-light">Danger Zone</p>
                 <div className="flex items-center justify-between p-4 rounded-2xl border border-red-500/10 bg-red-500/[0.02]">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-white/55 text-sm font-light">Sign out everywhere</p>
                     <p className="text-white/18 text-xs font-light mt-0.5">Revokes all active sessions on all devices</p>
                   </div>
-                  <button onClick={signOut}
-                    className="flex items-center gap-1.5 text-red-400/65 hover:text-red-400 border border-red-500/15 hover:border-red-500/30 px-3 py-2 rounded-xl text-xs transition-all font-light">
+                  <button onClick={() => signOut(true)}
+                    className="flex items-center gap-1.5 text-red-400/65 hover:text-red-400 border border-red-500/15 hover:border-red-500/30 px-3 py-2 rounded-xl text-xs transition-all font-light shrink-0">
                     <LogOut size={11}/> Sign out all
                   </button>
                 </div>

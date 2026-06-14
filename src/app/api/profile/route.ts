@@ -6,13 +6,22 @@ export async function PATCH(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { full_name, company, profession } = await request.json();
+  const body = await request.json();
+  const { full_name, company, profession } = body;
 
-  const update: Record<string, string | null> = {
-    full_name: full_name || null,
-    company: company || null,
-  };
+  const update: Record<string, string | boolean | null> = {};
+  if (full_name !== undefined)  update.full_name = full_name || null;
+  if (company !== undefined)    update.company = company || null;
   if (profession !== undefined) update.profession = profession || null;
+
+  // Notification preferences — only included when the client sends them.
+  for (const k of ["notify_new_comment", "notify_new_version", "notify_mention", "notify_email_digest"] as const) {
+    if (body[k] !== undefined) update[k] = !!body[k];
+  }
+
+  if (Object.keys(update).length === 0) {
+    return NextResponse.json({ ok: true });
+  }
 
   const { error } = await supabase
     .from("profiles")
