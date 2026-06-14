@@ -39,16 +39,8 @@ export async function GET(req: NextRequest) {
   if (!b2Res.ok && b2Res.status !== 206) {
     const body = await b2Res.text();
     console.error("[media] B2 error response:", b2Res.status, body);
-    const keyId = (process.env.B2_KEY_ID ?? "").trim();
-    return new NextResponse(JSON.stringify({
-      b2Status: b2Res.status,
-      b2Error: body,
-      keyIdLen: keyId.length,
-      keyIdPrefix: keyId.slice(0, 5),
-      keyIdSuffix: keyId.slice(-4),
-      endpoint: (process.env.B2_ENDPOINT ?? "").trim(),
-      bucket: (process.env.B2_BUCKET_NAME ?? "").trim(),
-    }), { status: 502 });
+    const status = b2Res.status === 404 ? 404 : 502;
+    return new NextResponse(b2Res.status === 404 ? "Media not found" : "Failed to fetch media", { status });
   }
 
   const resHeaders = new Headers();
