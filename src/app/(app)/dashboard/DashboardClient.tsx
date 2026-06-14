@@ -75,8 +75,8 @@ function Card({ label, right, children, className = "" }: {
   label: string; right?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
-    <div className={`rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
+    <div className={`rounded-2xl border border-white/[0.06] bg-white/[0.015] px-4 py-3.5 ${className}`}>
+      <div className="flex items-center justify-between mb-3">
         <p className="text-white/20 text-[9px] tracking-[0.2em] uppercase font-light">{label}</p>
         {right}
       </div>
@@ -155,15 +155,15 @@ function ProjectCard({ project, tagColor, tagBorder, tagBg }: {
 function Deadlines({ deadlines }: { deadlines: Deadline[] }) {
   if (deadlines.length === 0) {
     return (
-      <div className="flex flex-col items-center py-6 gap-1.5">
-        <CalendarClock size={18} className="text-white/10"/>
+      <div className="flex flex-col items-center py-4 gap-1.5">
+        <CalendarClock size={16} className="text-white/10"/>
         <p className="text-white/18 text-[10px] font-light">No upcoming milestones</p>
       </div>
     );
   }
   return (
-    <div className="flex flex-col gap-3.5">
-      {deadlines.map(d => {
+    <div className="flex flex-col gap-2.5">
+      {deadlines.slice(0, 4).map(d => {
         const overdue = d.daysLeft < 0;
         const soon = d.daysLeft >= 0 && d.daysLeft <= 7;
         const label = overdue ? `${Math.abs(d.daysLeft)}d overdue` : d.daysLeft === 0 ? "Due today" : `${d.daysLeft}d left`;
@@ -191,15 +191,16 @@ function Deadlines({ deadlines }: { deadlines: Deadline[] }) {
 function ActivityFeed({ items }: { items: ActivityItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center py-6 gap-1.5">
-        <Activity size={18} className="text-white/10"/>
+      <div className="flex flex-col items-center py-4 gap-1.5">
+        <Activity size={16} className="text-white/10"/>
         <p className="text-white/18 text-[10px] font-light">No activity yet</p>
       </div>
     );
   }
+  const shown = items.slice(0, 5);
   return (
     <div className="flex flex-col">
-      {items.map((item, i) => (
+      {shown.map((item, i) => (
         <a key={item.id}
           href={item.type === "comment" ? `/review/${item.projectId}` : `/project/${item.projectId}`}
           className="flex gap-3 group">
@@ -209,9 +210,9 @@ function ActivityFeed({ items }: { items: ActivityItem[] }) {
             }`}>
               {item.type === "comment" ? <MessageSquare size={10}/> : <FileText size={10}/>}
             </div>
-            {i < items.length - 1 && <div className="w-px flex-1 bg-white/[0.04] my-1"/>}
+            {i < shown.length - 1 && <div className="w-px flex-1 bg-white/[0.04] my-1"/>}
           </div>
-          <div className={`flex-1 min-w-0 ${i < items.length - 1 ? "pb-3.5" : ""}`}>
+          <div className={`flex-1 min-w-0 ${i < shown.length - 1 ? "pb-3" : ""}`}>
             <p className="text-white/55 text-[11px] font-light leading-snug truncate group-hover:text-white/75 transition-colors">{item.text}</p>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-white/18 text-[9px] font-light truncate">{item.projectName}</span>
@@ -356,7 +357,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
           )}
 
           {/* ── Insights ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 mt-8 md:mt-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-6 md:mt-7">
             <Card label="Deadlines" right={<span className="text-white/18 text-[10px] font-light tabular-nums">{deadlines.length} upcoming</span>}>
               <Deadlines deadlines={deadlines} />
             </Card>
