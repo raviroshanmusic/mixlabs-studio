@@ -9,7 +9,7 @@ import {
   CheckCircle2, Film, Layers,
   Trash2, RefreshCw, MoreHorizontal, Eye,
   AlertCircle, X,
-  Play, Pause, ChevronsLeft, ChevronsRight, Gauge, MessageSquarePlus,
+  Play, Pause, ChevronsLeft, ChevronsRight, Gauge,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -568,11 +568,10 @@ const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 // Reports the playhead up on pause/seek so notes can auto-anchor to the moment.
 
 function VideoStage({
-  version, comments, active, compact = false,
+  version, active, compact = false,
   onCaptureTimecode, onRegisterSeek, onRequestComment,
 }: {
   version: Version | null;
-  comments: Comment[];
   active: boolean;
   compact?: boolean;
   onCaptureTimecode: (sec: number) => void;
@@ -705,7 +704,6 @@ function VideoStage({
   const bufPct    = duration ? (buffered / duration) * 100 : 0;
   const showUi    = uiVisible || !playing || scrubbing;
   const VolIcon   = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-  const markers   = comments.filter(c => c.timecode != null && duration > 0);
 
   function pctFromClientX(clientX: number) {
     const r = trackRef.current?.getBoundingClientRect();
@@ -773,16 +771,6 @@ function VideoStage({
           <div className="absolute inset-x-0 h-1 rounded-full bg-white/15" />
           <div className="absolute left-0 h-1 rounded-full bg-white/25" style={{ width: `${bufPct}%` }} />
           <div className="absolute left-0 h-1 rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
-          {/* Comment markers */}
-          {markers.map(c => (
-            <span key={c.id}
-              onPointerDown={e => { e.stopPropagation(); seek(c.timecode!); }}
-              title={`${fmtTimecode(c.timecode)} — ${c.body.slice(0, 60)}`}
-              className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full hover:scale-150 transition-transform z-10 ${
-                c.status === "resolved" ? "bg-emerald-400/70" : "bg-amber-300"
-              }`}
-              style={{ left: `${(c.timecode! / duration) * 100}%` }} />
-          ))}
           {/* Thumb */}
           <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white shadow z-20 opacity-0 group-hover/track:opacity-100 transition-opacity"
             style={{ left: `${pct}%` }} />
@@ -821,14 +809,6 @@ function VideoStage({
           </div>
 
           <div className="ml-auto flex items-center gap-1.5">
-            {/* Comment at frame */}
-            <button onClick={() => onRequestComment(videoRef.current?.currentTime ?? time)}
-              title="Comment at this frame (c)"
-              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-amber-500/15 border border-amber-400/25 text-amber-200 hover:bg-amber-500/25 transition-colors text-[11px] font-medium">
-              <MessageSquarePlus size={13} />
-              <span className="hidden md:inline">Note here</span>
-            </button>
-
             {/* Speed */}
             <div className="relative">
               <button onClick={() => setShowRate(p => !p)} title="Playback speed"
@@ -1242,7 +1222,6 @@ export default function ReviewClient({
           active={isMobile}
           compact
           version={selectedVersion}
-          comments={allVisible}
           onCaptureTimecode={captureTimecode}
           onRegisterSeek={registerSeek}
           onRequestComment={requestComment}
@@ -1480,7 +1459,6 @@ export default function ReviewClient({
                 <VideoStage
                   active={!isMobile}
                   version={selectedVersion}
-                  comments={allVisible}
                   onCaptureTimecode={captureTimecode}
                   onRegisterSeek={registerSeek}
                   onRequestComment={requestComment}
