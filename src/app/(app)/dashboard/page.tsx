@@ -12,8 +12,6 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const fourteenAgoISO = new Date(Date.now() - 14 * DAY).toISOString();
-
   const [
     { data: profile },
     { data: projects },
@@ -21,8 +19,6 @@ export default async function DashboardPage() {
     { data: allVersions },
     { data: recentComments },
     { data: recentFiles },
-    { data: pulseComments },
-    { count: totalComments },
     { data: milestones },
   ] = await Promise.all([
     supabase.from("profiles").select("id, full_name, email, company").eq("id", user.id).single(),
@@ -31,8 +27,6 @@ export default async function DashboardPage() {
     supabase.from("project_versions").select("id, version_name, department, project_id, created_at"),
     supabase.from("review_comments").select("id, body, project_id, author_name, created_at, timecode").order("created_at", { ascending: false }).limit(12),
     supabase.from("project_versions").select("id, version_name, department, project_id, created_at").order("created_at", { ascending: false }).limit(12),
-    supabase.from("review_comments").select("created_at").gte("created_at", fourteenAgoISO),
-    supabase.from("review_comments").select("id", { count: "exact", head: true }),
     supabase.from("project_milestones").select("id, title, department, start_date, end_date, status, project_id"),
   ]);
 
@@ -75,44 +69,8 @@ export default async function DashboardPage() {
     total:     projectList.length,
   };
 
-  // ── 14-day activity pulse (files + comments per day, oldest → newest) ──
-  const todayStart = dayStart(new Date());
-  const pulse = Array.from({ length: 14 }, () => 0);
-  const bumpPulse = (iso: string) => {
-    const idx = Math.floor((todayStart.getTime() - dayStart(new Date(iso)).getTime()) / DAY);
-    if (idx >= 0 && idx < 14) pulse[13 - idx] += 1;
-  };
-  (allVersions ?? []).forEach(v => bumpPulse(v.created_at));
-  (pulseComments ?? []).forEach(c => bumpPulse(c.created_at));
-
-  // ── Momentum: this week vs previous week (files + comments) ──
-  const within = (iso: string, from: number, to: number) => {
-    const t = new Date(iso).getTime();
-    return t >= from && t < to;
-  };
-  const now = Date.now();
-  const w1from = now - 7 * DAY, w2from = now - 14 * DAY;
-  let thisWeek = 0, lastWeek = 0;
-  const tally = (iso: string) => {
-    if (within(iso, w1from, now)) thisWeek += 1;
-    else if (within(iso, w2from, w1from)) lastWeek += 1;
-  };
-  (allVersions ?? []).forEach(v => tally(v.created_at));
-  (pulseComments ?? []).forEach(c => tally(c.created_at));
-  const momentum = {
-    thisWeek,
-    lastWeek,
-    deltaPct: lastWeek === 0 ? (thisWeek > 0 ? 100 : 0) : Math.round(((thisWeek - lastWeek) / lastWeek) * 100),
-  };
-
-  // ── Department load (versions grouped by department, across all projects) ──
-  const deptCounts: Record<string, number> = {};
-  (allVersions ?? []).forEach(v => { if (v.department) deptCounts[v.department] = (deptCounts[v.department] ?? 0) + 1; });
-  const deptLoad = Object.entries(deptCounts)
-    .map(([dept, count]) => ({ dept, count }))
-    .sort((a, b) => b.count - a.count);
-
   // ── Deadline runway: upcoming / active milestones, soonest first ──
+  const todayStart = dayStart(new Date());
   const ms = (milestones ?? []).filter(m => m.status !== "completed");
   const deadlines = ms.map(m => {
     const start = parseDateOnly(m.start_date).getTime();
@@ -136,13 +94,6 @@ export default async function DashboardPage() {
     .sort((a, b) => a.daysLeft - b.daysLeft)
     .slice(0, 6);
 
-  const totals = {
-    files: (allVersions ?? []).length,
-    comments: totalComments ?? 0,
-    members: (allMembers ?? []).length,
-    milestones: (milestones ?? []).length,
-  };
-
   return (
     <DashboardClient
       user={user}
@@ -150,11 +101,7 @@ export default async function DashboardPage() {
       projects={projectList}
       activity={activity}
       stats={stats}
-      pulse={pulse}
-      momentum={momentum}
-      deptLoad={deptLoad}
       deadlines={deadlines}
-      totals={totals}
     />
   );
 }
