@@ -10,3 +10,7 @@ alter table public.profiles add column if not exists notify_new_comment  boolean
 alter table public.profiles add column if not exists notify_new_version  boolean not null default true;
 alter table public.profiles add column if not exists notify_mention      boolean not null default true;
 alter table public.profiles add column if not exists notify_email_digest boolean not null default false;
+
+-- Notification feed read marker: everything created after this timestamp counts as unread
+-- in the sidebar bell. Stamped to now() whenever the user opens the notifications panel.
+alter table public.profiles add column if not exists notifications_last_read_at timestamptz;

@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import MixLabsLogo from "@/components/ui/MixLabsLogo";
+import NotificationsBell from "@/components/ui/NotificationsBell";
 import {
   LayoutDashboard,
   FolderOpen,
   MessageSquare,
   User,
   LogOut,
-  Bell,
   Plus,
   Sun,
   Moon,
@@ -238,24 +238,8 @@ export default function Sidebar({
           </span>
         </button>
 
-        {/* Notifications — links to member page */}
-        <a href="/member"
-          className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
-          style={{ padding: "9px 0" }}
-          onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "var(--bg-card-hover)"}
-          onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-        >
-          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
-                           text-white/25 group-hover:text-white/60 transition-colors duration-200 relative">
-            <Bell size={15} strokeWidth={1.5} />
-            {/* notification dot */}
-            <span className="absolute top-[7px] right-[7px] w-[5px] h-[5px] rounded-full bg-[#f59e0b] ring-[1.5px] ring-[#060606]" />
-          </span>
-          <span className="overflow-hidden ml-3 whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
-            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms" }}>
-            Notifications
-          </span>
-        </a>
+        {/* Notifications — live feed popover */}
+        <NotificationsBell expanded={expanded} />
 
         {/* User row + sign out */}
         <div className="flex items-center rounded-xl overflow-hidden" style={{ padding: "8px 0" }}>
