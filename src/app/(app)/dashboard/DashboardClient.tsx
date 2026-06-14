@@ -7,8 +7,8 @@ import NewProjectModal from "@/components/ui/NewProjectModal";
 import {
   Plus, Search, Volume2, Music, Palette, Scissors, Wand2, Zap,
   MessageSquare, FileText, Users, PlayCircle, ArrowUpRight,
-  Clock, ChevronRight, Activity, CalendarClock, Radio,
-  TrendingUp, TrendingDown, Minus, AlertTriangle, Layers,
+  Clock, Activity, CalendarClock, Radio,
+  TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
 
@@ -276,42 +276,6 @@ function Runway({ deadlines }: { deadlines: Deadline[] }) {
   );
 }
 
-// ─── Department Load ─────────────────────────────────────────────────────────
-
-function DeptLoadView({ deptLoad }: { deptLoad: DeptLoad[] }) {
-  if (deptLoad.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 gap-2">
-        <Layers size={20} className="text-white/10" />
-        <p className="text-white/20 text-xs">No files yet</p>
-      </div>
-    );
-  }
-  const max = Math.max(...deptLoad.map(d => d.count));
-  return (
-    <div className="flex flex-col gap-3">
-      {deptLoad.map((d, i) => {
-        const hex = deptHex(d.dept);
-        return (
-          <div key={d.dept} className="flex items-center gap-3">
-            <span className="w-16 shrink-0 flex items-center gap-1.5 text-[11px] text-white/55" style={{ color: hex }}>
-              {DEPT_ICON[d.dept] ?? <FileText size={10} />}
-              <span className="truncate">{d.dept}</span>
-            </span>
-            <div className="flex-1 h-2 rounded-full bg-white/[0.04] overflow-hidden">
-              <motion.div className="h-full rounded-full"
-                style={{ background: hex }}
-                initial={{ width: 0 }} animate={{ width: `${(d.count / max) * 100}%` }}
-                transition={{ duration: 0.9, delay: 0.15 + i * 0.07, ease: [0.16, 1, 0.3, 1] }} />
-            </div>
-            <span className="w-5 text-right text-[11px] text-white/40 tabular-nums shrink-0">{d.count}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 // ─── Activity Feed ───────────────────────────────────────────────────────────
 
 function ActivityFeed({ items }: { items: ActivityItem[] }) {
@@ -482,7 +446,6 @@ export default function DashboardClient({ user, projects, profile, activity, sta
     return matchStatus && matchSearch;
   }), [projects, filter, search]);
 
-  const inReviewProjects = projects.filter(p => p.status === "in review");
   const topDept = deptLoad[0];
   const nextDeadline = deadlines[0];
 
@@ -548,61 +511,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
             <StatTile label="Delivered" value={stats.delivered} hex="#a78bfa" />
           </motion.div>
 
-          {/* ── Hero command grid ── */}
-          <motion.div initial="hidden" animate="show" variants={grid}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-3 md:mb-4">
-            {/* Deadline runway */}
-            <div className="lg:col-span-2">
-              <Panel title="Deadline Runway" icon={<CalendarClock size={12} />}
-                right={<span className="text-white/20 text-[10px] tabular-nums">{deadlines.length} upcoming</span>}>
-                <Runway deadlines={deadlines} />
-              </Panel>
-            </div>
-            {/* Activity pulse */}
-            <Panel title="Activity Pulse" icon={<Activity size={12} />}>
-              <Pulse values={pulse} momentum={momentum} />
-            </Panel>
-          </motion.div>
-
-          {/* ── Secondary grid ── */}
-          <motion.div initial="hidden" animate="show" variants={grid}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4 mb-7 md:mb-9">
-            {/* Department load */}
-            <Panel title="Department Load" icon={<Layers size={12} />}>
-              <DeptLoadView deptLoad={deptLoad} />
-            </Panel>
-
-            {/* Needs attention */}
-            <Panel title="Needs Attention" icon={<AlertTriangle size={12} />}
-              right={inReviewProjects.length > 0 ? <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" /> : null}>
-              {inReviewProjects.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-2">
-                  <div className="w-8 h-8 rounded-full border border-emerald-400/20 flex items-center justify-center">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  </div>
-                  <p className="text-white/25 text-xs">All clear</p>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {inReviewProjects.map(p => (
-                    <a key={p.id} href={`/review/${p.id}`}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-amber-400/[0.04] border border-amber-400/15 hover:bg-amber-400/[0.08] transition-all group">
-                      <PlayCircle size={13} className="text-amber-400/70 shrink-0" />
-                      <span className="text-white/70 text-xs truncate flex-1 group-hover:text-white transition-colors">{p.name}</span>
-                      <ChevronRight size={11} className="text-white/20 group-hover:text-white/40 shrink-0" />
-                    </a>
-                  ))}
-                </div>
-              )}
-            </Panel>
-
-            {/* Recent activity */}
-            <Panel title="Recent Activity" icon={<Activity size={12} />}>
-              <ActivityFeed items={activity} />
-            </Panel>
-          </motion.div>
-
-          {/* ── Projects ── */}
+          {/* ── Projects (primary) ── */}
           <div className="flex flex-col gap-2.5 mb-5 min-w-0">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
@@ -629,7 +538,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
           </div>
 
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="flex flex-col items-center justify-center py-20 gap-4 mb-7 md:mb-9">
               {search ? (
                 <>
                   <p className="text-white/20 text-sm">No projects match “{search}”</p>
@@ -647,12 +556,33 @@ export default function DashboardClient({ user, projects, profile, activity, sta
             </div>
           ) : (
             <motion.div initial="hidden" animate="show" variants={grid}
-              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4">
+              className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-4 mb-7 md:mb-9">
               <AnimatePresence>
                 {filtered.map(p => <ProjectCard key={p.id} project={p} isLight={isLight} />)}
               </AnimatePresence>
             </motion.div>
           )}
+
+          {/* ── Insights ── */}
+          <motion.div initial="hidden" animate="show" variants={grid}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-4">
+            {/* Deadline runway */}
+            <div className="lg:col-span-2">
+              <Panel title="Deadline Runway" icon={<CalendarClock size={12} />}
+                right={<span className="text-white/20 text-[10px] tabular-nums">{deadlines.length} upcoming</span>}>
+                <Runway deadlines={deadlines} />
+              </Panel>
+            </div>
+            {/* Right rail: pulse + recent activity */}
+            <div className="flex flex-col gap-3 md:gap-4">
+              <Panel title="Activity Pulse" icon={<Activity size={12} />}>
+                <Pulse values={pulse} momentum={momentum} />
+              </Panel>
+              <Panel title="Recent Activity" icon={<Clock size={12} />}>
+                <ActivityFeed items={activity} />
+              </Panel>
+            </div>
+          </motion.div>
         </div>
       </main>
 
