@@ -1321,16 +1321,20 @@ export default function ReviewClient({
             </div>
           )}
           <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-            <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
-            <textarea
-              ref={textareaRef}
-              placeholder="Leave a note…"
-              value={body}
-              onChange={e => setBody(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={3}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white/75 placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all resize-none"
-            />
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] focus-within:border-white/20 focus-within:bg-white/[0.05] transition-all">
+              <textarea
+                ref={textareaRef}
+                placeholder="Leave a note…"
+                value={body}
+                onChange={e => setBody(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={3}
+                className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm text-white/75 placeholder-white/25 outline-none resize-none"
+              />
+              <div className="px-2.5 pb-2">
+                <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
+              </div>
+            </div>
             <button type="submit" disabled={submitting || !body.trim()}
               className="flex items-center justify-center gap-2 w-full bg-white text-black text-xs font-bold py-3 rounded-xl hover:bg-white/90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-white/5">
               <Send size={12} />
@@ -1571,10 +1575,14 @@ export default function ReviewClient({
                       </div>
                     )}
                     <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
-                      <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
-                      <textarea ref={textareaRef} placeholder="Leave a note… (⌘↵ to send)" value={body}
-                        onChange={e => setBody(e.target.value)} onKeyDown={handleKeyDown} rows={3}
-                        className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-3.5 py-3 text-sm text-white/75 placeholder-white/25 outline-none focus:border-white/20 focus:bg-white/[0.05] transition-all resize-none" />
+                      <div className="rounded-xl border border-white/10 bg-white/[0.04] focus-within:border-white/20 focus-within:bg-white/[0.05] transition-all">
+                        <textarea ref={textareaRef} placeholder="Leave a note… (⌘↵ to send)" value={body}
+                          onChange={e => setBody(e.target.value)} onKeyDown={handleKeyDown} rows={3}
+                          className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm text-white/75 placeholder-white/25 outline-none resize-none" />
+                        <div className="px-2.5 pb-2">
+                          <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />
+                        </div>
+                      </div>
                       <button type="submit" disabled={submitting || !body.trim()}
                         className="flex items-center justify-center gap-2 w-full bg-white text-black text-xs font-bold py-3 rounded-xl hover:bg-white/90 disabled:opacity-20 disabled:cursor-not-allowed transition-all shadow-lg shadow-white/5">
                         <Send size={12} />{submitting ? "Sending…" : "Send Note"}
