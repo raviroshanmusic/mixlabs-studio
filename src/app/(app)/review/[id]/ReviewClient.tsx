@@ -4,11 +4,12 @@ import Sidebar from "@/components/ui/Sidebar";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ChevronLeft,
   Send, MessageSquare, Clock,
-  Volume2, Music, Palette, Scissors, Wand2, Zap, FileText,
+  Volume2, Volume1, VolumeX, Music, Palette, Scissors, Wand2, Zap, FileText,
   Check, Download, Maximize2, Minimize2,
   CheckCircle2, Film, Layers,
   Trash2, RefreshCw, MoreHorizontal, Eye,
-  Flag, AlertCircle, X,
+  AlertCircle, X,
+  Play, Pause, ChevronsLeft, ChevronsRight, Gauge, MessageSquarePlus,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -66,14 +67,27 @@ function fmtTimecode(sec: number | null | undefined): string {
 }
 function pad(n: number) { return String(n).padStart(2, "0"); }
 
+const FPS = 24;
+
 function parseTimecode(str: string): number | null {
   const clean = str.trim();
   if (!clean) return null;
   const parts = clean.split(":").map(Number);
   if (parts.some(isNaN)) return null;
+  if (parts.length === 4) return parts[0] * 3600 + parts[1] * 60 + parts[2] + parts[3] / FPS;
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   return parts[0];
+}
+
+// Seconds → film timecode HH:MM:SS:FF (frame-accurate)
+function secToFilm(sec: number): string {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const f = Math.floor((sec - Math.floor(sec)) * FPS);
+  return fmtFilm(h, m, s, f);
 }
 
 function parseFilmTC(str: string) {
@@ -547,10 +561,125 @@ function mediaUrl(driveUrl: string) {
   return `/api/media?key=${encodeURIComponent(key)}`;
 }
 
-function Player({ version }: { version: Version | null }) {
+const PLAYBACK_RATES = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+
+// ─── Pro Video Stage ──────────────────────────────────────────────────────────
+// Custom transport, frame-accurate timecode, comment markers, keyboard control.
+// Reports the playhead up on pause/seek so notes can auto-anchor to the moment.
+
+function VideoStage({
+  version, comments, active, compact = false,
+  onCaptureTimecode, onRegisterSeek, onRequestComment,
+}: {
+  version: Version | null;
+  comments: Comment[];
+  active: boolean;
+  compact?: boolean;
+  onCaptureTimecode: (sec: number) => void;
+  onRegisterSeek: (fn: (sec: number) => void) => void;
+  onRequestComment: (sec: number) => void;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const wrapRef  = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const hideTimer = useRef<number | undefined>(undefined);
+
+  const [playing, setPlaying]   = useState(false);
+  const [time, setTime]         = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [buffered, setBuffered] = useState(0);
+  const [volume, setVolume]     = useState(1);
+  const [muted, setMuted]       = useState(false);
+  const [rate, setRate]         = useState(1);
+  const [showRate, setShowRate] = useState(false);
+  const [fs, setFs]             = useState(false);
+  const [scrubbing, setScrubbing] = useState(false);
+  const [uiVisible, setUiVisible] = useState(true);
+
+  const src = active && version?.drive_url ? mediaUrl(version.drive_url) : null;
+
+  // Imperative seek — registered with parent so comments/rail can jump the playhead.
+  const seek = useCallback((sec: number) => {
+    const v = videoRef.current; if (!v) return;
+    const d = v.duration || sec;
+    v.currentTime = Math.max(0, Math.min(sec, d));
+    setTime(v.currentTime);
+  }, []);
+  useEffect(() => { if (active) onRegisterSeek(seek); }, [active, seek, onRegisterSeek]);
+
+  // Reset transport when the file changes
+  useEffect(() => { setTime(0); setDuration(0); setBuffered(0); setPlaying(false); }, [version?.id]);
+
+  const stepFrame = useCallback((dir: number) => {
+    const v = videoRef.current; if (!v) return;
+    v.pause();
+    v.currentTime = Math.max(0, Math.min((v.duration || 0), v.currentTime + dir / FPS));
+  }, []);
+
+  const setVol = useCallback((val: number) => {
+    const v = videoRef.current; if (!v) return;
+    const clamped = Math.max(0, Math.min(1, val));
+    v.volume = clamped; v.muted = clamped === 0;
+    setVolume(clamped); setMuted(clamped === 0);
+  }, []);
+
+  const toggleFs = useCallback(() => {
+    const el = wrapRef.current; if (!el) return;
+    if (document.fullscreenElement) document.exitFullscreen();
+    else el.requestFullscreen?.();
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current; if (!v) return;
+    if (v.paused) v.play(); else v.pause();
+  }, []);
+
+  // Keyboard shortcuts (only the active layout, never while typing)
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      const el = document.activeElement as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      const v = videoRef.current; if (!v) return;
+      switch (e.key) {
+        case " ": case "k": e.preventDefault(); togglePlay(); break;
+        case "j": e.preventDefault(); seek(v.currentTime - 10); break;
+        case "l": e.preventDefault(); seek(v.currentTime + 10); break;
+        case "ArrowLeft":  e.preventDefault(); stepFrame(e.shiftKey ? -FPS : -1); break;
+        case "ArrowRight": e.preventDefault(); stepFrame(e.shiftKey ?  FPS :  1); break;
+        case ",": e.preventDefault(); stepFrame(-1); break;
+        case ".": e.preventDefault(); stepFrame(1); break;
+        case "ArrowUp":   e.preventDefault(); setVol(v.volume + 0.1); break;
+        case "ArrowDown": e.preventDefault(); setVol(v.volume - 0.1); break;
+        case "m": e.preventDefault(); v.muted = !v.muted; setMuted(v.muted); break;
+        case "f": e.preventDefault(); toggleFs(); break;
+        case "c": e.preventDefault(); onRequestComment(v.currentTime); break;
+        default: break;
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [active, seek, stepFrame, setVol, toggleFs, togglePlay, onRequestComment]);
+
+  // Track fullscreen changes
+  useEffect(() => {
+    const fn = () => setFs(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", fn);
+    return () => document.removeEventListener("fullscreenchange", fn);
+  }, []);
+
+  // Auto-hide controls while playing
+  const poke = useCallback(() => {
+    setUiVisible(true);
+    window.clearTimeout(hideTimer.current);
+    if (videoRef.current && !videoRef.current.paused)
+      hideTimer.current = window.setTimeout(() => setUiVisible(false), 2600);
+  }, []);
+
+  // ── Empty / unattached states ──
   if (!version) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center gap-6">
+      <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-black">
         <div className="relative">
           <div className="w-24 h-24 rounded-3xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center">
             <Film size={32} className="text-white/15" />
@@ -564,28 +693,167 @@ function Player({ version }: { version: Version | null }) {
       </div>
     );
   }
+  if (!version.drive_url) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-black">
+        <p className="text-white/30 text-sm">No file attached</p>
+      </div>
+    );
+  }
 
-  if (!version.drive_url) return (
-    <div className="w-full h-full flex items-center justify-center">
-      <p className="text-white/30 text-sm">No file attached</p>
-    </div>
-  );
+  const pct       = duration ? (time / duration) * 100 : 0;
+  const bufPct    = duration ? (buffered / duration) * 100 : 0;
+  const showUi    = uiVisible || !playing || scrubbing;
+  const VolIcon   = muted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const markers   = comments.filter(c => c.timecode != null && duration > 0);
 
-  return <video key={version.id} src={mediaUrl(version.drive_url)} controls className="w-full h-full bg-black" controlsList="nodownload" />;
-}
+  function pctFromClientX(clientX: number) {
+    const r = trackRef.current?.getBoundingClientRect();
+    if (!r) return 0;
+    return Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+  }
+  function scrubTo(clientX: number) {
+    const v = videoRef.current; if (!v || !duration) return;
+    const t = pctFromClientX(clientX) * duration;
+    v.currentTime = t; setTime(t);
+  }
 
-// ─── Mobile Player ────────────────────────────────────────────────────────────
-
-function MobilePlayer({ version }: { version: Version | null }) {
   return (
-    <div className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0" style={{ height: "max(240px, 56.25vw)" }}>
-      {!version || !version.drive_url ? (
-        <div className="w-full h-full flex items-center justify-center">
-          <p className="text-white/25 text-xs">No file selected</p>
-        </div>
-      ) : (
-        <video key={version.id} src={mediaUrl(version.drive_url)} controls controlsList="nodownload" className="w-full h-full bg-black" />
+    <div ref={wrapRef}
+      className="relative w-full h-full bg-black overflow-hidden select-none group/stage"
+      onMouseMove={poke} onMouseLeave={() => playing && setUiVisible(false)}>
+
+      <video ref={videoRef} key={version.id} src={src ?? undefined}
+        className="w-full h-full bg-black" playsInline preload="auto"
+        onClick={togglePlay}
+        onDoubleClick={toggleFs}
+        onPlay={() => { setPlaying(true); poke(); }}
+        onPause={() => {
+          setPlaying(false);
+          setUiVisible(true);
+          const v = videoRef.current; if (v) onCaptureTimecode(v.currentTime);
+        }}
+        onTimeUpdate={() => { const v = videoRef.current; if (v && !scrubbing) setTime(v.currentTime); }}
+        onLoadedMetadata={() => { const v = videoRef.current; if (v) setDuration(v.duration || 0); }}
+        onProgress={() => {
+          const v = videoRef.current;
+          if (v && v.buffered.length) setBuffered(v.buffered.end(v.buffered.length - 1));
+        }}
+        onSeeked={() => { const v = videoRef.current; if (v && v.paused) onCaptureTimecode(v.currentTime); }}
+        onVolumeChange={() => { const v = videoRef.current; if (v) { setVolume(v.volume); setMuted(v.muted); } }}
+        onRateChange={() => { const v = videoRef.current; if (v) setRate(v.playbackRate); }}
+      />
+
+      {/* Center play overlay (when paused) */}
+      {!playing && (
+        <button onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center group/play"
+          aria-label="Play">
+          <span className="w-16 h-16 rounded-full bg-black/45 backdrop-blur-sm border border-white/15 flex items-center justify-center text-white/90 group-hover/play:scale-105 group-hover/play:bg-black/60 transition-all">
+            <Play size={26} className="ml-0.5" fill="currentColor" />
+          </span>
+        </button>
       )}
+
+      {/* ── Control bar ── */}
+      <div onClick={e => e.stopPropagation()}
+        className={`absolute inset-x-0 bottom-0 px-3 md:px-4 bg-gradient-to-t from-black/80 via-black/35 to-transparent transition-opacity duration-200 ${
+          compact ? "pt-8 pb-2" : "pt-10 pb-2.5"
+        } ${
+          showUi ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}>
+
+        {/* Scrubber */}
+        <div ref={trackRef}
+          className="relative h-4 flex items-center cursor-pointer group/track mb-1.5"
+          onPointerDown={e => { setScrubbing(true); (e.target as Element).setPointerCapture?.(e.pointerId); scrubTo(e.clientX); }}
+          onPointerMove={e => { if (scrubbing) scrubTo(e.clientX); }}
+          onPointerUp={() => setScrubbing(false)}
+          onPointerCancel={() => setScrubbing(false)}>
+          <div className="absolute inset-x-0 h-1 rounded-full bg-white/15" />
+          <div className="absolute left-0 h-1 rounded-full bg-white/25" style={{ width: `${bufPct}%` }} />
+          <div className="absolute left-0 h-1 rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
+          {/* Comment markers */}
+          {markers.map(c => (
+            <span key={c.id}
+              onPointerDown={e => { e.stopPropagation(); seek(c.timecode!); }}
+              title={`${fmtTimecode(c.timecode)} — ${c.body.slice(0, 60)}`}
+              className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full hover:scale-150 transition-transform z-10 ${
+                c.status === "resolved" ? "bg-emerald-400/70" : "bg-amber-300"
+              }`}
+              style={{ left: `${(c.timecode! / duration) * 100}%` }} />
+          ))}
+          {/* Thumb */}
+          <span className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-white shadow z-20 opacity-0 group-hover/track:opacity-100 transition-opacity"
+            style={{ left: `${pct}%` }} />
+        </div>
+
+        {/* Buttons row */}
+        <div className="flex items-center gap-1.5 text-white/80">
+          <button onClick={togglePlay} title={playing ? "Pause (k)" : "Play (k)"}
+            className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+            {playing ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
+          </button>
+
+          <button onClick={() => stepFrame(-1)} title="Previous frame (←)"
+            className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center hover:bg-white/10 transition-colors text-white/65 hover:text-white">
+            <ChevronsLeft size={16} />
+          </button>
+          <button onClick={() => stepFrame(1)} title="Next frame (→)"
+            className="hidden sm:flex w-8 h-8 rounded-lg items-center justify-center hover:bg-white/10 transition-colors text-white/65 hover:text-white">
+            <ChevronsRight size={16} />
+          </button>
+
+          {/* Volume */}
+          <div className="hidden sm:flex items-center gap-1 group/vol">
+            <button onClick={() => setVol(muted || volume === 0 ? 1 : 0)} title="Mute (m)"
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors text-white/65 hover:text-white">
+              <VolIcon size={16} />
+            </button>
+            <input type="range" min={0} max={1} step={0.05} value={muted ? 0 : volume}
+              onChange={e => setVol(Number(e.target.value))}
+              className="w-0 group-hover/vol:w-16 transition-all duration-200 h-1 accent-white cursor-pointer" />
+          </div>
+
+          {/* Timecode readout */}
+          <div className="ml-1 font-mono text-[11px] tabular-nums text-white/70 tracking-tight">
+            {secToFilm(time)} <span className="text-white/30">/ {secToFilm(duration)}</span>
+          </div>
+
+          <div className="ml-auto flex items-center gap-1.5">
+            {/* Comment at frame */}
+            <button onClick={() => onRequestComment(videoRef.current?.currentTime ?? time)}
+              title="Comment at this frame (c)"
+              className="flex items-center gap-1.5 h-8 px-2.5 rounded-lg bg-amber-500/15 border border-amber-400/25 text-amber-200 hover:bg-amber-500/25 transition-colors text-[11px] font-medium">
+              <MessageSquarePlus size={13} />
+              <span className="hidden md:inline">Note here</span>
+            </button>
+
+            {/* Speed */}
+            <div className="relative">
+              <button onClick={() => setShowRate(p => !p)} title="Playback speed"
+                className="flex items-center gap-1 h-8 px-2 rounded-lg hover:bg-white/10 transition-colors text-white/65 hover:text-white text-[11px] font-mono">
+                <Gauge size={14} /> {rate}×
+              </button>
+              {showRate && (
+                <div className="absolute bottom-10 right-0 z-30 bg-[#161616] border border-white/12 rounded-xl shadow-2xl py-1.5 w-20">
+                  {PLAYBACK_RATES.map(r => (
+                    <button key={r} onClick={() => { const v = videoRef.current; if (v) v.playbackRate = r; setShowRate(false); }}
+                      className={`w-full px-3 py-1.5 text-left text-[11px] font-mono hover:bg-white/8 transition-colors ${r === rate ? "text-amber-300" : "text-white/55"}`}>
+                      {r}×
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={toggleFs} title="Fullscreen (f)"
+              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors text-white/65 hover:text-white">
+              {fs ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -768,6 +1036,19 @@ export default function ReviewClient({
   const commentsEndRef   = useRef<HTMLDivElement>(null);
   const textareaRef      = useRef<HTMLTextAreaElement>(null);
   const projectMenuRef   = useRef<HTMLDivElement>(null);
+  // The active VideoStage registers its seek fn here so comments/rail can jump the playhead.
+  const seekRef          = useRef<(sec: number) => void>(() => {});
+
+  // Keep isMobile in sync so the correct VideoStage owns the keyboard + seek wiring.
+  useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
+  const registerSeek    = useCallback((fn: (sec: number) => void) => { seekRef.current = fn; }, []);
+  // Player paused / scrubbed-while-paused → auto-anchor the note to that moment.
+  const captureTimecode = useCallback((sec: number) => { setTimecodeInput(secToFilm(sec)); }, []);
 
   // Close project menu on outside click
   useEffect(() => {
@@ -885,10 +1166,18 @@ export default function ReviewClient({
     else addToast("error", "Could not update status");
   }
 
+  // Jump the playhead to a moment (from a comment badge or the timecode rail).
+  // The player's pause/seek capture then refreshes the note's timecode.
   function handleTimecodeClick(sec: number) {
-    setTimecodeInput(fmtFilm(Math.floor(sec / 3600), Math.floor((sec % 3600) / 60), Math.floor(sec % 60), 0));
-    if (!panelCollapsed) setTimeout(() => textareaRef.current?.focus(), 50);
+    seekRef.current?.(sec);
   }
+
+  // "Note here" / pressing C in the player — anchor a new note to the current frame and focus the box.
+  const requestComment = useCallback((sec: number) => {
+    setTimecodeInput(secToFilm(sec));
+    setPanelCollapsed(false);
+    setTimeout(() => textareaRef.current?.focus(), 60);
+  }, []);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSubmit(e as unknown as React.FormEvent);
@@ -945,7 +1234,20 @@ export default function ReviewClient({
       </header>
 
       {/* Player */}
-      <MobilePlayer version={selectedVersion} />
+      <div
+        className="mx-3 mt-2 mb-1 rounded-2xl overflow-hidden bg-[#0d0d0d] border border-white/[0.07] shrink-0"
+        style={{ height: "max(240px, 56.25vw)" }}
+      >
+        <VideoStage
+          active={isMobile}
+          compact
+          version={selectedVersion}
+          comments={allVisible}
+          onCaptureTimecode={captureTimecode}
+          onRegisterSeek={registerSeek}
+          onRequestComment={requestComment}
+        />
+      </div>
 
       {/* Version / department picker — always visible, horizontal scroll */}
       <div className="px-4 pb-3 bg-[#080808]">
@@ -1175,7 +1477,14 @@ export default function ReviewClient({
             )}
             <div className={`flex-1 min-h-0 ${cinemaMode ? "" : "p-4 pb-2"}`}>
               <div className={`w-full h-full overflow-hidden bg-black ${cinemaMode ? "" : "rounded-2xl border border-white/[0.06]"}`}>
-                <Player version={selectedVersion} />
+                <VideoStage
+                  active={!isMobile}
+                  version={selectedVersion}
+                  comments={allVisible}
+                  onCaptureTimecode={captureTimecode}
+                  onRegisterSeek={registerSeek}
+                  onRequestComment={requestComment}
+                />
               </div>
             </div>
             {!cinemaMode && (
