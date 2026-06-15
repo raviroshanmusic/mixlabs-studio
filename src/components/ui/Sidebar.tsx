@@ -85,7 +85,7 @@ export default function Sidebar({
         })}
 
         {/* Centre FAB */}
-        <a href="/project" className="flex flex-col items-center gap-1 px-2 -mt-4">
+        <a href="/dashboard?new=1" className="flex flex-col items-center gap-1 px-2 -mt-4">
           <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center
                            shadow-[0_0_28px_rgba(255,255,255,0.2)] transition-all active:scale-95">
             <Plus size={20} strokeWidth={2.5} className="text-black" />
@@ -148,7 +148,7 @@ export default function Sidebar({
 
       {/* ── New project button ── */}
       <div className="px-3 mb-3 shrink-0">
-        <a href="/project"
+        <a href="/dashboard?new=1"
           className="flex items-center rounded-xl transition-all duration-200 overflow-hidden group
                      border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.04]"
           style={{ padding: "8px 0" }}>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
 import {
   Plus, Search, Volume2, Music, Palette, Scissors, Wand2, Zap,
@@ -235,6 +235,18 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const [filter, setFilter] = useState<StatusTab>("All");
   const [search, setSearch] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
+
+  // Sidebar "New Project" / mobile FAB deep-link here via /dashboard?new=1.
+  // Open the modal and strip the param so a refresh doesn't reopen it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("new") === "1") {
+      setShowNewProject(true);
+      params.delete("new");
+      const qs = params.toString();
+      window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, []);
 
   const { theme } = useTheme();
   const isLight = theme === "light";
