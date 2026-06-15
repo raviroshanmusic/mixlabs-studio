@@ -164,7 +164,7 @@ function Toggle({ on, onClick, disabled }: { on: boolean; onClick: () => void; d
   return (
     <button type="button" onClick={onClick} disabled={disabled}
       className={`relative w-9 h-5 rounded-full transition-colors shrink-0 disabled:opacity-40 ${on ? "bg-white/80" : "bg-white/10"}`}>
-      <span className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${on ? "left-[18px] bg-black" : "left-0.5 bg-white/60"}`}/>
+      <span className={`absolute top-0.5 w-4 h-4 rounded-full transition-all ${on ? "left-[18px] ml-toggle-knob-on" : "left-0.5 bg-white/60"}`}/>
     </button>
   );
 }

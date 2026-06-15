@@ -195,6 +195,97 @@ html.light nav.fixed {
 html.light video,
 html.light .video-player-black { background-color: #000000 !important; }
 
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT MODE — gap fixes (every opacity/surface actually used in the app)
+   Without these, any token not listed in the blocks above stays white-on-
+   white in light mode (invisible content + no negative-switch).
+═══════════════════════════════════════════════════════════════════ */
+
+/* ── Text — missing opacities ── */
+html.light .text-white\/14          { color: rgba(0,0,0,0.42) !important; }
+html.light .text-white\/16          { color: rgba(0,0,0,0.45) !important; }
+html.light .text-white\/24          { color: rgba(0,0,0,0.51) !important; }
+html.light .text-white\/32          { color: rgba(0,0,0,0.56) !important; }
+html.light .text-white\/38          { color: rgba(0,0,0,0.59) !important; }
+html.light .text-white\/48          { color: rgba(0,0,0,0.66) !important; }
+html.light .text-white\/52          { color: rgba(0,0,0,0.68) !important; }
+html.light .text-white\/58          { color: rgba(0,0,0,0.70) !important; }
+html.light .text-white\/62          { color: rgba(0,0,0,0.73) !important; }
+html.light .text-white\/65          { color: rgba(0,0,0,0.74) !important; }
+html.light .text-white\/85          { color: rgba(0,0,0,0.90) !important; }
+html.light .text-white\/92          { color: rgba(0,0,0,0.93) !important; }
+html.light .text-white\/\[0\.06\]   { color: rgba(0,0,0,0.34) !important; }
+
+/* ── Borders — missing opacities ── */
+html.light .border-white\/6         { border-color: rgba(0,0,0,0.15) !important; }
+html.light .border-white\/18        { border-color: rgba(0,0,0,0.215) !important; }
+html.light .border-white\/22        { border-color: rgba(0,0,0,0.23) !important; }
+html.light .border-white\/45        { border-color: rgba(0,0,0,0.32) !important; }
+html.light .border-white\/\[0\.15\] { border-color: rgba(0,0,0,0.20) !important; }
+
+/* ── White-opacity backgrounds — missing subtle surfaces ── */
+html.light .bg-white\/3             { background-color: rgba(0,0,0,0.03) !important; }
+html.light .bg-white\/4             { background-color: rgba(0,0,0,0.035) !important; }
+html.light .bg-white\/6             { background-color: rgba(0,0,0,0.05) !important; }
+html.light .bg-white\/12            { background-color: rgba(0,0,0,0.08) !important; }
+html.light .bg-white\/15            { background-color: rgba(0,0,0,0.09) !important; }
+html.light .bg-white\/\[0\.02\]     { background-color: rgba(0,0,0,0.025) !important; }
+
+/* ── White-opacity backgrounds — accent fills / dots / dividers / toggle ──
+   These are solid marks (progress fills, status dots, grip lines, toggle
+   track). Map to dark-on-light so they stay visible. ── */
+html.light .bg-white\/25            { background-color: rgba(0,0,0,0.20) !important; }
+html.light .bg-white\/30            { background-color: rgba(0,0,0,0.24) !important; }
+html.light .bg-white\/40            { background-color: rgba(0,0,0,0.34) !important; }
+html.light .bg-white\/60            { background-color: rgba(0,0,0,0.50) !important; }
+html.light .bg-white\/80            { background-color: rgba(0,0,0,0.78) !important; }
+
+/* ── Dark hex surfaces — missing values map to the light surface vars ── */
+html.light .bg-\[\#070707\]         { background-color: var(--bg-sidebar)   !important; }
+html.light .bg-\[\#0b0b0b\]         { background-color: var(--bg-app)       !important; }
+html.light .bg-\[\#0c0c0d\]         { background-color: var(--bg-footer)    !important; }
+html.light .bg-\[\#0d0d0d\]         { background-color: var(--bg-app)       !important; }
+html.light .bg-\[\#0f0f0f\]         { background-color: var(--bg-surface)   !important; }
+html.light .bg-\[\#161616\]         { background-color: var(--bg-surface-2) !important; }
+
+/* ── Placeholders — missing opacities ── */
+html.light .placeholder-white\/15::placeholder { color: rgba(0,0,0,0.31) !important; }
+html.light .placeholder-white\/16::placeholder { color: rgba(0,0,0,0.32) !important; }
+html.light .placeholder-white\/18::placeholder { color: rgba(0,0,0,0.33) !important; }
+html.light .placeholder-white\/25::placeholder { color: rgba(0,0,0,0.38) !important; }
+
+/* ── Ring / shadow whites ── */
+html.light .ring-white\/10          { --tw-ring-color: rgba(0,0,0,0.15) !important; }
+html.light .shadow-white\/5         { --tw-shadow-color: rgba(0,0,0,0.06) !important; }
+html.light .shadow-white\/8         { --tw-shadow-color: rgba(0,0,0,0.08) !important; }
+
+/* ── Hover backgrounds — keep hover feedback visible (dark-on-light) ── */
+html.light .hover\:bg-white\/3:hover         { background-color: rgba(0,0,0,0.03) !important; }
+html.light .hover\:bg-white\/5:hover         { background-color: rgba(0,0,0,0.05) !important; }
+html.light .hover\:bg-white\/8:hover         { background-color: rgba(0,0,0,0.06) !important; }
+html.light .hover\:bg-white\/10:hover        { background-color: rgba(0,0,0,0.08) !important; }
+html.light .hover\:bg-white\/\[0\.02\]:hover { background-color: rgba(0,0,0,0.025) !important; }
+html.light .hover\:bg-white\/\[0\.025\]:hover{ background-color: rgba(0,0,0,0.03) !important; }
+html.light .hover\:bg-white\/\[0\.03\]:hover { background-color: rgba(0,0,0,0.035) !important; }
+html.light .hover\:bg-white\/\[0\.04\]:hover { background-color: rgba(0,0,0,0.04) !important; }
+html.light .hover\:bg-white\/\[0\.06\]:hover { background-color: rgba(0,0,0,0.05) !important; }
+
+/* ── Negative switch: solid white primary buttons → dark in light mode ──
+   Scoped to elements that are BOTH bg-white AND text-black (the primary
+   CTAs), so accent badges that use text-black on a colored bg are untouched. */
+html.light .bg-white.text-black {
+  background-color: #141414 !important;
+  color: #ffffff !important;
+}
+html.light .bg-white.text-black:hover,
+html.light .bg-white.text-black.hover\:bg-white\/90:hover {
+  background-color: #000000 !important;
+}
+
+/* ── Toggle ON knob — black on white track (dark), white on dark track (light) ── */
+.ml-toggle-knob-on            { background-color: #000000; }
+html.light .ml-toggle-knob-on { background-color: #ffffff !important; }
+
 /* ── Sidebar responsive ── */
 .sidebar-desktop { display: none; }
 .sidebar-mobile  { display: flex; }
