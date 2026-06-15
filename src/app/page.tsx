@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
   useScroll, useTransform, useSpring,
   motion, AnimatePresence,
@@ -225,7 +225,7 @@ function Nav() {
 
       <div className="flex items-center gap-8">
         <div className="hidden md:flex items-center gap-8 text-[10px] tracking-[0.22em] uppercase text-white/28 font-light">
-          {["Features", "Review", "Studio"].map(label => (
+          {["Tour", "Features", "Review"].map(label => (
             <motion.a key={label} href={`#${label.toLowerCase()}`}
               className="hover:text-white/60 transition-colors duration-300 cursor-pointer">
               {label}
@@ -304,7 +304,7 @@ function ReviewMockup() {
           <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
         </div>
-        <span className="text-[10px] text-white/22 tracking-wider font-light">Chandralekha — Score v3</span>
+        <span className="text-[10px] text-white/22 tracking-wider font-light">Harbor Lights — Score v3</span>
         <span className="font-mono text-[10px] text-white/18">{tcStr}</span>
       </div>
 
@@ -322,7 +322,7 @@ function ReviewMockup() {
               <span className="text-white/22 text-[10px] font-mono tracking-widest">{tcStr}</span>
             </div>
             <div className="absolute bottom-6 inset-x-0 text-center">
-              <span className="text-white/55 text-[10px] tracking-wide" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>— नेपाल को लागि —</span>
+              <span className="text-white/55 text-[10px] tracking-wide" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>— Reel 02 · Scene 14 —</span>
             </div>
           </div>
           {/* Playbar */}
@@ -395,9 +395,9 @@ function ReviewMockup() {
 
 function DashboardMockup() {
   const projects = [
-    { name: "Chandralekha", client: "Himalayan Films", status: "in review", color: "bg-amber-400/70" },
-    { name: "Midnight Raga", client: "Sundance Lab", status: "active", color: "bg-emerald-400/70" },
-    { name: "The Bridge", client: "Netflix India", status: "delivered", color: "bg-blue-400/70" },
+    { name: "Harbor Lights", client: "Cedar Lane Pictures", status: "in review", color: "bg-amber-400/70" },
+    { name: "Midnight Mile", client: "Riverstone Media", status: "active", color: "bg-emerald-400/70" },
+    { name: "Echo Park", client: "Apex Studios", status: "delivered", color: "bg-blue-400/70" },
   ];
   return (
     <div className="w-full bg-[#080808] border border-white/[0.09] rounded-2xl overflow-hidden shadow-2xl shadow-black/80">
@@ -410,7 +410,7 @@ function DashboardMockup() {
         <div className="flex items-start justify-between mb-5">
           <div>
             <p className="text-[9px] text-white/25 tracking-widest uppercase font-light mb-1">Good afternoon</p>
-            <p className="text-white/65 font-light text-sm">Ravi Roshan</p>
+            <p className="text-white/65 font-light text-sm">Marcus Bennett</p>
           </div>
           <div className="flex gap-4">
             {[{ v: "3", l: "Active" }, { v: "1", l: "Review" }, { v: "1", l: "Done" }].map(s => (
@@ -423,7 +423,7 @@ function DashboardMockup() {
         </div>
         <div className="flex items-center gap-2 border border-amber-500/15 bg-amber-500/[0.05] rounded-xl px-3 py-2 mb-4">
           <div className="w-1.5 h-1.5 rounded-full bg-amber-400/70 shrink-0" />
-          <span className="text-[9px] text-amber-300/60 font-light">Chandralekha awaiting review</span>
+          <span className="text-[9px] text-amber-300/60 font-light">Harbor Lights awaiting review</span>
           <span className="ml-auto text-[8px] text-amber-400/40 border border-amber-500/15 px-1.5 py-0.5 rounded-md">Open →</span>
         </div>
         <div className="space-y-1.5">
@@ -461,9 +461,9 @@ function WorkspaceMockup() {
     { name: "Edit_Cut_v7.xml", dept: "Edit", status: "approved" },
   ];
   const members = [
-    { name: "Ravi Roshan", role: "Owner", color: "bg-violet-500/30 text-violet-200" },
-    { name: "Arjun M.", role: "Editor", color: "bg-blue-500/30 text-blue-200" },
-    { name: "Director", role: "Viewer", color: "bg-amber-500/30 text-amber-200" },
+    { name: "Marcus Bennett", role: "Owner", color: "bg-violet-500/30 text-violet-200" },
+    { name: "James Carter", role: "Editor", color: "bg-blue-500/30 text-blue-200" },
+    { name: "Olivia Reed", role: "Viewer", color: "bg-amber-500/30 text-amber-200" },
   ];
   const statusCls: Record<string, string> = {
     approved: "text-emerald-400/70 border-emerald-500/20",
@@ -478,8 +478,8 @@ function WorkspaceMockup() {
         <div className="text-[9px] text-emerald-400/50 font-mono">● Live</div>
       </div>
       <div className="px-5 pt-4 pb-3 border-b border-white/[0.05]">
-        <p className="text-white/60 font-light text-sm mb-0.5">Chandralekha</p>
-        <p className="text-white/25 text-[10px] font-light">Himalayan Films</p>
+        <p className="text-white/60 font-light text-sm mb-0.5">Harbor Lights</p>
+        <p className="text-white/25 text-[10px] font-light">Cedar Lane Pictures</p>
         <div className="flex gap-1 mt-3">
           {["Files & Versions", "Team"].map((t, i) => (
             <button key={t} onClick={() => setTab(i)}
@@ -549,6 +549,174 @@ function WorkspaceMockup() {
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PRODUCT TOUR — pinned, scroll-driven product walkthrough (the centerpiece)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TOUR_STEPS = [
+  {
+    n: "01",
+    label: "Dashboard",
+    title: "Your whole slate, at a glance.",
+    desc: "The moment you sign in, every project is laid out by status. No hunting through folders or chat threads.",
+    points: [
+      "Active, in-review and delivered counts at the top",
+      "A pinned alert jumps you straight into anything awaiting review",
+      "Color-coded status on every project card",
+    ],
+    Mockup: DashboardMockup,
+  },
+  {
+    n: "02",
+    label: "Project Workspace",
+    title: "Every department, one room.",
+    desc: "Open a project and the whole post-production pipeline lives in one place. Files are versioned, the team is listed, nothing drifts out of sync.",
+    points: [
+      "Score, Sound, Edit, Color and VFX each get their own lane",
+      "Files are versioned and tagged Draft → In Review → Approved",
+      "Switch to the Team tab to see roles and who's online",
+    ],
+    Mockup: WorkspaceMockup,
+  },
+  {
+    n: "03",
+    label: "Review Room",
+    title: "Feedback at the exact frame.",
+    desc: "Play the cut, drop a note on the precise timecode, and watch it resolve. This is where directors and composers actually meet.",
+    points: [
+      "Notes are anchored to an exact HH:MM:SS timecode",
+      "Each comment is open or resolved — a progress bar tracks the rest",
+      "Comments stream in live as the team reviews together",
+    ],
+    Mockup: ReviewMockup,
+  },
+];
+
+function ProductTour() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end end"] });
+  const [step, setStep] = useState(0);
+
+  useEffect(() => scrollYProgress.on("change", v => {
+    const i = v >= 0.66 ? 2 : v >= 0.33 ? 1 : 0;
+    setStep(prev => (prev === i ? prev : i));
+  }), [scrollYProgress]);
+
+  const goTo = (i: number) => {
+    const el = ref.current;
+    if (!el) return;
+    const scrollable = el.offsetHeight - window.innerHeight;
+    // Aim for the middle of each step's band so it lands cleanly.
+    const target = el.offsetTop + scrollable * ((i + 0.5) / TOUR_STEPS.length);
+    window.scrollTo({ top: target, behavior: "smooth" });
+  };
+
+  const active = TOUR_STEPS[step];
+  const ActiveMockup = active.Mockup;
+
+  return (
+    <section id="tour" ref={ref} className="relative" style={{ height: "320vh" }}>
+      <div className="sticky top-0 h-screen flex flex-col justify-center overflow-hidden">
+        {/* ambient glow follows step */}
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-end pr-[10%]">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2 }}
+            className="w-[680px] h-[680px] rounded-full"
+            style={{ background: "radial-gradient(circle, rgba(255,255,255,0.035) 0%, transparent 60%)" }}
+          />
+        </div>
+
+        <div className="relative w-full max-w-[1400px] mx-auto px-8 md:px-20">
+          <div className="flex items-center gap-4 mb-10">
+            <span className="text-[10px] font-mono text-white/20">00</span>
+            <div className="w-10 h-px bg-white/15" />
+            <span className="text-[9px] tracking-[0.35em] uppercase text-white/25 font-light">A Guided Walkthrough</span>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-14 items-center">
+            {/* Left — narrative */}
+            <div className="flex flex-col">
+              {/* Step rail */}
+              <div className="flex flex-col gap-1.5 mb-10">
+                {TOUR_STEPS.map((s, i) => {
+                  const isActive = i === step;
+                  return (
+                    <button key={s.n} onClick={() => goTo(i)}
+                      className="group flex items-center gap-4 text-left py-1">
+                      <span className={`text-[10px] font-mono transition-colors duration-300 ${isActive ? "text-white/70" : "text-white/20 group-hover:text-white/40"}`}>{s.n}</span>
+                      <div className="relative h-px flex-1 max-w-[120px] bg-white/[0.08] overflow-hidden">
+                        <motion.div
+                          className="absolute inset-y-0 left-0 bg-white/60"
+                          initial={false}
+                          animate={{ width: isActive ? "100%" : "0%" }}
+                          transition={{ duration: 0.5, ease: EASE_OUT }}
+                        />
+                      </div>
+                      <span className={`text-[9px] tracking-[0.25em] uppercase font-light transition-colors duration-300 ${isActive ? "text-white/70" : "text-white/22 group-hover:text-white/40"}`}>{s.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div key={step}
+                  initial={{ opacity: 0, y: 18, filter: "blur(6px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -12, filter: "blur(6px)" }}
+                  transition={{ duration: 0.5, ease: EASE_OUT }}>
+                  <h2 className="text-[clamp(34px,4vw,58px)] font-light leading-[0.92] tracking-[-0.025em] text-white/85 mb-5">
+                    {active.title}
+                  </h2>
+                  <p className="text-white/38 text-sm leading-relaxed max-w-sm font-light mb-7">
+                    {active.desc}
+                  </p>
+                  <div className="space-y-3">
+                    {active.points.map((pt, i) => (
+                      <motion.div key={pt}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.15 + i * 0.08, duration: 0.5, ease: EASE }}
+                        className="flex items-start gap-3">
+                        <span className="mt-[7px] w-1 h-1 rounded-full bg-white/40 shrink-0" />
+                        <p className="text-white/45 text-[13px] leading-relaxed font-light">{pt}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Right — live mockup cross-fade */}
+            <div className="relative w-full lg:max-w-[520px] lg:ml-auto">
+              <AnimatePresence mode="wait">
+                <motion.div key={step}
+                  initial={{ opacity: 0, scale: 0.96, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, scale: 0.98, filter: "blur(8px)" }}
+                  transition={{ duration: 0.55, ease: EASE_OUT }}>
+                  <ActiveMockup />
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          {/* scroll hint */}
+          <motion.div
+            animate={{ opacity: step === TOUR_STEPS.length - 1 ? 0 : 0.5 }}
+            transition={{ duration: 0.4 }}
+            className="hidden lg:flex items-center gap-2 mt-12 text-[9px] tracking-[0.3em] uppercase text-white/30 font-light">
+            <span>Keep scrolling</span>
+            <span className="text-white/20">↓</span>
+          </motion.div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -632,7 +800,7 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.3 }}
               className="flex items-center gap-3 mb-10">
               <div className="h-px w-8 bg-white/20" />
-              <span className="text-[9px] tracking-[0.48em] uppercase text-white/28 font-light">Studio OS · 2025</span>
+              <span className="text-[9px] tracking-[0.48em] uppercase text-white/28 font-light">Studio OS · 2026</span>
             </motion.div>
 
             {/* Staggered title lines */}
@@ -664,7 +832,7 @@ export default function HomePage() {
                 Login / Sign Up
                 <span className="text-black/50 group-hover:translate-x-0.5 transition-transform duration-300">→</span>
               </a>
-              <a href="#features"
+              <a href="#tour"
                 className="group flex items-center gap-2 text-sm font-light text-white/38 hover:text-white/65 transition-colors duration-300">
                 See how it works
                 <span className="text-white/20 group-hover:text-white/40 group-hover:translate-x-0.5 transition-all duration-300">↓</span>
@@ -698,46 +866,27 @@ export default function HomePage() {
       {/* Marquee */}
       <Marquee />
 
-      {/* ════════════════════════════════════════ APP IN MOTION ═════════════════ */}
+      {/* ════════════════════════════════════════ WHAT IS MIXLABS ═══════════════ */}
       <section className="px-8 md:px-20 py-32 max-w-[1400px] mx-auto">
-        <SectionLabel n="01">The App, In Motion</SectionLabel>
-
-        <div className="grid md:grid-cols-2 gap-10 items-center mb-20">
-          <Parallax speed={0.07}>
-            <FadeIn>
-              <h2 className="text-[clamp(34px,4vw,58px)] font-light leading-[0.9] tracking-[-0.025em] text-white/85 mb-5">
-                Not a prototype.<br />The real thing.
-              </h2>
-              <p className="text-white/35 text-sm leading-relaxed max-w-xs font-light">
-                Every mockup on this page is animated live in your browser. The comments appear, the timecode runs, files get uploaded. This is the actual interface.
-              </p>
-            </FadeIn>
-          </Parallax>
-          <FadeIn delay={0.15}>
-            <DashboardMockup />
+        <div className="grid md:grid-cols-12 gap-10 items-start">
+          <FadeIn className="md:col-span-5">
+            <h2 className="text-[clamp(32px,3.8vw,56px)] font-light leading-[0.95] tracking-[-0.025em] text-white/85">
+              One home for<br />the entire cut.
+            </h2>
           </FadeIn>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-10 items-center">
-          <FadeIn>
-            <WorkspaceMockup />
+          <FadeIn delay={0.15} className="md:col-span-7 md:pt-3">
+            <p className="text-white/45 text-lg md:text-xl leading-relaxed font-light max-w-xl">
+              MixLabs is the workspace where a film&apos;s post-production actually happens — from first ingest to final delivery. Editors, composers, sound designers, colorists and clients all work the same project, see the same versions, and leave feedback on the same frame.
+            </p>
+            <p className="text-white/30 text-sm leading-relaxed font-light max-w-lg mt-6">
+              No scattered file links. No screenshots in chat. No &quot;which version was that?&quot; Just one cinematic room for the whole team.
+            </p>
           </FadeIn>
-          <Parallax speed={0.07}>
-            <FadeIn delay={0.15} className="md:pl-6">
-              <h2 className="text-[clamp(34px,4vw,58px)] font-light leading-[0.9] tracking-[-0.025em] text-white/85 mb-5">
-                One workspace,<br />every department.
-              </h2>
-              <p className="text-white/35 text-sm leading-relaxed max-w-xs font-light">
-                Score. Sound. Edit. Color. VFX. Each team gets their own space, the project stays whole. Files versioned, approvals tracked.
-              </p>
-              <a href="/login" className="group inline-flex items-center gap-2 mt-8 text-sm font-light text-white/40 hover:text-white/70 transition-colors duration-300">
-                Open a project
-                <span className="group-hover:translate-x-0.5 transition-transform duration-300">→</span>
-              </a>
-            </FadeIn>
-          </Parallax>
         </div>
       </section>
+
+      {/* ════════════════════════════════════════ PRODUCT TOUR ══════════════════ */}
+      <ProductTour />
 
       <Divider />
 
@@ -807,7 +956,7 @@ export default function HomePage() {
             desc="Invite clients as viewers, collaborators as editors. Each member sees exactly what they need."
             visual={
               <div className="w-full h-full flex flex-col justify-center px-6 gap-3">
-                {[{ n:"Director", r:"Viewer", c:"bg-amber-500/25 text-amber-200" },{ n:"Ravi R.", r:"Owner", c:"bg-violet-500/25 text-violet-200" },{ n:"Arjun M.", r:"Editor", c:"bg-blue-500/25 text-blue-200" },{ n:"Sara L.", r:"Viewer", c:"bg-rose-500/25 text-rose-200" }].map((m, i) => (
+                {[{ n:"Olivia Reed", r:"Viewer", c:"bg-amber-500/25 text-amber-200" },{ n:"Marcus Bennett", r:"Owner", c:"bg-violet-500/25 text-violet-200" },{ n:"James Carter", r:"Editor", c:"bg-blue-500/25 text-blue-200" },{ n:"Sara Lewis", r:"Viewer", c:"bg-rose-500/25 text-rose-200" }].map((m, i) => (
                   <motion.div key={m.n} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.1 + 0.3, duration: 0.6, ease: EASE }} viewport={{ once: true }}
                     className="flex items-center gap-2.5">
