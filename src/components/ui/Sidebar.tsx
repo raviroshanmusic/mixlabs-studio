@@ -145,7 +145,7 @@ export default function Sidebar({
     >
 
       {/* ── Logo ── */}
-      <div className="flex items-center h-16 px-3 shrink-0">
+      <a href="/dashboard" aria-label="Go to dashboard" className="flex items-center h-16 px-3 shrink-0 hover:opacity-80 transition-opacity">
         {/* Logo bare — 32px wide, centered in 56px collapsed rail */}
         <span className="shrink-0 flex items-center justify-center w-8" style={{ color: "var(--text-1)" }}>
           <MixLabsLogo size={32} />
@@ -155,7 +155,7 @@ export default function Sidebar({
           <p className="text-[13px] font-semibold leading-tight tracking-wide" style={{ color: "var(--text-1)" }}>MixLabs</p>
           <p className="text-[9px] leading-tight tracking-[0.25em] uppercase" style={{ color: "var(--text-3)" }}>Workspace</p>
         </div>
-      </div>
+      </a>
 
       {/* ── New project button — staff only ── */}
       {isStaff && (
