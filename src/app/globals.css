@@ -195,6 +195,28 @@ html.light nav.fixed {
 html.light video,
 html.light .video-player-black { background-color: #000000 !important; }
 
+/* ── Review room: the player stage is an always-dark "theater" in both
+   themes (like Frame.io / YouTube). Its overlay chrome — control bar,
+   play button, scrubber, timecodes, speed menu — sits over dark video,
+   so re-assert white-on-dark here to cancel the global light inversion.
+   Two-class specificity beats the single-class !important overrides. ── */
+html.light .review-stage { background-color: #000 !important; }
+html.light .review-stage .text-white\/90 { color: rgba(255,255,255,0.90) !important; }
+html.light .review-stage .text-white\/80 { color: rgba(255,255,255,0.80) !important; }
+html.light .review-stage .text-white\/70 { color: rgba(255,255,255,0.70) !important; }
+html.light .review-stage .text-white\/65 { color: rgba(255,255,255,0.65) !important; }
+html.light .review-stage .text-white\/55 { color: rgba(255,255,255,0.55) !important; }
+html.light .review-stage .text-white\/30 { color: rgba(255,255,255,0.30) !important; }
+html.light .review-stage .hover\:text-white:hover { color: #fff !important; }
+html.light .review-stage .bg-white\/25 { background-color: rgba(255,255,255,0.25) !important; }
+html.light .review-stage .bg-white\/15 { background-color: rgba(255,255,255,0.15) !important; }
+html.light .review-stage .hover\:bg-white\/10:hover { background-color: rgba(255,255,255,0.10) !important; }
+html.light .review-stage .hover\:bg-white\/8:hover  { background-color: rgba(255,255,255,0.08) !important; }
+html.light .review-stage .bg-white { background-color: #fff !important; }
+html.light .review-stage .border-white\/15 { border-color: rgba(255,255,255,0.15) !important; }
+html.light .review-stage .border-white\/12 { border-color: rgba(255,255,255,0.12) !important; }
+html.light .review-stage .bg-\[\#161616\] { background-color: #161616 !important; }
+
 /* ═══════════════════════════════════════════════════════════════════
    LIGHT MODE — gap fixes (every opacity/surface actually used in the app)
    Without these, any token not listed in the blocks above stays white-on-

@@ -718,7 +718,7 @@ function VideoStage({
 
   return (
     <div ref={wrapRef}
-      className="relative w-full h-full bg-black overflow-hidden select-none group/stage"
+      className="review-stage relative w-full h-full bg-black overflow-hidden select-none group/stage"
       onMouseMove={poke} onMouseLeave={() => playing && setUiVisible(false)}>
 
       <video ref={videoRef} key={version.id} src={src ?? undefined}
