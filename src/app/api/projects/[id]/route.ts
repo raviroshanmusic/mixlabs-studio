@@ -17,6 +17,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (typeof body.status === "string") updates.status = body.status;
   if (Array.isArray(body.departments)) updates.departments = body.departments;
+  if (body.logline === null || typeof body.logline === "string") {
+    updates.logline = typeof body.logline === "string" ? body.logline.trim() || null : null;
+  }
+  if (body.synopsis === null || typeof body.synopsis === "string") {
+    updates.synopsis = typeof body.synopsis === "string" ? body.synopsis.trim() || null : null;
+  }
+  if (body.brief && typeof body.brief === "object" && !Array.isArray(body.brief)) {
+    updates.brief = body.brief;
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

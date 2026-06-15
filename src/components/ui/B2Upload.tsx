@@ -4,10 +4,30 @@ import { Upload, X, CheckCircle2, AlertCircle, Film } from "lucide-react";
 
 type Props = {
   projectId: string;
-  onUploaded: (fileKey: string, filename: string) => void;
+  onUploaded: (fileKey: string, filename: string, fileSize: number) => void;
+  // Optional overrides so the same uploader works for media (versions) and for
+  // reference documents (scripts, mood boards, EDLs, ...).
+  accept?: string;                       // <input accept="..."> value
+  folder?: string;                       // B2 sub-folder, e.g. "docs"
+  hint?: string;                         // small caption under the prompt
+  icon?: React.ReactNode;                // glyph in the drop zone
+  validate?: (file: File) => string | null; // return an error string or null
 };
 
-export default function B2Upload({ projectId, onUploaded }: Props) {
+const defaultValidate = (file: File): string | null =>
+  file.type.startsWith("video/") || file.type.startsWith("audio/")
+    ? null
+    : "Only video and audio files are supported";
+
+export default function B2Upload({
+  projectId,
+  onUploaded,
+  accept = "video/*,audio/*",
+  folder,
+  hint = "Video or audio · any size",
+  icon,
+  validate = defaultValidate,
+}: Props) {
   const [dragging, setDragging]   = useState(false);
   const [progress, setProgress]   = useState<number | null>(null);
   const [error, setError]         = useState<string | null>(null);
@@ -23,37 +43,46 @@ export default function B2Upload({ projectId, onUploaded }: Props) {
     const res = await fetch("/api/upload/presign", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ filename: file.name, contentType: file.type, projectId }),
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type || "application/octet-stream",
+        projectId,
+        folder,
+      }),
     });
-    if (!res.ok) { setError("Failed to get upload URL"); setProgress(null); return; }
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error || "Failed to get upload URL");
+      setProgress(null);
+      return;
+    }
     const { uploadUrl, fileKey } = await res.json();
 
     // 2. Upload directly to B2 via XHR (so we get progress events)
+    let failed = false;
     await new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("PUT", uploadUrl);
-      xhr.setRequestHeader("Content-Type", file.type);
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
       xhr.upload.onprogress = e => {
         if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
       };
       xhr.onload  = () => xhr.status < 300 ? resolve() : reject(new Error(`Upload failed: ${xhr.status}`));
       xhr.onerror = () => reject(new Error("Network error"));
       xhr.send(file);
-    }).catch(e => { setError(e.message); setProgress(null); return; });
+    }).catch(e => { failed = true; setError(e.message); setProgress(null); });
 
-    if (error) return;
+    if (failed) return;
     setProgress(100);
     setDone(true);
-    onUploaded(fileKey, file.name);
+    onUploaded(fileKey, file.name, file.size);
   }
 
   function handleFiles(files: FileList | null) {
     if (!files?.length) return;
     const file = files[0];
-    if (!file.type.startsWith("video/") && !file.type.startsWith("audio/")) {
-      setError("Only video and audio files are supported");
-      return;
-    }
+    const err = validate(file);
+    if (err) { setError(err); return; }
     upload(file);
   }
 
@@ -67,7 +96,7 @@ export default function B2Upload({ projectId, onUploaded }: Props) {
         dragging ? "border-white/30 bg-white/5" : "border-white/10 hover:border-white/20 hover:bg-white/[0.02]"
       } ${progress !== null ? "cursor-default pointer-events-none" : ""}`}>
 
-      <input ref={inputRef} type="file" accept="video/*,audio/*" className="hidden"
+      <input ref={inputRef} type="file" accept={accept} className="hidden"
         onChange={e => handleFiles(e.target.files)} />
 
       {done ? (
@@ -78,7 +107,7 @@ export default function B2Upload({ projectId, onUploaded }: Props) {
       ) : error ? (
         <>
           <AlertCircle size={28} className="text-rose-400" />
-          <p className="text-rose-300 text-sm">{error}</p>
+          <p className="text-rose-300 text-sm text-center">{error}</p>
           <button onClick={e => { e.stopPropagation(); setError(null); }}
             className="text-white/40 hover:text-white/70 text-xs underline">Try again</button>
         </>
@@ -91,12 +120,12 @@ export default function B2Upload({ projectId, onUploaded }: Props) {
         </>
       ) : (
         <>
-          <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
-            <Film size={22} className="text-white/30" />
+          <div className="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/30">
+            {icon ?? <Film size={22} />}
           </div>
           <div className="text-center">
             <p className="text-white/60 text-sm font-medium">Drop file or tap to browse</p>
-            <p className="text-white/25 text-xs mt-1">Video or audio · any size</p>
+            <p className="text-white/25 text-xs mt-1">{hint}</p>
           </div>
           <div className="flex items-center gap-1.5 text-white/20 text-[10px]">
             <Upload size={10} />

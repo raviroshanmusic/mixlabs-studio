@@ -52,13 +52,20 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .eq("project_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: documents } = await supabase
+    .from("project_documents")
+    .select("*")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
+
   return (
     <ProjectClient
-      project={{ ...project, departments: project.departments ?? [], owner_id: project.owner_id }}
+      project={{ ...project, departments: project.departments ?? [], owner_id: project.owner_id, brief: project.brief ?? {} }}
       versions={versions ?? []}
       members={members ?? []}
       milestones={milestones ?? []}
       deliveries={deliveries ?? []}
+      documents={documents ?? []}
       currentUserId={user.id}
     />
   );

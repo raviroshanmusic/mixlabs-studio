@@ -49,8 +49,24 @@ export async function GET(req: NextRequest) {
   }
 
   const resHeaders = new Headers();
-  resHeaders.set("Content-Type", b2Res.headers.get("Content-Type") ?? "video/mp4");
+  const contentType = b2Res.headers.get("Content-Type") ?? "video/mp4";
+  resHeaders.set("Content-Type", contentType);
   resHeaders.set("Accept-Ranges", "bytes");
+
+  // Defence in depth for the document library: only audio/video/images/PDFs are
+  // safe to render inline. Anything else (and any explicit ?download=1) is forced
+  // to download with nosniff, so an uploaded .html/.svg can never execute in our
+  // origin even if it slipped past the upload allowlist.
+  resHeaders.set("X-Content-Type-Options", "nosniff");
+  const inlineSafe =
+    /^(audio|video)\//.test(contentType) ||
+    (contentType.startsWith("image/") && contentType !== "image/svg+xml") ||
+    contentType === "application/pdf";
+  const forceDownload = req.nextUrl.searchParams.get("download") === "1";
+  if (!inlineSafe || forceDownload) {
+    const name = (key.split("/").pop() ?? "file").replace(/"/g, "");
+    resHeaders.set("Content-Disposition", `attachment; filename="${name}"`);
+  }
   // B2 keys are content-addressed (avatars/{id}/{ts}.ext, immutable version objects),
   // so a given URL never changes bytes. Cache hard in the browser to stop re-downloading
   // the same media from B2 on every replay/seek - the main driver of the daily bandwidth cap.
