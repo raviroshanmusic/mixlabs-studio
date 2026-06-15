@@ -789,20 +789,17 @@ export default function MemberClient({
                                   className="w-full flex items-center gap-3 px-4 py-2.5 transition-all text-left"
                                   style={selected ? { background: p.accent + "10" } : {}}>
                                   {/* Radio dot */}
-                                  <span className="w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all"
-                                    style={selected
-                                      ? { borderColor: p.accent, background: p.accent + "20" }
-                                      : { borderColor: "rgba(255,255,255,0.12)" }}>
+                                  <span className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 transition-all ${selected ? "" : "border-white/15"}`}
+                                    style={selected ? { borderColor: p.accent, background: p.accent + "20" } : {}}>
                                     {selected && <span className="w-1.5 h-1.5 rounded-full" style={{ background: p.accent }}/>}
                                   </span>
                                   {/* Icon */}
-                                  <span className="shrink-0 transition-colors"
-                                    style={{ color: selected ? p.accent : "rgba(255,255,255,0.2)" }}>
+                                  <span className={`shrink-0 transition-colors ${selected ? "" : "text-white/30"}`}
+                                    style={selected ? { color: p.accent } : {}}>
                                     {p.icon}
                                   </span>
                                   {/* Label */}
-                                  <span className="text-[12px] font-light transition-colors flex-1"
-                                    style={{ color: selected ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.38)" }}>
+                                  <span className={`text-[12px] font-light transition-colors flex-1 ${selected ? "text-white/85" : "text-white/45"}`}>
                                     {p.label}
                                   </span>
                                   {selected && (
