@@ -1090,7 +1090,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
         {/* ══ Scrollable Body ══ */}
         {isTimeline ? (
           <div className="flex-1 overflow-hidden px-4 md:px-9 py-4 md:py-6">
-            <Timeline project={project} initialMilestones={milestones}/>
+            <Timeline project={project} initialMilestones={milestones} versions={versions} canEdit={canEdit}/>
           </div>
         ) : (
           <div className="flex-1 flex overflow-hidden">

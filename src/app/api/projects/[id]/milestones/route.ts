@@ -30,13 +30,15 @@ export async function POST(
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const body = await req.json();
-  const { title, department, start_date, end_date, status } = body;
+  const { title, department, start_date, end_date, status, linked_version_id } = body;
 
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });
   if (!start_date || !end_date) return NextResponse.json({ error: "Dates required" }, { status: 400 });
   if (new Date(end_date) < new Date(start_date)) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
   }
+
+  const progress = Math.max(0, Math.min(100, Math.round(Number(body.progress) || 0)));
 
   const { data, error } = await supabase
     .from("project_milestones")
@@ -47,6 +49,8 @@ export async function POST(
       start_date,
       end_date,
       status: status || "planned",
+      progress,
+      linked_version_id: linked_version_id || null,
       created_by: user.id,
     })
     .select()

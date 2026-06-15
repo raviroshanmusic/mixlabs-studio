@@ -11,13 +11,16 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   const body = await req.json();
-  const allowed = ["title", "department", "start_date", "end_date", "status"];
-  const update: Record<string, string | null> = {};
+  const allowed = ["title", "department", "start_date", "end_date", "status", "linked_version_id"];
+  const update: Record<string, string | number | null> = {};
   for (const k of allowed) {
     if (body[k] !== undefined) update[k] = body[k];
   }
+  if (body.progress !== undefined) {
+    update.progress = Math.max(0, Math.min(100, Math.round(Number(body.progress) || 0)));
+  }
 
-  if (update.end_date && update.start_date && new Date(update.end_date) < new Date(update.start_date)) {
+  if (update.end_date && update.start_date && new Date(update.end_date as string) < new Date(update.start_date as string)) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
   }
 
