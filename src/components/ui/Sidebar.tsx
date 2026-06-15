@@ -14,6 +14,8 @@ import {
   Moon,
 } from "lucide-react";
 import { useTheme } from "@/hooks/useTheme";
+import { createClient } from "@/lib/supabase/client";
+import { isStaffEmail } from "@/lib/staff";
 
 /* ─── Nav config ────────────────────────────────────────────────── */
 const NAV = [
@@ -37,6 +39,13 @@ export default function Sidebar({
   const [isMobile, setIsMobile] = useState(false);
   const [mounted,  setMounted]  = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [isStaff,  setIsStaff]  = useState(false);
+
+  // Only MixLabs staff can create projects — hide the create entry points for
+  // everyone else. The API + DB enforce this regardless; this is just UX.
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setIsStaff(isStaffEmail(data.user?.email)));
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -84,14 +93,16 @@ export default function Sidebar({
           );
         })}
 
-        {/* Centre FAB */}
-        <a href="/dashboard?new=1" className="flex flex-col items-center gap-1 px-2 -mt-4">
-          <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center
-                           shadow-[0_0_28px_rgba(255,255,255,0.2)] transition-all active:scale-95">
-            <Plus size={20} strokeWidth={2.5} className="text-black" />
-          </span>
-          <span className="text-[9px] tracking-wider text-white/25">New</span>
-        </a>
+        {/* Centre FAB — staff only */}
+        {isStaff && (
+          <a href="/dashboard?new=1" className="flex flex-col items-center gap-1 px-2 -mt-4">
+            <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center
+                             shadow-[0_0_28px_rgba(255,255,255,0.2)] transition-all active:scale-95">
+              <Plus size={20} strokeWidth={2.5} className="text-black" />
+            </span>
+            <span className="text-[9px] tracking-wider text-white/25">New</span>
+          </a>
+        )}
 
         {/* Last 2 nav items */}
         {NAV.slice(2).map(({ href, label, icon: Icon, key, color }) => {
@@ -146,22 +157,24 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* ── New project button ── */}
-      <div className="px-3 mb-3 shrink-0">
-        <a href="/dashboard?new=1"
-          className="flex items-center rounded-xl transition-all duration-200 overflow-hidden group
-                     border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.04]"
-          style={{ padding: "8px 0" }}>
-          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
-                           text-white/40 group-hover:text-white/70 transition-colors">
-            <Plus size={15} />
-          </span>
-          <span className="overflow-hidden whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
-            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", maxWidth: expanded ? 160 : 0 }}>
-            New Project
-          </span>
-        </a>
-      </div>
+      {/* ── New project button — staff only ── */}
+      {isStaff && (
+        <div className="px-3 mb-3 shrink-0">
+          <a href="/dashboard?new=1"
+            className="flex items-center rounded-xl transition-all duration-200 overflow-hidden group
+                       border border-white/[0.08] hover:border-white/[0.15] hover:bg-white/[0.04]"
+            style={{ padding: "8px 0" }}>
+            <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                             text-white/40 group-hover:text-white/70 transition-colors">
+              <Plus size={15} />
+            </span>
+            <span className="overflow-hidden whitespace-nowrap text-[12px] text-white/40 group-hover:text-white/70 transition-colors"
+              style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", maxWidth: expanded ? 160 : 0 }}>
+              New Project
+            </span>
+          </a>
+        </div>
+      )}
 
       {/* thin rule */}
       <div className="mx-3 mb-2 shrink-0 h-px bg-white/[0.05]" />

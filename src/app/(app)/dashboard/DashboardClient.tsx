@@ -9,6 +9,7 @@ import {
 import Sidebar from "@/components/ui/Sidebar";
 import NewProjectModal from "@/components/ui/NewProjectModal";
 import { useTheme } from "@/hooks/useTheme";
+import { isStaffEmail } from "@/lib/staff";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -236,17 +237,20 @@ export default function DashboardClient({ user, projects, profile, activity, sta
   const [search, setSearch] = useState("");
   const [showNewProject, setShowNewProject] = useState(false);
 
+  // Only MixLabs staff can create projects; clients are invited into existing ones.
+  const isStaff = isStaffEmail(user.email);
+
   // Sidebar "New Project" / mobile FAB deep-link here via /dashboard?new=1.
-  // Open the modal and strip the param so a refresh doesn't reopen it.
+  // Open the modal (staff only) and strip the param so a refresh doesn't reopen it.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("new") === "1") {
-      setShowNewProject(true);
+      if (isStaff) setShowNewProject(true);
       params.delete("new");
       const qs = params.toString();
       window.history.replaceState(null, "", window.location.pathname + (qs ? `?${qs}` : ""));
     }
-  }, []);
+  }, [isStaff]);
 
   const { theme } = useTheme();
   const isLight = theme === "light";
@@ -292,10 +296,12 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                   {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}
                 </p>
               </div>
-              <button onClick={() => setShowNewProject(true)}
-                className="flex items-center gap-2 bg-white text-black text-xs font-medium px-4 md:px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shrink-0">
-                <Plus size={13}/> New Project
-              </button>
+              {isStaff && (
+                <button onClick={() => setShowNewProject(true)}
+                  className="flex items-center gap-2 bg-white text-black text-xs font-medium px-4 md:px-5 py-2.5 rounded-xl hover:bg-white/90 transition-all shrink-0">
+                  <Plus size={13}/> New Project
+                </button>
+              )}
             </div>
 
             {/* Stats row */}
@@ -350,7 +356,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                   <p className="text-white/22 text-sm font-light">No projects match “{search}”</p>
                   <button onClick={() => setSearch("")} className="text-white/30 hover:text-white/60 text-xs font-light transition-colors">Clear search</button>
                 </>
-              ) : (
+              ) : isStaff ? (
                 <>
                   <button onClick={() => setShowNewProject(true)}
                     className="w-14 h-14 rounded-2xl border border-white/10 flex items-center justify-center hover:border-white/20 transition-all group">
@@ -358,6 +364,8 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                   </button>
                   <p className="text-white/22 text-sm font-light">Start your first project</p>
                 </>
+              ) : (
+                <p className="text-white/22 text-sm font-light">No projects yet — you&apos;ll see them here once you&apos;re added to one.</p>
               )}
             </div>
           ) : (
