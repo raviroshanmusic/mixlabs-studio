@@ -438,7 +438,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
             <span className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: meta.bg, color: meta.accent }}>{meta.icon}</span>
             <div>
               <h3 className="text-white/72 text-sm font-light">{activeDept}</h3>
-              <p className="text-white/18 text-[10px] font-light">{files.length} {files.length === 1 ? "file" : "files"}</p>
+              <p className="text-white/18 text-[10px] font-light">{files.length} {files.length === 1 ? "draft" : "drafts"}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -451,7 +451,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
             {canEdit && (
               <button onClick={(e) => { e.stopPropagation(); setAddingFile(p => !p); }}
                 className="flex items-center gap-1.5 text-[10px] text-white/40 hover:text-white/70 border border-white/10 hover:border-white/22 px-3 py-1.5 rounded-lg transition-all font-light">
-                <Plus size={11}/> Add file
+                <Plus size={11}/> Add draft
               </button>
             )}
           </div>
@@ -490,8 +490,8 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
               <span style={{ color: meta.accent }}>{meta.icon}</span>
             </div>
             <div className="text-center">
-              <p className="text-white/28 text-sm font-light">No {activeDept} files yet</p>
-              {canEdit && <p className="text-white/14 text-xs font-light mt-0.5">Add your first file above</p>}
+              <p className="text-white/28 text-sm font-light">No {activeDept} drafts yet</p>
+              {canEdit && <p className="text-white/14 text-xs font-light mt-0.5">Add your first draft above</p>}
             </div>
           </div>
         ) : (
@@ -982,7 +982,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
   }
 
   const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number; accent?: string }[] = [
-    { id: "files",    label: "Files",    icon: <FileText size={12}/>, count: versions.length },
+    { id: "files",    label: "Drafts",   icon: <FileText size={12}/>, count: versions.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
     { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
     { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: members.length },
@@ -1046,7 +1046,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {[
-                { icon: <FileText size={13}/>,   label: "Files",       value: versions.length,   sub: `${project.departments.length} dept${project.departments.length !== 1?"s":""}` },
+                { icon: <FileText size={13}/>,   label: "Drafts",      value: versions.length,   sub: `${project.departments.length} dept${project.departments.length !== 1?"s":""}` },
                 { icon: <Activity size={13}/>,    label: "Milestones",  value: milestones.length > 0 ? `${milestones.filter(m=>m.status==="completed").length}/${milestones.length}` : "—", sub: "done" },
                 { icon: <Users size={13}/>,       label: "Team",        value: members.length,    sub: members.length === 1 ? "member" : "members" },
                 { icon: <TrendingUp size={13}/>,  label: "Progress",    value: milestones.length > 0 ? `${Math.round(milestones.filter(m=>m.status==="completed").length/milestones.length*100)}%` : "—", sub: "" },
