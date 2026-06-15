@@ -53,6 +53,7 @@ html.light {
   html {
     scroll-behavior: smooth;
     height: -webkit-fill-available;
+    overflow-x: hidden;
   }
 
   html, body {

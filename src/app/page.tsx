@@ -767,7 +767,7 @@ export default function HomePage() {
   const heroO = useTransform(heroP, [0, 0.8], [1, 0]);
 
   return (
-    <div className="grain bg-black text-white overflow-x-hidden">
+    <div className="grain bg-black text-white">
       <CursorGlow />
       <ScrollProgress />
       <Nav />
