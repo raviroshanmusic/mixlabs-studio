@@ -46,7 +46,11 @@ export async function GET(req: NextRequest) {
   const resHeaders = new Headers();
   resHeaders.set("Content-Type", b2Res.headers.get("Content-Type") ?? "video/mp4");
   resHeaders.set("Accept-Ranges", "bytes");
-  resHeaders.set("Cache-Control", "private, max-age=300");
+  // B2 keys are content-addressed (avatars/{id}/{ts}.ext, immutable version objects),
+  // so a given URL never changes bytes. Cache hard in the browser to stop re-downloading
+  // the same media from B2 on every replay/seek — the main driver of the daily bandwidth cap.
+  // `private` keeps it per-user (media is auth-gated) and out of any shared/CDN cache.
+  resHeaders.set("Cache-Control", "private, max-age=31536000, immutable");
   const cl = b2Res.headers.get("Content-Length");
   if (cl) resHeaders.set("Content-Length", cl);
   const cr = b2Res.headers.get("Content-Range");
