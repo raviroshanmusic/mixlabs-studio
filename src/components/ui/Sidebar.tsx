@@ -145,7 +145,7 @@ export default function Sidebar({
     >
 
       {/* ── Logo ── */}
-      <a href="/dashboard" aria-label="Go to dashboard" className="flex items-center h-16 px-3 shrink-0 hover:opacity-80 transition-opacity">
+      <a href="/" aria-label="Go to home page" className="flex items-center h-16 px-3 shrink-0 hover:opacity-80 transition-opacity">
         {/* Logo bare — 32px wide, centered in 56px collapsed rail */}
         <span className="shrink-0 flex items-center justify-center w-8" style={{ color: "var(--text-1)" }}>
           <MixLabsLogo size={32} />
