@@ -282,6 +282,21 @@ html.light .bg-white.text-black.hover\:bg-white\/90:hover {
   background-color: #000000 !important;
 }
 
+/* ── Card hover scrim — dark gradient → light in light mode ──
+   DashboardClient project-card actions use md:bg-gradient-to-t with a near-
+   black from/via. Replace the whole gradient so hovering a card in light mode
+   shows a light fade (not a dark strip) behind the Open/Review buttons. */
+@media (min-width: 768px) {
+  html.light .md\:from-\[\#0e0e0e\] {
+    background-image: linear-gradient(
+      to top,
+      var(--bg-app) 0%,
+      rgba(232,232,232,0.92) 45%,
+      transparent 100%
+    ) !important;
+  }
+}
+
 /* ── Toggle ON knob — black on white track (dark), white on dark track (light) ── */
 .ml-toggle-knob-on            { background-color: #000000; }
 html.light .ml-toggle-knob-on { background-color: #ffffff !important; }
