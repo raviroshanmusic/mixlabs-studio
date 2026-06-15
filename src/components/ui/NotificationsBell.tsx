@@ -61,7 +61,7 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
       const j = await r.json();
       setItems(j.items ?? []);
       setUnread(j.unreadCount ?? 0);
-    } catch { /* offline — keep last state */ }
+    } catch { /* offline - keep last state */ }
   }, []);
 
   // Initial + poll every 60s
@@ -132,7 +132,7 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
         )}
       </button>
 
-      {/* Popover — fixed so it escapes the sidebar's overflow-hidden */}
+      {/* Popover - fixed so it escapes the sidebar's overflow-hidden */}
       {open && (
         <div
           className="fixed z-[120] w-[340px] max-h-[460px] flex flex-col rounded-2xl border border-white/[0.08]

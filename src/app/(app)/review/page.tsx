@@ -9,7 +9,7 @@ export default async function ReviewIndexPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  // 1. Get projects the user is a member of (separate query — avoids broken inline await)
+  // 1. Get projects the user is a member of (separate query - avoids broken inline await)
   const { data: memberRows } = await supabase
     .from("project_members")
     .select("project_id")
@@ -33,6 +33,6 @@ export default async function ReviewIndexPage() {
     redirect(`/review/${projects[0].id}`);
   }
 
-  // No projects yet — go back to dashboard
+  // No projects yet - go back to dashboard
   redirect("/dashboard");
 }

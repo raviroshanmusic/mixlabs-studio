@@ -124,7 +124,7 @@ function initials(name: string): string {
 
 function exportNotes(comments: Comment[], project: Project, version: Version | null) {
   const lines = [
-    `REVIEW NOTES — ${project.name}`,
+    `REVIEW NOTES - ${project.name}`,
     project.client ? `Client: ${project.client}` : "",
     `File: ${version?.version_name ?? "All Files"}`,
     `Exported: ${new Date().toLocaleString()}`,
@@ -597,7 +597,7 @@ function VideoStage({
 
   const src = active && version?.drive_url ? mediaUrl(version.drive_url) : null;
 
-  // Imperative seek — registered with parent so comments/rail can jump the playhead.
+  // Imperative seek - registered with parent so comments/rail can jump the playhead.
   const seek = useCallback((sec: number) => {
     const v = videoRef.current; if (!v) return;
     const d = v.duration || sec;
@@ -919,7 +919,7 @@ function CommentCard({
               </button>
             )}
 
-            {/* Action buttons — visible on hover */}
+            {/* Action buttons - visible on hover */}
             <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <button
                 onClick={() => onResolve(comment.id, resolved ? "open" : "resolved")}
@@ -1123,7 +1123,7 @@ export default function ReviewClient({
       // Revert
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, status: status === "resolved" ? "open" : "resolved" } : c));
       const err = await res.json().catch(() => ({}));
-      addToast("error", err.error ?? "Could not update — check RLS policy");
+      addToast("error", err.error ?? "Could not update - check RLS policy");
     }
   }
 
@@ -1152,7 +1152,7 @@ export default function ReviewClient({
     seekRef.current?.(sec);
   }
 
-  // "Note here" / pressing C in the player — anchor a new note to the current frame and focus the box.
+  // "Note here" / pressing C in the player - anchor a new note to the current frame and focus the box.
   const requestComment = useCallback((sec: number) => {
     setTimecodeInput(secToFilm(sec));
     setPanelCollapsed(false);
@@ -1168,7 +1168,7 @@ export default function ReviewClient({
   const userName     = currentUser.full_name || currentUser.email.split("@")[0];
   const userInitials = userName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 
-  // ─── MOBILE LAYOUT (< 768px) — scrollable page, aspect-ratio player ───────
+  // ─── MOBILE LAYOUT (< 768px) - scrollable page, aspect-ratio player ───────
   const mobileLayout = (
     <div className="md:hidden flex flex-col bg-[#080808] pb-28" style={{ color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
@@ -1182,7 +1182,7 @@ export default function ReviewClient({
         </a>
         <div className="w-px h-4 bg-white/10 shrink-0" />
 
-        {/* Project switcher — tappable dropdown */}
+        {/* Project switcher - tappable dropdown */}
         <div className="relative min-w-0 flex-1" ref={projectMenuRef}>
           <button onClick={() => setShowProjectMenu(p => !p)} className="flex items-center gap-1 min-w-0 w-full text-left">
             <div className="min-w-0">
@@ -1228,7 +1228,7 @@ export default function ReviewClient({
         />
       </div>
 
-      {/* Version / department picker — always visible, horizontal scroll */}
+      {/* Version / department picker - always visible, horizontal scroll */}
       <div className="px-4 pb-3 bg-[#080808]">
         {allVersions.length > 0 && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -1248,7 +1248,7 @@ export default function ReviewClient({
         )}
       </div>
 
-      {/* ── Notes section — full natural height, page scrolls ── */}
+      {/* ── Notes section - full natural height, page scrolls ── */}
       <div className="flex flex-col bg-[#090909] border-t border-white/[0.07]">
 
         {/* Notes header */}
@@ -1291,7 +1291,7 @@ export default function ReviewClient({
           })}
         </div>
 
-        {/* Comments — no overflow-y-auto, page scrolls naturally */}
+        {/* Comments - no overflow-y-auto, page scrolls naturally */}
         <div className="border-t border-white/[0.04]">
           {visibleComments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 gap-3 px-6">
@@ -1310,7 +1310,7 @@ export default function ReviewClient({
           )}
         </div>
 
-        {/* Add Note Form — always visible, page scrolls to it */}
+        {/* Add Note Form - always visible, page scrolls to it */}
         <div className="p-4 bg-[#0c0c0c] border-t border-white/[0.08]">
           {selectedVersion && (
             <div className="flex items-center gap-1.5 mb-3">
@@ -1349,7 +1349,7 @@ export default function ReviewClient({
     </div>
   );
 
-  // ─── DESKTOP LAYOUT (>= 768px) — fixed height panels ───────────────────────
+  // ─── DESKTOP LAYOUT (>= 768px) - fixed height panels ───────────────────────
   const desktopLayout = (
     <div className="hidden md:flex bg-[#080808] overflow-hidden" style={{ height: "100dvh", color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />

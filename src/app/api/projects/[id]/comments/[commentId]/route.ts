@@ -15,7 +15,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  // Update without .single() so RLS block doesn't throw — we check count instead
+  // Update without .single() so RLS block doesn't throw - we check count instead
   const { data, error } = await supabase
     .from("review_comments")
     .update({ status })
@@ -25,10 +25,10 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // If no rows updated — likely RLS blocked it. Try as author fallback.
+  // If no rows updated - likely RLS blocked it. Try as author fallback.
   if (!data || data.length === 0) {
     return NextResponse.json(
-      { error: "Permission denied — you may not have access to update this comment. Ask the project owner to run the RLS fix in Supabase." },
+      { error: "Permission denied - you may not have access to update this comment. Ask the project owner to run the RLS fix in Supabase." },
       { status: 403 }
     );
   }

@@ -15,7 +15,7 @@ export type NotificationItem = {
 
 // GET /api/notifications
 // Derives a notification feed from recent activity on projects the user owns or
-// belongs to — new review comments and new versions created by *other* people.
+// belongs to - new review comments and new versions created by *other* people.
 // Read state is tracked by profiles.notifications_last_read_at.
 export async function GET() {
   const supabase = await createClient();
@@ -122,7 +122,7 @@ export async function POST() {
     .update({ notifications_last_read_at: new Date().toISOString() })
     .eq("id", user.id);
 
-  // A missing column means the migration hasn't run yet — report it so the UI can hint.
+  // A missing column means the migration hasn't run yet - report it so the UI can hint.
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

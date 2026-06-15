@@ -355,7 +355,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
                   <p className="text-white/22 text-sm font-light">Start your first project</p>
                 </>
               ) : (
-                <p className="text-white/22 text-sm font-light">No projects yet — you&apos;ll see them here once you&apos;re added to one.</p>
+                <p className="text-white/22 text-sm font-light">No projects yet - you&apos;ll see them here once you&apos;re added to one.</p>
               )}
             </div>
           ) : (

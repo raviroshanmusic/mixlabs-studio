@@ -320,7 +320,7 @@ export default function Timeline({
   const todayOffset = useMemo(() => daysBetween(start, today0()), [start]);
   const totalWidth  = totalDays * dayPx;
 
-  // All days in range — for day ticks + weekend shading
+  // All days in range - for day ticks + weekend shading
   const days = useMemo(() => {
     const arr: { d: Date; offset: number }[] = [];
     let cur = new Date(start); let i = 0;

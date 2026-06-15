@@ -43,7 +43,7 @@ export default async function ReviewPage({
     .eq("id", user.id)
     .single();
 
-  // Fetch all projects the user owns or is a member of — for the project switcher
+  // Fetch all projects the user owns or is a member of - for the project switcher
   const { data: memberRows } = await supabase
     .from("project_members")
     .select("project_id")

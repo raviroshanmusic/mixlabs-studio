@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-// Middleware stripped down — auth is handled at the page level.
+// Middleware stripped down - auth is handled at the page level.
 // Each protected page calls supabase.auth.getUser() and redirects if no session.
 export async function proxy(request: NextRequest) {
   return NextResponse.next({ request });

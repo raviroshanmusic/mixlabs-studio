@@ -14,7 +14,7 @@ export async function PATCH(request: NextRequest) {
   if (company !== undefined)    update.company = company || null;
   if (profession !== undefined) update.profession = profession || null;
 
-  // Notification preferences — only included when the client sends them.
+  // Notification preferences - only included when the client sends them.
   for (const k of ["notify_new_comment", "notify_new_version", "notify_mention", "notify_email_digest"] as const) {
     if (body[k] !== undefined) update[k] = !!body[k];
   }

@@ -41,7 +41,7 @@ export default function Sidebar({
   const [expanded, setExpanded] = useState(false);
   const [isStaff,  setIsStaff]  = useState(false);
 
-  // Only MixLabs staff can create projects — hide the create entry points for
+  // Only MixLabs staff can create projects - hide the create entry points for
   // everyone else. The API + DB enforce this regardless; this is just UX.
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setIsStaff(isStaffEmail(data.user?.email)));
@@ -65,7 +65,7 @@ export default function Sidebar({
   if (!mounted) return null;
 
   /* ══════════════════════════════════════════════════════════
-     MOBILE — fixed bottom nav
+     MOBILE - fixed bottom nav
   ══════════════════════════════════════════════════════════ */
   if (isMobile) {
     return (
@@ -93,7 +93,7 @@ export default function Sidebar({
           );
         })}
 
-        {/* Centre FAB — staff only */}
+        {/* Centre FAB - staff only */}
         {isStaff && (
           <a href="/dashboard?new=1" className="flex flex-col items-center gap-1 px-2 -mt-4">
             <span className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center
@@ -127,7 +127,7 @@ export default function Sidebar({
   }
 
   /* ══════════════════════════════════════════════════════════
-     DESKTOP — hover-to-expand sidebar
+     DESKTOP - hover-to-expand sidebar
      Collapsed: 56px  |  Expanded: 220px
      Icon is always px-3 = 12px each side → perfectly centered at 56px
   ══════════════════════════════════════════════════════════ */
@@ -146,7 +146,7 @@ export default function Sidebar({
 
       {/* ── Logo ── */}
       <a href="/" aria-label="Go to home page" className="flex items-center h-16 px-3 shrink-0 hover:opacity-80 transition-opacity">
-        {/* Logo bare — 32px wide, centered in 56px collapsed rail */}
+        {/* Logo bare - 32px wide, centered in 56px collapsed rail */}
         <span className="shrink-0 flex items-center justify-center w-8" style={{ color: "var(--text-1)" }}>
           <MixLabsLogo size={32} />
         </span>
@@ -157,7 +157,7 @@ export default function Sidebar({
         </div>
       </a>
 
-      {/* ── New project button — staff only ── */}
+      {/* ── New project button - staff only ── */}
       {isStaff && (
         <div className="px-3 mb-3 shrink-0">
           <a href="/dashboard?new=1"
@@ -203,7 +203,7 @@ export default function Sidebar({
                   transition: "height 200ms, box-shadow 200ms",
                 }} />
 
-              {/* icon — always 32px, px-0 since parent has px-3 */}
+              {/* icon - always 32px, px-0 since parent has px-3 */}
               <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg transition-colors duration-200"
                 style={{
                   background: isActive ? color + "22" : "transparent",
@@ -251,7 +251,7 @@ export default function Sidebar({
           </span>
         </button>
 
-        {/* Notifications — live feed popover */}
+        {/* Notifications - live feed popover */}
         <NotificationsBell expanded={expanded} />
 
         {/* User row + sign out */}
@@ -263,7 +263,7 @@ export default function Sidebar({
             {userInitials ?? "U"}
           </span>
 
-          {/* name — only in expanded */}
+          {/* name - only in expanded */}
           <div className="overflow-hidden ml-3 flex-1"
             style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0 }}>
             <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
@@ -272,7 +272,7 @@ export default function Sidebar({
             <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Studio</p>
           </div>
 
-          {/* sign out — only in expanded */}
+          {/* sign out - only in expanded */}
           {expanded && (
             <button onClick={signOut}
               className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0

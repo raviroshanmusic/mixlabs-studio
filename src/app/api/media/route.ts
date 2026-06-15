@@ -3,8 +3,9 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { b2, B2_BUCKET } from "@/lib/b2";
 import { createClient } from "@/lib/supabase/server";
+import { canAccessKey } from "@/lib/access";
 
-// Stream media from B2 through our server — avoids all CORS issues.
+// Stream media from B2 through our server - avoids all CORS issues.
 // The browser never talks to B2 directly.
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -13,6 +14,10 @@ export async function GET(req: NextRequest) {
 
   const key = req.nextUrl.searchParams.get("key");
   if (!key) return new NextResponse("Missing key", { status: 400 });
+
+  if (!(await canAccessKey(supabase, user, key, "read"))) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   let signedUrl: string;
   try {
@@ -48,7 +53,7 @@ export async function GET(req: NextRequest) {
   resHeaders.set("Accept-Ranges", "bytes");
   // B2 keys are content-addressed (avatars/{id}/{ts}.ext, immutable version objects),
   // so a given URL never changes bytes. Cache hard in the browser to stop re-downloading
-  // the same media from B2 on every replay/seek — the main driver of the daily bandwidth cap.
+  // the same media from B2 on every replay/seek - the main driver of the daily bandwidth cap.
   // `private` keeps it per-user (media is auth-gated) and out of any shared/CDN cache.
   resHeaders.set("Cache-Control", "private, max-age=31536000, immutable");
   const cl = b2Res.headers.get("Content-Length");

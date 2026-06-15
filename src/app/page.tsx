@@ -248,7 +248,7 @@ function Nav() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DEMO_COMMENTS = [
-  { tc: "01:12:44", text: "The strings feel too bright — bring them down 2dB", author: "Director", color: "bg-violet-500/30 text-violet-300" },
+  { tc: "01:12:44", text: "The strings feel too bright - bring them down 2dB", author: "Director", color: "bg-violet-500/30 text-violet-300" },
   { tc: "01:14:08", text: "Perfect. Lock this moment.", author: "Composer", color: "bg-amber-500/30 text-amber-300" },
   { tc: "01:16:22", text: "Reduce reverb tail on the dialogue", author: "Sound", color: "bg-blue-500/30 text-blue-300" },
   { tc: "01:18:55", text: "Try a harder cut here instead of the fade", author: "Editor", color: "bg-rose-500/30 text-rose-300" },
@@ -304,7 +304,7 @@ function ReviewMockup() {
           <div className="w-2.5 h-2.5 rounded-full bg-amber-500/50" />
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/50" />
         </div>
-        <span className="text-[10px] text-white/22 tracking-wider font-light">Harbor Lights — Score v3</span>
+        <span className="text-[10px] text-white/22 tracking-wider font-light">Harbor Lights - Score v3</span>
         <span className="font-mono text-[10px] text-white/18">{tcStr}</span>
       </div>
 
@@ -322,7 +322,7 @@ function ReviewMockup() {
               <span className="text-white/22 text-[10px] font-mono tracking-widest">{tcStr}</span>
             </div>
             <div className="absolute bottom-6 inset-x-0 text-center">
-              <span className="text-white/55 text-[10px] tracking-wide" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>— Reel 02 · Scene 14 —</span>
+              <span className="text-white/55 text-[10px] tracking-wide" style={{ textShadow: "0 1px 6px rgba(0,0,0,0.9)" }}>Reel 02 · Scene 14</span>
             </div>
           </div>
           {/* Playbar */}
@@ -553,7 +553,7 @@ function WorkspaceMockup() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PRODUCT TOUR — pinned, scroll-driven product walkthrough (the centerpiece)
+// PRODUCT TOUR - pinned, scroll-driven product walkthrough (the centerpiece)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const TOUR_STEPS = [
@@ -584,11 +584,11 @@ const TOUR_STEPS = [
   {
     n: "03",
     label: "Review Room",
-    title: "Feedback at the exact frame.",
+    title: "Play it, note it, resolve it.",
     desc: "Play the cut, drop a note on the precise timecode, and watch it resolve. This is where directors and composers actually meet.",
     points: [
       "Notes are anchored to an exact HH:MM:SS timecode",
-      "Each comment is open or resolved — a progress bar tracks the rest",
+      "Each comment is open or resolved - a progress bar tracks the rest",
       "Comments stream in live as the team reviews together",
     ],
     Mockup: ReviewMockup,
@@ -640,7 +640,7 @@ function ProductTour() {
           </div>
 
           <div className="grid lg:grid-cols-2 gap-14 items-center">
-            {/* Left — narrative */}
+            {/* Left - narrative */}
             <div className="flex flex-col">
               {/* Step rail */}
               <div className="flex flex-col gap-1.5 mb-10">
@@ -692,7 +692,7 @@ function ProductTour() {
               </AnimatePresence>
             </div>
 
-            {/* Right — live mockup cross-fade */}
+            {/* Right - live mockup cross-fade */}
             <div className="relative w-full lg:max-w-[520px] lg:ml-auto">
               <AnimatePresence mode="wait">
                 <motion.div key={step}
@@ -795,7 +795,7 @@ export default function HomePage() {
         <motion.div style={{ y: heroY, opacity: heroO }}
           className="flex-1 flex flex-col lg:flex-row items-center gap-16 px-12 md:px-20 pt-32 pb-20 max-w-[1400px] mx-auto w-full">
 
-          {/* Left — type */}
+          {/* Left - type */}
           <div className="flex-1 flex flex-col">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.3 }}
               className="flex items-center gap-3 mb-10">
@@ -840,7 +840,7 @@ export default function HomePage() {
             </motion.div>
           </div>
 
-          {/* Right — live app mockup */}
+          {/* Right - live app mockup */}
           <motion.div
             initial={{ opacity: 0, x: 48, scale: 0.97 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
@@ -876,7 +876,7 @@ export default function HomePage() {
           </FadeIn>
           <FadeIn delay={0.15} className="md:col-span-7 md:pt-3">
             <p className="text-white/45 text-lg md:text-xl leading-relaxed font-light max-w-xl">
-              MixLabs is the workspace where a film&apos;s post-production actually happens — from first ingest to final delivery. Editors, composers, sound designers, colorists and clients all work the same project, see the same versions, and leave feedback on the same frame.
+              MixLabs is the workspace where a film&apos;s post-production actually happens - from first ingest to final delivery. Editors, composers, sound designers, colorists and clients all work the same project, see the same versions, and leave feedback on the same frame.
             </p>
             <p className="text-white/30 text-sm leading-relaxed font-light max-w-lg mt-6">
               No scattered file links. No screenshots in chat. No &quot;which version was that?&quot; Just one cinematic room for the whole team.
@@ -989,7 +989,7 @@ export default function HomePage() {
           </Parallax>
           <div className="space-y-10 pt-2">
             {[
-              { n:"01", t:"Drop a timecoded note", b:"A film-format HH:MM:SS drum roller appears. Your note is anchored to the exact frame — not a rough approximation." },
+              { n:"01", t:"Drop a timecoded note", b:"A film-format HH:MM:SS drum roller appears. Your note is anchored to the exact frame - not a rough approximation." },
               { n:"02", t:"Resolve, track, ship", b:"Every comment is either open or resolved. A progress bar shows the team exactly how close to locked you are." },
               { n:"03", t:"Cinema Mode", b:"One button hides everything. Full black, just the film. For moments that need full attention." },
               { n:"04", t:"Auto-refresh", b:"Comments update every 45 seconds. File status flows Draft → In Review → Approved. Everyone stays current." },

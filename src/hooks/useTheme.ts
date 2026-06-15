@@ -12,7 +12,7 @@ function isAppRoute(): boolean {
 export function useTheme() {
   const [theme, setTheme] = useState<Theme>("dark");
 
-  // Sync from localStorage on mount — only apply if on an app route
+  // Sync from localStorage on mount - only apply if on an app route
   useEffect(() => {
     const saved = localStorage.getItem("ml-theme") as Theme | null;
     if (saved === "light" && isAppRoute()) {

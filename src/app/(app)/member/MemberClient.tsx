@@ -98,12 +98,12 @@ function timeAgo(d: string): string {
 }
 
 function fmtDate(d: string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function fmtDateTime(d: string | null): string {
-  if (!d) return "—";
+  if (!d) return "-";
   return new Date(d).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
@@ -457,7 +457,7 @@ export default function MemberClient({
               </div>
             </div>
 
-            {/* Stats inline — hide on very small screens */}
+            {/* Stats inline - hide on very small screens */}
             <div className="flex items-center gap-3 md:gap-6 shrink-0">
               {[
                 { icon: <FolderOpen size={13}/>, value: stats.projects, label: "projects" },
@@ -511,7 +511,7 @@ export default function MemberClient({
           {/* ══ OVERVIEW ══ */}
           {section === "overview" && (
             <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-              {/* Left — main content */}
+              {/* Left - main content */}
               <div className="flex-1 min-w-0 flex flex-col gap-6">
 
                 {/* Active projects */}
@@ -557,10 +557,10 @@ export default function MemberClient({
                   <p className="text-white/18 text-[9px] tracking-[0.2em] uppercase font-light mb-3">Identity</p>
                   <div className="flex flex-col gap-2">
                     {[
-                      { icon: <User size={11}/>,     label: "Name",    value: profile.full_name || "—" },
+                      { icon: <User size={11}/>,     label: "Name",    value: profile.full_name || "-" },
                       { icon: <Mail size={11}/>,     label: "Email",   value: user.email },
-                      { icon: <Briefcase size={11}/>,label: "Company", value: profile.company || "—" },
-                      { icon: <Star size={11}/>,     label: "Role",    value: profile.profession || "—" },
+                      { icon: <Briefcase size={11}/>,label: "Company", value: profile.company || "-" },
+                      { icon: <Star size={11}/>,     label: "Role",    value: profile.profession || "-" },
                     ].map(r => (
                       <div key={r.label} className="flex items-center gap-2.5 py-1.5">
                         <span className="text-white/22 shrink-0">{r.icon}</span>
@@ -761,7 +761,7 @@ export default function MemberClient({
                       className="w-full bg-white/[0.03] border border-white/8 rounded-2xl px-4 py-3.5 text-sm text-white/78 placeholder-white/14 outline-none focus:border-white/16 transition-colors font-light"/>
                     <p className="text-white/16 text-[10px] font-light mt-1.5">Shown on your profile and project pages</p>
                   </div>
-                  {/* Profession picker — single select */}
+                  {/* Profession picker - single select */}
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <label className="text-white/28 text-xs font-light">Your role <span className="text-white/14 font-light">(pick one)</span></label>

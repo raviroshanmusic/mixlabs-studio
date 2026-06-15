@@ -113,7 +113,7 @@ function StatusBadge({ status, onChange, disabled }: { status: string; onChange:
 }
 
 // ─── Activity Feed ────────────────────────────────────────────────────────────
-// Constructed from versions + milestones — no extra API needed.
+// Constructed from versions + milestones - no extra API needed.
 
 type ActivityItem = { id: string; type: "file" | "milestone" | "status"; text: string; sub: string; when: string; dept?: string };
 
@@ -514,7 +514,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                     <p className="text-white/62 text-[13px] truncate font-light">{f.version_name}</p>
                   </div>
 
-                  {/* Status — clickable dropdown for editors+ */}
+                  {/* Status - clickable dropdown for editors+ */}
                   <div className="relative" onClick={e => e.stopPropagation()}>
                     {canEdit ? (
                       <>
@@ -883,7 +883,7 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
 
             <div className="mt-6 p-3.5 rounded-xl border border-white/[0.05] bg-white/[0.015]">
               <p className="text-white/22 text-[10px] font-light leading-relaxed">
-                Removing a department doesn't delete existing files — it just hides that department from the Files and Review tabs. You can re-add it anytime to restore access.
+                Removing a department doesn't delete existing files - it just hides that department from the Files and Review tabs. You can re-add it anytime to restore access.
               </p>
             </div>
           </div>
@@ -1040,9 +1040,9 @@ export default function ProjectClient({ project: initialProject, versions, membe
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
               {[
                 { icon: <FileText size={13}/>,   label: "Drafts",      value: versions.length,   sub: `${project.departments.length} dept${project.departments.length !== 1?"s":""}` },
-                { icon: <Activity size={13}/>,    label: "Milestones",  value: milestones.length > 0 ? `${milestones.filter(m=>m.status==="completed").length}/${milestones.length}` : "—", sub: "done" },
+                { icon: <Activity size={13}/>,    label: "Milestones",  value: milestones.length > 0 ? `${milestones.filter(m=>m.status==="completed").length}/${milestones.length}` : "-", sub: "done" },
                 { icon: <Users size={13}/>,       label: "Team",        value: members.length,    sub: members.length === 1 ? "member" : "members" },
-                { icon: <TrendingUp size={13}/>,  label: "Progress",    value: milestones.length > 0 ? `${Math.round(milestones.filter(m=>m.status==="completed").length/milestones.length*100)}%` : "—", sub: "" },
+                { icon: <TrendingUp size={13}/>,  label: "Progress",    value: milestones.length > 0 ? `${Math.round(milestones.filter(m=>m.status==="completed").length/milestones.length*100)}%` : "-", sub: "" },
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-white/[0.05] bg-white/[0.015] hover:bg-white/[0.025] transition-colors group">
                   <div className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.04] text-white/25 group-hover:text-white/45 transition-colors shrink-0">{s.icon}</div>
@@ -1087,7 +1087,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
           </div>
         ) : (
           <div className="flex-1 flex overflow-hidden">
-            {/* Left — main tab content, scrolls independently */}
+            {/* Left - main tab content, scrolls independently */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-4 md:py-6 pb-28 md:pb-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
@@ -1095,7 +1095,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}
             </div>
 
-            {/* Right — sidebar, scrolls independently, hidden on mobile */}
+            {/* Right - sidebar, scrolls independently, hidden on mobile */}
             <div className="hidden md:block">
             <ProjectSidebar
               project={project}

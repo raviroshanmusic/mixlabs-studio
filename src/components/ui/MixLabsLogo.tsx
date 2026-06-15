@@ -1,5 +1,5 @@
 /**
- * MixLabs brand mark — inlined SVG so currentColor works.
+ * MixLabs brand mark - inlined SVG so currentColor works.
  * Dark mode  → set parent color to white → white logo
  * Light mode → set parent color to black → black logo
  * Never inverts, never needs a separate dark/light asset.

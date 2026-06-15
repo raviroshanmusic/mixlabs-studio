@@ -7,8 +7,22 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  // Whitelist updatable columns. Never spread the raw body into update():
+  // that lets a caller overwrite owner_id, created_at, or anything else.
   const body = await request.json();
-  const { error } = await supabase.from("projects").update(body).eq("id", id);
+  const updates: Record<string, unknown> = {};
+  if (typeof body.name === "string") updates.name = body.name.trim();
+  if (body.client === null || typeof body.client === "string") {
+    updates.client = typeof body.client === "string" ? body.client.trim() : null;
+  }
+  if (typeof body.status === "string") updates.status = body.status;
+  if (Array.isArray(body.departments)) updates.departments = body.departments;
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+  }
+
+  const { error } = await supabase.from("projects").update(updates).eq("id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -99,7 +99,7 @@ function LinkEditor({
       {links.map((l, i) => (
         <div key={i} className="flex gap-2 items-center">
           <input
-            placeholder="Label — e.g. Final Mix"
+            placeholder="Label - e.g. Final Mix"
             value={l.label}
             onChange={e => update(i, "label", e.target.value)}
             className="w-28 bg-white/[0.04] border border-white/8 rounded-lg px-3 py-2 text-xs text-white/70 placeholder-white/18 outline-none focus:border-white/18 font-light transition-colors shrink-0"
@@ -194,7 +194,7 @@ function DeliveryForm({
 
         <form onSubmit={handleSubmit} className="px-6 py-5 flex flex-col gap-5">
 
-          {/* Department — only on create */}
+          {/* Department - only on create */}
           {!isEdit && (
             <div>
               <label className="text-white/28 text-[10px] tracking-[0.2em] uppercase font-light mb-2 block">Department</label>
@@ -218,7 +218,7 @@ function DeliveryForm({
           <div>
             <label className="text-white/28 text-[10px] tracking-[0.2em] uppercase font-light mb-2 block">Package Title</label>
             <input autoFocus value={title} onChange={e => setTitle(e.target.value)} required
-              placeholder="e.g. Final Mix — Stereo + 5.1"
+              placeholder="e.g. Final Mix - Stereo + 5.1"
               className="w-full bg-white/[0.04] border border-white/8 rounded-xl px-4 py-3 text-sm text-white/80 placeholder-white/16 outline-none focus:border-white/18 transition-colors font-light"/>
           </div>
 
@@ -502,7 +502,7 @@ export default function DeliveryTab({
           {deliveries.length > 0 && (
             <div className="flex items-center gap-1.5">
               {deliveries.map(d => (
-                <div key={d.id} title={`${d.department} — ${STATUS_META[d.status].label}`}
+                <div key={d.id} title={`${d.department} - ${STATUS_META[d.status].label}`}
                   className={`w-2 h-2 rounded-full transition-all ${
                     d.status === "confirmed" ? "bg-emerald-400/70" :
                     d.status === "sent"      ? "bg-amber-400/60" : "bg-white/15"
