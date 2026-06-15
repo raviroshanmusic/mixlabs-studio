@@ -12,7 +12,6 @@ import B2Upload from "@/components/ui/B2Upload";
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
 import DeliveryTab, { Delivery } from "./Delivery";
-import { useTheme } from "@/hooks/useTheme";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -951,11 +950,6 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const [activeTab, setActiveTab] = useState<Tab>("files");
   const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
-  const { theme } = useTheme();
-  const isLight = theme === "light";
-  const tagColor  = isLight ? "rgba(0,0,0,0.60)"  : "rgba(255,255,255,0.50)";
-  const tagBorder = isLight ? "rgba(0,0,0,0.14)"  : "rgba(255,255,255,0.10)";
-  const tagBg     = isLight ? "rgba(0,0,0,0.05)"  : "rgba(255,255,255,0.05)";
 
   const currentMember = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
   const currentName = currentMember?.profiles?.full_name || currentMember?.profiles?.email || "";
@@ -1025,8 +1019,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
                     {project.departments.map(d => {
                       const m = DEPT_META[d];
                       return (
-                        <span key={d} className="flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border font-light"
-                          style={{ color: tagColor, borderColor: tagBorder, background: tagBg }}>
+                        <span key={d} className="flex items-center gap-1.5 text-[9px] px-2.5 py-1 rounded-full border border-white/10 bg-white/5 text-white/50 font-light">
                           {m?.icon}{d}
                         </span>
                       );
