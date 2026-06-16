@@ -5,6 +5,7 @@ import {
   ClipboardList, Clapperboard, MessageSquare, ListMusic, Volume2,
   Package, FileText, Plus, Trash2, X, Check, Pencil, Link2,
   ExternalLink, Download, Upload, FileUp, Sparkles,
+  Clock, Gauge, Crop, Languages, Tag,
 } from "lucide-react";
 import B2Upload from "@/components/ui/B2Upload";
 
@@ -70,7 +71,6 @@ const DOC_GROUPS: { group: string; items: CatItem[] }[] = [
   {
     group: "Other",
     items: [
-      { id: "contract",       label: "Contract / Agreement",    icon: ICON(FileText) },
       { id: "other",          label: "Other Reference",         icon: ICON(FileText) },
     ],
   },
@@ -79,14 +79,14 @@ const DOC_GROUPS: { group: string; items: CatItem[] }[] = [
 const CAT_META: Record<string, { label: string; icon: React.ReactNode; group: string }> = {};
 for (const g of DOC_GROUPS) for (const it of g.items) CAT_META[it.id] = { label: it.label, icon: it.icon, group: g.group };
 
-const SPEC_FIELDS: { key: string; label: string; placeholder: string }[] = [
-  { key: "format",            label: "Format",            placeholder: "Feature Film" },
-  { key: "genre",             label: "Genre",             placeholder: "Psychological Thriller" },
-  { key: "runtime",           label: "Runtime",           placeholder: "1h 48m" },
-  { key: "frame_rate",        label: "Frame Rate",        placeholder: "24 fps" },
-  { key: "aspect_ratio",      label: "Aspect Ratio",      placeholder: "2.39:1" },
-  { key: "language",          label: "Language",          placeholder: "Nepali" },
-  { key: "audio_deliverable", label: "Audio Deliverable", placeholder: "5.1 Surround" },
+const SPEC_FIELDS: { key: string; label: string; placeholder: string; Icon: React.ElementType }[] = [
+  { key: "format",            label: "Format",            placeholder: "Feature Film",          Icon: Clapperboard },
+  { key: "genre",             label: "Genre",             placeholder: "Psychological Thriller", Icon: Tag },
+  { key: "runtime",           label: "Runtime",           placeholder: "1h 48m",                Icon: Clock },
+  { key: "frame_rate",        label: "Frame Rate",        placeholder: "24 fps",                Icon: Gauge },
+  { key: "aspect_ratio",      label: "Aspect Ratio",      placeholder: "2.39:1",                Icon: Crop },
+  { key: "language",          label: "Language",          placeholder: "Nepali",                Icon: Languages },
+  { key: "audio_deliverable", label: "Audio Deliverable", placeholder: "5.1 Surround",          Icon: Volume2 },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -184,7 +184,8 @@ function Brief({ project, canEdit, onProjectUpdate }: {
   const [brief, setBrief]       = useState<Record<string, string>>(project.brief ?? {});
 
   const specsFilled = SPEC_FIELDS.filter(f => (project.brief?.[f.key] ?? "").trim());
-  const hasContent  = !!(project.logline?.trim() || project.synopsis?.trim() || specsFilled.length);
+  const hasNarrative = !!(project.logline?.trim() || project.synopsis?.trim());
+  const hasContent   = hasNarrative || specsFilled.length > 0;
 
   async function save() {
     setSaving(true);
@@ -206,78 +207,133 @@ function Brief({ project, canEdit, onProjectUpdate }: {
     setSaving(false);
   }
 
+  function cancel() {
+    setLogline(project.logline ?? "");
+    setSynopsis(project.synopsis ?? "");
+    setBrief(project.brief ?? {});
+    setEditing(false);
+  }
+
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.015] p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Sparkles size={14} className="text-white/35"/>
-          <h3 className="text-white/70 text-sm font-light tracking-wide">Project Brief</h3>
+    <div className="relative overflow-hidden rounded-[20px] border border-white/[0.07] bg-gradient-to-b from-white/[0.04] to-white/[0.01]">
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full opacity-[0.06] blur-3xl"
+        style={{ background: "radial-gradient(circle, #ffffff, transparent 70%)" }}/>
+
+      <div className="relative p-5 sm:p-6">
+        {/* header */}
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-white/[0.06] border border-white/[0.08] flex items-center justify-center">
+              <Sparkles size={12} className="text-white/45"/>
+            </div>
+            <span className="text-white/40 text-[10px] tracking-[0.28em] uppercase font-light">Project Brief</span>
+          </div>
+          {canEdit && !editing && hasContent && (
+            <button onClick={() => setEditing(true)}
+              className="flex items-center gap-1.5 text-[11px] text-white/35 hover:text-white/80 border border-white/8 hover:border-white/20 px-2.5 py-1.5 rounded-lg transition-all font-light">
+              <Pencil size={11}/> Edit
+            </button>
+          )}
         </div>
-        {canEdit && !editing && (
-          <button onClick={() => setEditing(true)}
-            className="flex items-center gap-1.5 text-[11px] text-white/40 hover:text-white/75 transition-colors font-light">
-            <Pencil size={11}/> Edit
-          </button>
+
+        {editing ? (
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-4">
+              <Field label="Logline">
+                <textarea value={logline} onChange={e => setLogline(e.target.value)} rows={2}
+                  placeholder="One or two sentences that capture the film."
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-3.5 py-2.5 text-[15px] text-white/85 placeholder:text-white/20 focus:outline-none focus:border-white/30 resize-none font-light leading-snug"/>
+              </Field>
+              <Field label="Synopsis">
+                <textarea value={synopsis} onChange={e => setSynopsis(e.target.value)} rows={4}
+                  placeholder="A short paragraph on the story, tone, and what the post team should know."
+                  className="w-full bg-black/20 border border-white/10 rounded-xl px-3.5 py-2.5 text-[13.5px] text-white/80 placeholder:text-white/20 focus:outline-none focus:border-white/30 resize-none font-light leading-relaxed"/>
+              </Field>
+            </div>
+
+            <div>
+              <p className="text-white/25 text-[9px] tracking-[0.22em] uppercase font-light mb-2.5">Specifications</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                {SPEC_FIELDS.map(f => (
+                  <div key={f.key} className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none"><f.Icon size={13}/></span>
+                    <input value={brief[f.key] ?? ""} onChange={e => setBrief(p => ({ ...p, [f.key]: e.target.value }))}
+                      placeholder={f.label} title={f.label}
+                      className="w-full bg-black/20 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-[13px] text-white/85 placeholder:text-white/25 focus:outline-none focus:border-white/30 font-light"/>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-0.5">
+              <button onClick={save} disabled={saving}
+                className="flex items-center gap-1.5 text-[12px] bg-white/90 hover:bg-white text-black px-4 py-2 rounded-xl transition-all disabled:opacity-40 font-medium">
+                <Check size={13}/> {saving ? "Saving…" : "Save brief"}
+              </button>
+              <button onClick={cancel}
+                className="text-[12px] text-white/40 hover:text-white/70 px-3 py-2 transition-colors font-light">Cancel</button>
+            </div>
+          </div>
+        ) : !hasContent ? (
+          <div className="flex flex-col items-center text-center gap-3 py-7">
+            <div className="w-12 h-12 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center">
+              <ScrollText size={20} className="text-white/20"/>
+            </div>
+            <div>
+              <p className="text-white/50 text-sm font-light">No brief yet</p>
+              <p className="text-white/22 text-xs font-light mt-1 max-w-[18rem] leading-relaxed">
+                Capture the logline, synopsis, and key specs so every department starts on the same page.
+              </p>
+            </div>
+            {canEdit && (
+              <button onClick={() => setEditing(true)}
+                className="flex items-center gap-1.5 text-[12px] text-white/70 hover:text-white border border-white/12 hover:border-white/30 px-3.5 py-2 rounded-xl transition-all font-light mt-1">
+                <Plus size={12}/> Add brief
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            {project.logline?.trim() && (
+              <div className="flex gap-3.5">
+                <div className="w-[3px] rounded-full shrink-0 bg-gradient-to-b from-white/45 via-white/15 to-transparent"/>
+                <div className="min-w-0">
+                  <p className="text-white/22 text-[9px] tracking-[0.22em] uppercase font-light mb-1.5">Logline</p>
+                  <p className="text-white/88 text-lg sm:text-xl leading-snug font-light tracking-tight">{project.logline}</p>
+                </div>
+              </div>
+            )}
+
+            {project.synopsis?.trim() && (
+              <div className={project.logline?.trim() ? "mt-5" : ""}>
+                <p className="text-white/22 text-[9px] tracking-[0.22em] uppercase font-light mb-1.5">Synopsis</p>
+                <p className="text-white/55 text-[13.5px] leading-relaxed font-light whitespace-pre-wrap">{project.synopsis}</p>
+              </div>
+            )}
+
+            {specsFilled.length > 0 && (
+              <>
+                {hasNarrative && <div className="h-px bg-white/[0.06] my-5"/>}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {specsFilled.map(f => (
+                    <div key={f.key}
+                      className="group/spec flex items-center gap-2.5 rounded-xl border border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04] px-3 py-2.5 transition-colors">
+                      <div className="w-7 h-7 rounded-lg bg-white/[0.05] flex items-center justify-center text-white/35 group-hover/spec:text-white/60 transition-colors shrink-0">
+                        <f.Icon size={13}/>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-white/22 text-[8.5px] tracking-[0.16em] uppercase font-light">{f.label}</p>
+                        <p className="text-white/80 text-[13px] font-light truncate leading-tight mt-0.5">{project.brief?.[f.key]}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         )}
       </div>
-
-      {editing ? (
-        <div className="flex flex-col gap-4">
-          <Field label="Logline">
-            <textarea value={logline} onChange={e => setLogline(e.target.value)} rows={2}
-              placeholder="One or two sentences that capture the film."
-              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/85 placeholder:text-white/20 focus:outline-none focus:border-white/25 resize-none font-light"/>
-          </Field>
-          <Field label="Synopsis">
-            <textarea value={synopsis} onChange={e => setSynopsis(e.target.value)} rows={4}
-              placeholder="A short paragraph on the story, tone, and what the post team should know."
-              className="w-full bg-white/[0.03] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white/85 placeholder:text-white/20 focus:outline-none focus:border-white/25 resize-none font-light"/>
-          </Field>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {SPEC_FIELDS.map(f => (
-              <Field key={f.key} label={f.label}>
-                <input value={brief[f.key] ?? ""} onChange={e => setBrief(p => ({ ...p, [f.key]: e.target.value }))}
-                  placeholder={f.placeholder}
-                  className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/85 placeholder:text-white/20 focus:outline-none focus:border-white/25 font-light"/>
-              </Field>
-            ))}
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            <button onClick={save} disabled={saving}
-              className="flex items-center gap-1.5 text-[12px] bg-white/90 hover:bg-white text-black px-4 py-2 rounded-xl transition-all disabled:opacity-40 font-medium">
-              <Check size={13}/> {saving ? "Saving…" : "Save brief"}
-            </button>
-            <button onClick={() => {
-              setLogline(project.logline ?? ""); setSynopsis(project.synopsis ?? "");
-              setBrief(project.brief ?? {}); setEditing(false);
-            }}
-              className="text-[12px] text-white/40 hover:text-white/70 px-3 py-2 transition-colors font-light">Cancel</button>
-          </div>
-        </div>
-      ) : !hasContent ? (
-        <p className="text-white/25 text-sm font-light">
-          {canEdit ? "No brief yet. Add the logline, synopsis, and key specs so every department starts on the same page." : "No brief has been added yet."}
-        </p>
-      ) : (
-        <div className="flex flex-col gap-4">
-          {project.logline?.trim() && (
-            <p className="text-white/80 text-[15px] leading-relaxed font-light italic">“{project.logline}”</p>
-          )}
-          {project.synopsis?.trim() && (
-            <p className="text-white/50 text-sm leading-relaxed font-light whitespace-pre-wrap">{project.synopsis}</p>
-          )}
-          {specsFilled.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
-              {specsFilled.map(f => (
-                <div key={f.key} className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-3 py-2">
-                  <p className="text-white/20 text-[9px] tracking-[0.18em] uppercase font-light">{f.label}</p>
-                  <p className="text-white/72 text-sm font-light mt-0.5">{project.brief?.[f.key]}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
