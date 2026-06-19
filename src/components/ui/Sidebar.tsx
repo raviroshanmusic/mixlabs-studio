@@ -40,11 +40,20 @@ export default function Sidebar({
   const [mounted,  setMounted]  = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isStaff,  setIsStaff]  = useState(false);
+  const [avatarKey, setAvatarKey] = useState<string | null>(null);
 
   // Only MixLabs staff can create projects - hide the create entry points for
   // everyone else. The API + DB enforce this regardless; this is just UX.
+  // Also pull the user's avatar so the profile row shows their photo.
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => setIsStaff(isStaffEmail(data.user?.email)));
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data }) => {
+      setIsStaff(isStaffEmail(data.user?.email));
+      if (data.user) {
+        const { data: p } = await supabase.from("profiles").select("avatar_url").eq("id", data.user.id).single();
+        setAvatarKey(p?.avatar_url ?? null);
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -257,23 +266,26 @@ export default function Sidebar({
 
         {/* User row → profile, + sign out */}
         <div className="flex items-center" style={{ padding: "8px 0" }}>
-          <a href="/member" title="Profile"
-            className="flex items-center flex-1 min-w-0 rounded-xl overflow-hidden hover:bg-white/[0.04] transition-colors"
+          <a href="/member" title="Open profile"
+            className="group/profile flex items-center flex-1 min-w-0 rounded-xl overflow-hidden hover:bg-white/[0.07] transition-colors cursor-pointer"
             style={{ padding: "2px 0", background: pathname.startsWith("/member") ? "var(--bg-card-hover)" : "transparent" }}>
-            {/* avatar */}
-            <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+            {/* avatar - photo if set, else initials */}
+            <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg overflow-hidden
                              bg-white/[0.08] border border-white/[0.08]
-                             text-[11px] font-semibold text-white/60">
-              {userInitials ?? "U"}
+                             text-[11px] font-semibold text-white/60
+                             transition-all group-hover/profile:ring-1 group-hover/profile:ring-white/25 group-hover/profile:border-white/20">
+              {avatarKey
+                ? <img src={`/api/media?key=${encodeURIComponent(avatarKey)}`} alt="" className="w-full h-full object-cover" />
+                : (userInitials ?? "U")}
             </span>
 
             {/* name - only in expanded */}
             <div className="overflow-hidden ml-3 flex-1"
               style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0 }}>
-              <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
+              <p className="text-[11px] text-white/50 group-hover/profile:text-white/80 whitespace-nowrap truncate leading-snug transition-colors">
                 {userName ?? "User"}
               </p>
-              <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Workspace</p>
+              <p className="text-[9px] text-white/20 group-hover/profile:text-white/35 whitespace-nowrap leading-snug transition-colors">View profile</p>
             </div>
           </a>
 
