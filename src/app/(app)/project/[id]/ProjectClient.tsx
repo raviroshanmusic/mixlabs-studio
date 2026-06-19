@@ -49,7 +49,7 @@ const VERSION_STATUS_META: Record<VersionStatus, { cls: string; label: string; d
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[]; owner_id?: string; logline?: string | null; synopsis?: string | null; brief?: Record<string, string> | null };
 type Version = { id: string; version_name: string; department: string; drive_url: string | null; status: string; created_at: string };
-type Member  = { id: string; role: string | null; user_id?: string; profiles: { id: string; full_name: string | null; email: string | null } | null };
+type Member  = { id: string; role: string | null; user_id?: string; profiles: { id: string; full_name: string | null; email?: string | null } | null };
 type UserRole = "owner" | "admin" | "editor" | "viewer";
 
 const ROLE_META: Record<UserRole, { icon: React.ReactNode; label: string; color: string; border: string; bg: string; desc: string }> = {
@@ -65,6 +65,16 @@ function avatarColor(name: string): string {
   const p = ["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#f97316","#14b8a6"];
   let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
   return p[h % p.length];
+}
+
+// Privacy: never show a teammate's email or full surname. Render "Alex C." —
+// full first name + last initial only.
+function shortName(full?: string | null, fallback = "Member"): string {
+  const n = (full ?? "").trim();
+  if (!n) return fallback;
+  const parts = n.split(/\s+/);
+  const last = parts.length > 1 ? `${parts[parts.length - 1][0].toUpperCase()}.` : "";
+  return last ? `${parts[0]} ${last}` : parts[0];
 }
 
 function daysFromToday(s: string): number {
@@ -317,8 +327,8 @@ function ProjectSidebar({ project, versions, members, milestones, userRole }: {
             <p className="text-white/20 text-[9px] tracking-[0.2em] uppercase font-light mb-3">Team</p>
             <div className="flex items-center gap-1.5 flex-wrap">
               {members.slice(0, 8).map(m => {
-                const name = m.profiles?.full_name || m.profiles?.email || "?";
-                const col = avatarColor(name);
+                const name = shortName(m.profiles?.full_name);
+                const col = avatarColor(m.profiles?.full_name || m.id);
                 return (
                   <div key={m.id} title={name}
                     className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium cursor-default"
@@ -663,8 +673,8 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
         ) : (
           <div className="flex flex-col gap-1">
             {localMembers.map(m => {
-              const name = m.profiles?.full_name || m.profiles?.email || "Unknown";
-              const col  = avatarColor(name);
+              const name = shortName(m.profiles?.full_name);
+              const col  = avatarColor(m.profiles?.full_name || m.id);
               const r    = (m.role ?? "viewer") as keyof typeof roleColors;
               return (
                 <div key={m.id} className="flex items-center justify-between px-4 py-3.5 rounded-2xl hover:bg-white/[0.02] border border-transparent hover:border-white/[0.04] transition-all group">
@@ -675,7 +685,6 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
                     </div>
                     <div>
                       <p className="text-white/65 text-[13px] font-light">{name}</p>
-                      {m.profiles?.full_name && <p className="text-white/18 text-[10px] font-light">{m.profiles.email}</p>}
                     </div>
                   </div>
                   <span className={`flex items-center gap-1.5 text-[9px] tracking-wide uppercase border px-2.5 py-1 rounded-full font-light ${roleColors[r] ?? roleColors["viewer"]}`}>
@@ -953,7 +962,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
 
   const currentMember = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
-  const currentName = currentMember?.profiles?.full_name || currentMember?.profiles?.email || "";
+  const currentName = currentMember?.profiles?.full_name || "";
   const currentInitials = currentName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 
   const userRole = useMemo<UserRole>(() => {

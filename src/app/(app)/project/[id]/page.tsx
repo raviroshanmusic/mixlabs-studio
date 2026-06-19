@@ -33,7 +33,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     (membersRaw ?? []).map(async (m) => {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("id, full_name, email")
+        .select("id, full_name")
         .eq("id", m.user_id)
         .single();
       return { ...m, profiles: profile ?? null };
