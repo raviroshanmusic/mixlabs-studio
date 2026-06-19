@@ -306,7 +306,7 @@ export default function LoginPage() {
             <Field label="Company / Studio" value={company} onChange={setCompany}
               placeholder="MixLabs Creative (optional)" autoComplete="organization" />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Password" type="password" value={upPassword} onChange={setUpPassword}
                 placeholder="8+ chars" required autoComplete="new-password" />
               <Field label="Confirm Password" type="password" value={confirmPwd} onChange={setConfirmPwd}
