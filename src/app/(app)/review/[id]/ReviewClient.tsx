@@ -806,14 +806,14 @@ function VideoStage({
           </button>
 
           {/* Volume */}
-          <div className="hidden sm:flex items-center gap-1 group/vol">
+          <div className="hidden sm:flex items-center gap-1">
             <button onClick={() => setVol(muted || volume === 0 ? 1 : 0)} title="Mute (m)"
-              className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors text-white/65 hover:text-white">
+              className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors text-white/65">
               <VolIcon size={16} />
             </button>
             <input type="range" min={0} max={1} step={0.05} value={muted ? 0 : volume}
               onChange={e => setVol(Number(e.target.value))}
-              className="w-0 group-hover/vol:w-16 transition-all duration-200 h-1 accent-white cursor-pointer" />
+              className="w-16 h-1 accent-white cursor-pointer" />
           </div>
 
           {/* Timecode readout */}
