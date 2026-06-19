@@ -309,6 +309,15 @@ export default function Timeline({
   const justDragged  = useRef(false);
   const dayPx        = DAY_PX[zoom];
 
+  // Narrow the milestone-name rail on phones so the chart isn't squeezed.
+  const [sideW, setSideW] = useState(SIDE_W);
+  useEffect(() => {
+    const fn = () => setSideW(window.innerWidth < 640 ? 112 : SIDE_W);
+    fn();
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+
   const versionMap = useMemo(() => Object.fromEntries(versions.map(v => [v.id, v])), [versions]);
 
   // Apply live preview dates while dragging
@@ -331,9 +340,9 @@ export default function Timeline({
   // Scroll to today on mount / zoom change
   useEffect(() => {
     if (!scrollRef.current) return;
-    const todayX = SIDE_W + todayOffset * dayPx;
+    const todayX = sideW + todayOffset * dayPx;
     scrollRef.current.scrollLeft = Math.max(0, todayX - scrollRef.current.clientWidth / 2);
-  }, [zoom, todayOffset, dayPx]);
+  }, [zoom, todayOffset, dayPx, sideW]);
 
   // Auto-poll every 45s (paused mid-drag)
   useEffect(() => {
@@ -357,7 +366,7 @@ export default function Timeline({
   }
   function goToday() {
     if (!scrollRef.current) return;
-    const todayX = SIDE_W + todayOffset * dayPx;
+    const todayX = sideW + todayOffset * dayPx;
     scrollRef.current.scrollTo({ left: Math.max(0, todayX - scrollRef.current.clientWidth / 2), behavior: "smooth" });
   }
 
@@ -461,7 +470,7 @@ export default function Timeline({
   const showDayNums = dayPx >= 30; // month+ zoom shows per-day numbers
 
   return (
-    <div className="flex flex-col select-none px-6 md:px-10 pb-10 pt-4" style={{ minHeight: 600 }}>
+    <div className="flex flex-col select-none px-3 sm:px-6 md:px-10 pb-10 pt-4" style={{ minHeight: 600 }}>
 
       {/* ── Toolbar ── */}
       <div className="flex items-center justify-between mb-5 gap-3 flex-wrap">
@@ -488,13 +497,13 @@ export default function Timeline({
       {/* ── Canvas ── */}
       <div className="border border-white/[0.07] rounded-2xl overflow-hidden bg-[#070707]" style={{ height: Math.max(canvasH + HEAD_H + 2, 320) }}>
         <div ref={scrollRef} className="overflow-auto h-full">
-          <div style={{ width: SIDE_W + totalWidth, minHeight: HEAD_H + canvasH }}>
+          <div style={{ width: sideW + totalWidth, minHeight: HEAD_H + canvasH }}>
 
             {/* ── Header ── */}
             <div className="sticky top-0 z-20 bg-[#0c0c0c] border-b border-white/[0.08]">
               <div style={{ height: HEAD_H }} className="relative flex">
                 {/* Sidebar header */}
-                <div className="shrink-0 sticky left-0 z-10 bg-[#0c0c0c] flex items-end pb-2.5 px-4 border-r border-white/[0.08]" style={{ width: SIDE_W }}>
+                <div className="shrink-0 sticky left-0 z-10 bg-[#0c0c0c] flex items-end pb-2.5 px-4 border-r border-white/[0.08]" style={{ width: sideW }}>
                   <span className="text-[9px] tracking-[0.22em] uppercase text-white/25 font-light">Milestone</span>
                 </div>
                 <div className="flex-1 relative">
@@ -534,7 +543,7 @@ export default function Timeline({
             {/* ── Rows ── */}
             <div className="relative" style={{ height: canvasH }}>
               {/* Sidebar */}
-              <div className="sticky left-0 z-10 absolute top-0 bottom-0 border-r border-white/[0.08] bg-[#070707]" style={{ width: SIDE_W }}>
+              <div className="sticky left-0 z-10 absolute top-0 bottom-0 border-r border-white/[0.08] bg-[#070707]" style={{ width: sideW }}>
                 {rows.map((lane, ri) => {
                   const m = lane[0];
                   const c = DEPT_COLOR[m?.department ?? ""] ?? FALLBACK;
@@ -567,7 +576,7 @@ export default function Timeline({
               </div>
 
               {/* Grid + bars */}
-              <div className="absolute top-0 bottom-0" style={{ left: SIDE_W, right: 0 }}>
+              <div className="absolute top-0 bottom-0" style={{ left: sideW, right: 0 }}>
                 {/* Weekend shading */}
                 {days.filter(({ d }) => isWeekend(d)).map(({ offset }) => (
                   <div key={`w-${offset}`} className="absolute top-0 bottom-0" style={{ left: offset * dayPx, width: dayPx, background: "rgba(255,255,255,0.018)" }} />
