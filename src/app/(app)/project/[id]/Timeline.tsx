@@ -496,7 +496,8 @@ export default function Timeline({
 
       {/* ── Canvas ── */}
       <div className="border border-white/[0.07] rounded-2xl overflow-hidden bg-[#070707]" style={{ height: Math.max(canvasH + HEAD_H + 2, 320) }}>
-        <div ref={scrollRef} className="overflow-auto h-full">
+        <div ref={scrollRef} className="overflow-auto h-full"
+          style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y", overscrollBehaviorX: "contain" }}>
           <div style={{ width: sideW + totalWidth, minHeight: HEAD_H + canvasH }}>
 
             {/* ── Header ── */}
