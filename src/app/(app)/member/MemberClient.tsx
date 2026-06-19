@@ -8,8 +8,10 @@ import {
   Briefcase, Mail, Mic, Film, Sliders, Clapperboard,
   MonitorPlay, Sparkles, Headphones, Radio, Star,
   Camera, Trash2, Bell, Monitor, Smartphone, Calendar, Clock,
+  Sun, Moon,
 } from "lucide-react";
 import Sidebar from "@/components/ui/Sidebar";
+import { useTheme } from "@/hooks/useTheme";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -272,6 +274,7 @@ export default function MemberClient({
   recentComments: RecentComment[];
   recentFiles: RecentFile[];
 }) {
+  const { theme, toggle } = useTheme();
   const [profile, setProfile]   = useState(initialProfile);
   const [section, setSection]   = useState<Section>("overview");
   const [avatar,  setAvatar]    = useState<string | null>(initialAvatar);
@@ -979,6 +982,21 @@ export default function MemberClient({
                     {pwSaving ? "Updating…" : "Update password"}
                   </button>
                 </form>
+              </div>
+
+              {/* Appearance */}
+              <div className="border-t border-white/[0.04] pt-6">
+                <p className="text-white/18 text-[9px] tracking-[0.25em] uppercase mb-4 font-light">Appearance</p>
+                <div className="flex items-center justify-between p-4 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+                  <div className="min-w-0">
+                    <p className="text-white/55 text-sm font-light">{theme === "dark" ? "Dark mode" : "Light mode"}</p>
+                    <p className="text-white/18 text-xs font-light mt-0.5">Switch between dark and light themes</p>
+                  </div>
+                  <button onClick={toggle}
+                    className="flex items-center gap-1.5 text-white/55 hover:text-white border border-white/[0.08] hover:border-white/[0.18] px-3 py-2 rounded-xl text-xs transition-all font-light shrink-0">
+                    {theme === "dark" ? <><Sun size={11}/> Light mode</> : <><Moon size={11}/> Dark mode</>}
+                  </button>
+                </div>
               </div>
 
               {/* Danger */}
