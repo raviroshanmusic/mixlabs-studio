@@ -8,7 +8,6 @@ import {
   FolderOpen,
   MessageSquare,
   User,
-  LogOut,
   Plus,
   Sun,
   Moon,
@@ -65,11 +64,6 @@ export default function Sidebar({
   }, []);
 
   const { theme, toggle } = useTheme();
-
-  async function signOut() {
-    await fetch("/api/auth/signout", { method: "POST" });
-    window.location.href = "/login";
-  }
 
   if (!mounted) return null;
 
@@ -264,7 +258,7 @@ export default function Sidebar({
         {/* Notifications - live feed popover */}
         <NotificationsBell expanded={expanded} />
 
-        {/* User row → profile, + sign out */}
+        {/* User row → profile (sign out lives on the profile page) */}
         <div className="flex items-center" style={{ padding: "8px 0" }}>
           <a href="/member" title="Open profile"
             className="group/profile flex items-center flex-1 min-w-0 rounded-xl overflow-hidden hover:bg-white/[0.07] transition-colors cursor-pointer"
@@ -288,33 +282,7 @@ export default function Sidebar({
               <p className="text-[9px] text-white/20 group-hover/profile:text-white/35 whitespace-nowrap leading-snug transition-colors">View profile</p>
             </div>
           </a>
-
-          {/* sign out - only in expanded */}
-          {expanded && (
-            <button onClick={signOut}
-              className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0 ml-1
-                         text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all duration-200"
-              title="Sign out">
-              <LogOut size={13} />
-            </button>
-          )}
         </div>
-
-        {/* Sign out when collapsed (standalone) */}
-        {!expanded && (
-          <button onClick={signOut}
-            className="flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
-            style={{ padding: "9px 0" }}
-            title="Sign out"
-            onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"}
-            onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = "transparent"}
-          >
-            <span className="w-8 h-8 flex items-center justify-center rounded-lg
-                             text-white/20 group-hover:text-white/50 transition-colors duration-200">
-              <LogOut size={15} strokeWidth={1.5} />
-            </span>
-          </button>
-        )}
       </div>
     </aside>
   );
