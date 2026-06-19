@@ -1069,7 +1069,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             </div>
 
             {/* Tab bar */}
-            <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-x-1 gap-y-0 flex-wrap md:flex-nowrap md:overflow-x-auto scrollbar-hide">
               {TABS.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 py-2.5 text-[11px] tracking-wide transition-all relative -mb-px border-b-2 font-light ${
