@@ -269,7 +269,7 @@ export default function Sidebar({
             <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
               {userName ?? "User"}
             </p>
-            <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Studio</p>
+            <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Workspace</p>
           </div>
 
           {/* sign out - only in expanded */}

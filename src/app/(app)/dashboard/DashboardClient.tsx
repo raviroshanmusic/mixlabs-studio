@@ -278,7 +278,7 @@ export default function DashboardClient({ user, projects, profile, activity, sta
           <div className="px-4 md:px-9 pt-4 md:pt-7 pb-5 relative">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-6 mb-5">
               <div className="min-w-0">
-                <p className="text-white/18 text-[10px] tracking-[0.3em] uppercase mb-1.5 font-light">{profile?.company || "MixLabs Studio"}</p>
+                <p className="text-white/18 text-[10px] tracking-[0.3em] uppercase mb-1.5 font-light">{profile?.company || "MixLabs Workspace"}</p>
                 <h1 className="text-white/82 text-2xl md:text-[1.7rem] font-light tracking-wide leading-tight">
                   {greeting()}, <span className="text-white/45">{displayName.split(" ")[0]}</span>
                 </h1>

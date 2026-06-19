@@ -800,7 +800,7 @@ export default function HomePage() {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.3 }}
               className="flex items-center gap-3 mb-10">
               <div className="h-px w-8 bg-white/20" />
-              <span className="text-[9px] tracking-[0.48em] uppercase text-white/28 font-light">Studio OS · 2026</span>
+              <span className="text-[9px] tracking-[0.48em] uppercase text-white/28 font-light">Workspace · 2026</span>
             </motion.div>
 
             {/* Staggered title lines */}
@@ -1108,7 +1108,7 @@ export default function HomePage() {
             <span className="text-white/35">
               <MixLabsLogo size={26} />
             </span>
-            <span className="text-white/18 text-[10px] tracking-[0.3em] uppercase font-light">MixLabs Studio</span>
+            <span className="text-white/18 text-[10px] tracking-[0.3em] uppercase font-light">MixLabs Workspace</span>
           </div>
           <LiveTimecode />
           <p className="text-white/12 text-[10px] tracking-widest uppercase font-light">Built for film. Made with care.</p>

@@ -241,13 +241,13 @@ export default function LoginPage() {
         <span className="text-white">
           <MixLabsLogo size={80} />
         </span>
-        <span className="text-white/35 text-[10px] tracking-[0.4em] uppercase font-light">MixLabs Studio</span>
+        <span className="text-white/35 text-[10px] tracking-[0.4em] uppercase font-light">MixLabs Workspace</span>
       </div>
 
       {/* Card */}
       <div className="w-full max-w-sm glass rounded-2xl p-8">
         <div className="mb-6">
-          <p className="text-white/30 text-[10px] tracking-[0.3em] uppercase mb-1">Studio Access</p>
+          <p className="text-white/30 text-[10px] tracking-[0.3em] uppercase mb-1">Workspace Access</p>
           <h1 className="text-white text-xl font-light tracking-wide">
             {mode === "in" ? "Sign in to MixLabs" : "Create your account"}
           </h1>
@@ -293,9 +293,9 @@ export default function LoginPage() {
             {/* Name row */}
             <div className="grid grid-cols-2 gap-3">
               <Field label="First Name" value={firstName} onChange={setFirstName}
-                placeholder="Ravi" required autoComplete="given-name" />
+                placeholder="Alex" required autoComplete="given-name" />
               <Field label="Last Name" value={lastName} onChange={setLastName}
-                placeholder="Roshan" required autoComplete="family-name" />
+                placeholder="Carter" required autoComplete="family-name" />
             </div>
 
             <Field label="Email" type="email" value={upEmail} onChange={setUpEmail}
