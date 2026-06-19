@@ -37,6 +37,18 @@ export default async function ReviewPage({
     .eq("project_id", id)
     .order("timecode", { ascending: true });
 
+  // Enrich each comment with its author's display name only (never the email),
+  // so the UI can show "First L." instead of falling back to an email address.
+  const authorIds = [...new Set((comments ?? []).map(c => c.author_id).filter(Boolean))];
+  const { data: authorProfiles } = authorIds.length
+    ? await supabase.from("profiles").select("id, full_name").in("id", authorIds)
+    : { data: [] };
+  const profileMap = new Map((authorProfiles ?? []).map(p => [p.id, p]));
+  const commentsEnriched = (comments ?? []).map(c => ({
+    ...c,
+    profiles: profileMap.get(c.author_id) ?? null,
+  }));
+
   const { data: profile } = await supabase
     .from("profiles")
     .select("id, full_name, email")
@@ -65,7 +77,7 @@ export default async function ReviewPage({
     <ReviewClient
       project={{ ...project, departments: project.departments ?? [] }}
       versions={versions ?? []}
-      comments={comments ?? []}
+      comments={commentsEnriched}
       currentUser={{ id: user.id, full_name: profile?.full_name ?? null, email: user.email ?? "" }}
       initialDept={dept ?? null}
       allProjects={allProjects ?? []}

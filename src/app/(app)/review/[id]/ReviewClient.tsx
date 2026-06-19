@@ -20,7 +20,7 @@ type Comment   = {
   id: string; body: string; timecode: number | null; version_id: string | null;
   created_at: string; author_id: string; author_name: string | null; status: string;
   priority?: string;
-  profiles: { id: string; full_name: string | null; email: string | null } | null;
+  profiles: { id: string; full_name: string | null; email?: string | null } | null;
 };
 type CurrentUser = { id: string; full_name: string | null; email: string };
 type FilterTab   = "all" | "open" | "resolved";
@@ -117,6 +117,19 @@ function avatarColor(name: string) {
   return AVATAR_PALETTE[Math.abs(hash) % AVATAR_PALETTE.length];
 }
 
+// Privacy: never show a commenter's email. Render "Ravi R." — first name +
+// last initial. If only an email is available, fall back to its (capitalised)
+// local part so the address itself is never displayed.
+function shortName(raw?: string | null): string {
+  const v = (raw ?? "").trim();
+  if (!v) return "Member";
+  const base = v.includes("@") ? v.split("@")[0] : v;
+  const parts = base.split(/\s+/).filter(Boolean);
+  const first = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+  const last  = parts.length > 1 ? ` ${parts[parts.length - 1][0].toUpperCase()}.` : "";
+  return `${first}${last}`;
+}
+
 function initials(name: string): string {
   return name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
 }
@@ -134,7 +147,7 @@ function exportNotes(comments: Comment[], project: Project, version: Version | n
     ...comments.map(c => {
       const tc = c.timecode != null ? `[${fmtTimecode(c.timecode)}] ` : "";
       const st = c.status === "resolved" ? " ✓" : "";
-      return `${tc}${c.author_name ?? "Unknown"}${st}\n${c.body}\n`;
+      return `${tc}${shortName(c.profiles?.full_name || c.author_name)}${st}\n${c.body}\n`;
     }),
   ].filter(Boolean).join("\n");
 
@@ -392,7 +405,7 @@ function TimecodeRail({ comments, onSeek }: { comments: Comment[]; onSeek: (s: n
               )}
             </div>
             <p className="text-white/75 text-xs leading-snug line-clamp-2">{hovered.body}</p>
-            <p className="text-white/40 text-[10px] mt-1">{hovered.author_name}</p>
+            <p className="text-white/40 text-[10px] mt-1">{shortName(hovered.author_name)}</p>
           </div>
           <div className="w-px h-3 bg-white/15 mx-auto" />
         </div>
@@ -877,7 +890,7 @@ function CommentCard({
 }) {
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const name     = comment.author_name || comment.profiles?.full_name || comment.profiles?.email || "Unknown";
+  const name     = shortName(comment.profiles?.full_name || comment.author_name);
   const color    = avatarColor(name);
   const resolved = comment.status === "resolved";
   const isOwn    = comment.author_id === currentUserId;
