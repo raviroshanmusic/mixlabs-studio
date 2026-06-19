@@ -409,7 +409,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
   );
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-6 h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-6 md:h-full md:overflow-hidden">
       {/* Dept nav */}
       <div className="md:w-40 md:shrink-0 flex md:flex-col flex-row gap-1 md:gap-0.5 overflow-x-auto scrollbar-hide md:pt-0.5 pb-1 md:pb-0">
         <p className="hidden md:block text-white/16 text-[9px] tracking-[0.25em] uppercase px-3 mb-2.5 font-light">Departments</p>
@@ -505,7 +505,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto scrollbar-hide">
+          <div className="flex-1 md:overflow-y-auto scrollbar-hide">
             {/* Header row */}
             <div className="grid items-center px-3 pb-2.5 border-b border-white/[0.04]"
               style={{ gridTemplateColumns: "1fr 110px 70px 32px" }}>
@@ -776,7 +776,7 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
   ] as const;
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 md:gap-8 h-full overflow-hidden">
+    <div className="flex flex-col md:flex-row gap-4 md:gap-8 md:h-full md:overflow-hidden">
 
       {/* Left nav */}
       <div className="md:w-44 md:shrink-0 flex md:flex-col flex-row gap-1 md:gap-0.5 md:pt-0.5 overflow-x-auto scrollbar-hide pb-1 md:pb-0">
@@ -1093,7 +1093,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
 
         {/* ══ Scrollable Body ══ */}
         {isTimeline ? (
-          <div className="flex-1 overflow-hidden px-4 md:px-9 py-4 md:py-6">
+          <div className="flex-1 overflow-y-auto md:overflow-hidden px-4 md:px-9 py-4 md:py-6">
             <Timeline project={project} initialMilestones={milestones} versions={versions} canEdit={canEdit}/>
           </div>
         ) : (
