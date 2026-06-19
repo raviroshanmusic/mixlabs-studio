@@ -181,7 +181,8 @@ export default function Sidebar({
 
       {/* ── Main nav ── */}
       <nav className="flex flex-col gap-0.5 px-3 flex-1 min-h-0">
-        {NAV.map(({ href, label, sub, icon: Icon, key, color }) => {
+        {/* Profile lives in the user row at the bottom, so it's omitted here. */}
+        {NAV.filter(n => n.key !== "member").map(({ href, label, sub, icon: Icon, key, color }) => {
           const isActive = pathname.startsWith(href) || active === key;
           const glow = color + "1a"; // ~10% opacity
           return (
@@ -254,28 +255,32 @@ export default function Sidebar({
         {/* Notifications - live feed popover */}
         <NotificationsBell expanded={expanded} />
 
-        {/* User row + sign out */}
-        <div className="flex items-center rounded-xl overflow-hidden" style={{ padding: "8px 0" }}>
-          {/* avatar */}
-          <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
-                           bg-white/[0.08] border border-white/[0.08]
-                           text-[11px] font-semibold text-white/60">
-            {userInitials ?? "U"}
-          </span>
+        {/* User row → profile, + sign out */}
+        <div className="flex items-center" style={{ padding: "8px 0" }}>
+          <a href="/member" title="Profile"
+            className="flex items-center flex-1 min-w-0 rounded-xl overflow-hidden hover:bg-white/[0.04] transition-colors"
+            style={{ padding: "2px 0", background: pathname.startsWith("/member") ? "var(--bg-card-hover)" : "transparent" }}>
+            {/* avatar */}
+            <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg
+                             bg-white/[0.08] border border-white/[0.08]
+                             text-[11px] font-semibold text-white/60">
+              {userInitials ?? "U"}
+            </span>
 
-          {/* name - only in expanded */}
-          <div className="overflow-hidden ml-3 flex-1"
-            style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0 }}>
-            <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
-              {userName ?? "User"}
-            </p>
-            <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Workspace</p>
-          </div>
+            {/* name - only in expanded */}
+            <div className="overflow-hidden ml-3 flex-1"
+              style={{ opacity: expanded ? 1 : 0, transition: "opacity 160ms", minWidth: 0 }}>
+              <p className="text-[11px] text-white/50 whitespace-nowrap truncate leading-snug">
+                {userName ?? "User"}
+              </p>
+              <p className="text-[9px] text-white/20 whitespace-nowrap leading-snug">MixLabs Workspace</p>
+            </div>
+          </a>
 
           {/* sign out - only in expanded */}
           {expanded && (
             <button onClick={signOut}
-              className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0
+              className="w-7 h-7 flex items-center justify-center rounded-lg shrink-0 ml-1
                          text-white/20 hover:text-white/60 hover:bg-white/[0.06] transition-all duration-200"
               title="Sign out">
               <LogOut size={13} />
