@@ -167,13 +167,9 @@ function ToastStack({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: stri
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none">
       {toasts.map(t => (
         <div key={t.id}
-          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl border shadow-2xl shadow-black/50 pointer-events-auto backdrop-blur-sm text-sm font-medium ${
-            t.type === "success" ? "bg-emerald-950/90 border-emerald-500/30 text-emerald-200" :
-            t.type === "error"   ? "bg-rose-950/90 border-rose-500/30 text-rose-200" :
-                                   "bg-[#1a1a1a]/90 border-white/10 text-white/70"
-          }`}>
-          {t.type === "success" && <CheckCircle2 size={14} className="text-emerald-400" />}
-          {t.type === "error"   && <AlertCircle  size={14} className="text-rose-400" />}
+          className="flex items-center gap-2.5 px-4 py-3 rounded-2xl border border-white/[0.08] bg-[#141414]/95 text-white/85 shadow-2xl shadow-black/50 pointer-events-auto backdrop-blur-xl text-sm font-medium">
+          {t.type === "success" && <CheckCircle2 size={14} className="text-emerald-400/80" />}
+          {t.type === "error"   && <AlertCircle  size={14} className="text-rose-400/80" />}
           <span>{t.message}</span>
           <button onClick={() => onRemove(t.id)} className="ml-1 opacity-50 hover:opacity-100 transition-opacity">
             <X size={12} />
@@ -1131,7 +1127,7 @@ export default function ReviewClient({
       body: JSON.stringify({ status }),
     });
     if (res.ok) {
-      addToast("success", status === "resolved" ? "Marked resolved ✓" : "Reopened");
+      addToast("success", status === "resolved" ? "Marked resolved" : "Reopened");
     } else {
       // Revert
       setComments(prev => prev.map(c => c.id === commentId ? { ...c, status: status === "resolved" ? "open" : "resolved" } : c));
