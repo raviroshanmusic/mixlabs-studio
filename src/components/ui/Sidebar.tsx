@@ -187,13 +187,12 @@ export default function Sidebar({
         {/* Profile lives in the user row at the bottom, so it's omitted here. */}
         {NAV.filter(n => n.key !== "member").map(({ href, label, sub, icon: Icon, key, color }) => {
           const isActive = pathname.startsWith(href) || active === key;
-          const glow = color + "1a"; // ~10% opacity
           return (
             <a key={href} href={href}
               className="relative flex items-center rounded-xl transition-all duration-200 group overflow-hidden"
               style={{
                 padding: "9px 0",
-                background: isActive ? glow : "transparent",
+                background: isActive ? "var(--bg-card-hover)" : "transparent",
               }}
               onMouseEnter={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "var(--bg-card-hover)"; }}
               onMouseLeave={e => { if (!isActive)(e.currentTarget as HTMLElement).style.background = "transparent"; }}
@@ -210,7 +209,7 @@ export default function Sidebar({
               {/* icon - always 32px, px-0 since parent has px-3 */}
               <span className="w-8 h-8 flex items-center justify-center shrink-0 rounded-lg transition-colors duration-200"
                 style={{
-                  background: isActive ? color + "22" : "transparent",
+                  background: isActive ? color + "14" : "transparent",
                   color: isActive ? color : "var(--text-3)",
                 }}>
                 <Icon size={15} strokeWidth={isActive ? 2 : 1.5} />
