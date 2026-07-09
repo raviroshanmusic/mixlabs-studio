@@ -6,13 +6,14 @@ import {
   Settings, Users, FileText, Trash2, Check,
   PlayCircle, Calendar, TrendingUp, Activity, Package,
   ShieldCheck, Eye, Pencil, Crown, AlertCircle,
-  Clock, FolderOpen, RefreshCw, Dot, Upload, ScrollText,
+  Clock, FolderOpen, RefreshCw, Dot, Upload, ScrollText, Boxes,
 } from "lucide-react";
 import B2Upload from "@/components/ui/B2Upload";
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
 import DeliveryTab, { Delivery } from "./Delivery";
 import PreProTab, { ProjectDoc } from "./PreProTab";
+import ExchangeTab, { ExchangeFile } from "./ExchangeTab";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -952,10 +953,10 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-type Tab = "files" | "prepro" | "timeline" | "delivery" | "team" | "settings";
+type Tab = "files" | "prepro" | "exchange" | "timeline" | "delivery" | "team" | "settings";
 
-export default function ProjectClient({ project: initialProject, versions, members, milestones, deliveries: initialDeliveries, documents, currentUserId }: {
-  project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; deliveries: Delivery[]; documents: ProjectDoc[]; currentUserId: string;
+export default function ProjectClient({ project: initialProject, versions, members, milestones, deliveries: initialDeliveries, documents, exchange, currentUserId }: {
+  project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; deliveries: Delivery[]; documents: ProjectDoc[]; exchange: ExchangeFile[]; currentUserId: string;
 }) {
   const [project, setProject] = useState(initialProject);
   const [status, setStatus]   = useState(initialProject.status);
@@ -990,6 +991,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number; accent?: string }[] = [
     { id: "files",    label: "Drafts",   icon: <FileText size={12}/>, count: versions.length },
     { id: "prepro",   label: "Pre-Pro",  icon: <ScrollText size={12}/>, count: documents.length },
+    { id: "exchange", label: "Exchange", icon: <Boxes size={12}/>, count: exchange.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
     { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
     { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: members.length },
@@ -1104,6 +1106,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-4 md:py-6 pb-28 md:pb-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
               {activeTab === "prepro"   && <PreProTab project={project} initialDocuments={documents} canEdit={canEdit} onProjectUpdate={p => setProject(prev => ({...prev,...p}))}/>}
+              {activeTab === "exchange" && <ExchangeTab projectId={project.id} initialFiles={exchange} currentUserId={currentUserId} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
               {activeTab === "team"     && <TeamTab project={project} members={members} canManage={canManage}/>}
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}

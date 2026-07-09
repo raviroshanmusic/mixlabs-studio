@@ -58,6 +58,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .eq("project_id", id)
     .order("created_at", { ascending: false });
 
+  const { data: exchange } = await supabase
+    .from("project_exchange")
+    .select("*")
+    .eq("project_id", id)
+    .order("created_at", { ascending: false });
+
   return (
     <ProjectClient
       project={{ ...project, departments: project.departments ?? [], owner_id: project.owner_id, brief: project.brief ?? {} }}
@@ -66,6 +72,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       milestones={milestones ?? []}
       deliveries={deliveries ?? []}
       documents={documents ?? []}
+      exchange={exchange ?? []}
       currentUserId={user.id}
     />
   );
