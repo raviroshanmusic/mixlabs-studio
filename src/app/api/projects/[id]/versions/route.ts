@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifyNewVersion } from "@/lib/email";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,5 +26,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Notify the rest of the project by email (best-effort — never blocks the upload).
+  try {
+    await notifyNewVersion(supabase, {
+      projectId: id, actorId: user.id,
+      department: department.trim(), versionName: title.trim(),
+    });
+  } catch (e) { console.error("notifyNewVersion failed:", e); }
+
   return NextResponse.json(data);
 }
