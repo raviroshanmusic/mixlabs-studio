@@ -424,7 +424,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                 className={`flex-shrink-0 md:w-full flex items-center justify-between px-3 py-2 md:py-2.5 rounded-xl transition-all ${active ? "bg-white/6" : "hover:bg-white/3"}`}>
                 <div className="flex items-center gap-2">
                   <span className="w-5 h-5 rounded-lg flex items-center justify-center shrink-0 transition-all"
-                    style={{ background: active ? m.bg : "transparent", color: active ? m.accent : "rgba(255,255,255,0.2)" }}>
+                    style={{ background: active ? m.bg : "transparent", color: active ? m.hex : "var(--text-3)" }}>
                     {m.icon}
                   </span>
                   <span className={`text-[12px] font-light transition-colors ${active ? "text-white/80" : "text-white/28 group-hover/row:text-white/50"}`}>{dept}</span>
@@ -446,7 +446,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
         {/* Dept header */}
         <div className="flex items-center justify-between mb-5 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: meta.bg, color: meta.accent }}>{meta.icon}</span>
+            <span className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: meta.bg, color: meta.hex }}>{meta.icon}</span>
             <div>
               <h3 className="text-white/72 text-sm font-light">{activeDept}</h3>
               <p className="text-white/18 text-[10px] font-light">{files.length} {files.length === 1 ? "draft" : "drafts"}</p>
@@ -498,7 +498,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
         {files.length === 0 && !addingFile ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 border border-dashed border-white/[0.05] rounded-2xl">
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: meta.bg }}>
-              <span style={{ color: meta.accent }}>{meta.icon}</span>
+              <span style={{ color: meta.hex }}>{meta.icon}</span>
             </div>
             <div className="text-center">
               <p className="text-white/28 text-sm font-light">No {activeDept} drafts yet</p>
@@ -849,7 +849,7 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
                     style={active ? { borderColor: m.hex + "35", background: m.hex + "08" } : {}}>
                     <div className="flex items-center gap-3">
                       <span className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all`}
-                        style={active ? { background: m.bg, color: m.accent } : { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.22)" }}>
+                        style={active ? { background: m.bg, color: m.hex } : { background: "rgba(255,255,255,0.04)", color: "var(--text-3)" }}>
                         {m.icon}
                       </span>
                       <div>
