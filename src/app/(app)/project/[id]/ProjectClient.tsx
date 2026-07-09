@@ -991,7 +991,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number; accent?: string }[] = [
     { id: "files",    label: "Drafts",   icon: <FileText size={12}/>, count: versions.length },
     { id: "prepro",   label: "Pre-Pro",  icon: <ScrollText size={12}/>, count: documents.length },
-    { id: "exchange", label: "Exchange", icon: <Boxes size={12}/>, count: exchange.length },
+    { id: "exchange", label: "Turnover", icon: <Boxes size={12}/>, count: exchange.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
     { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
     { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: members.length },
