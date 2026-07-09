@@ -79,7 +79,7 @@ export default function ExchangeTab({
     <div className="flex flex-col gap-6 max-w-3xl">
       {/* Intro */}
       <div>
-        <h2 className="text-white/80 text-base font-light">Turnover</h2>
+        <h2 className="text-white/80 text-base font-light">Handoff</h2>
         <p className="text-white/30 text-xs font-light mt-1">
           Drop editorial turnover here — AAF, XML / FCPXML, EDL, OTIO, reference MOVs, audio stems.
         </p>
