@@ -159,7 +159,7 @@ function RoleSelector({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
 
   // Sign-in fields
   const [email, setEmail]       = useState("");
@@ -189,6 +189,20 @@ export default function LoginPage() {
     const data = await res.json();
     if (!res.ok) { setError(data.error || "Login failed"); setLoading(false); return; }
     window.location.href = "/dashboard";
+  }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setError(""); setMessage("");
+    if (!email.trim()) { setError("Enter your email first."); return; }
+    setLoading(true);
+    const { createClient } = await import("@/lib/supabase/client");
+    const { error } = await createClient().auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+    });
+    setLoading(false);
+    if (error) { setError(error.message); return; }
+    setMessage("If that email has an account, a reset link is on its way. Check your inbox (and spam).");
   }
 
   async function handleSignUp(e: React.FormEvent) {
@@ -249,7 +263,7 @@ export default function LoginPage() {
         <div className="mb-6">
           <p className="text-white/30 text-[10px] tracking-[0.3em] uppercase mb-1">Workspace Access</p>
           <h1 className="text-white text-xl font-light tracking-wide">
-            {mode === "in" ? "Sign in to MixLabs" : "Create your account"}
+            {mode === "in" ? "Sign in to MixLabs" : mode === "forgot" ? "Reset your password" : "Create your account"}
           </h1>
         </div>
 
@@ -283,6 +297,34 @@ export default function LoginPage() {
             <button type="submit" disabled={loading}
               className="mt-2 w-full bg-white text-black rounded-lg py-3 text-sm font-medium tracking-wide hover:bg-white/90 disabled:opacity-40 transition-all">
               {loading ? "Signing in…" : "Enter Dashboard"}
+            </button>
+
+            <button type="button" onClick={() => { setMode("forgot"); setError(""); setMessage(""); }}
+              className="text-center text-white/30 hover:text-white/60 text-[11px] transition-colors">
+              Forgot password?
+            </button>
+          </form>
+        )}
+
+        {/* ── Forgot password ── */}
+        {mode === "forgot" && (
+          <form onSubmit={handleForgot} className="flex flex-col gap-3">
+            <p className="text-white/40 text-xs font-light -mt-1 mb-1">
+              Enter your account email and we&apos;ll send you a link to set a new password.
+            </p>
+            <Field label="Email" type="email" value={email} onChange={setEmail}
+              placeholder="you@studio.com" required autoComplete="email" />
+
+            {error   && <p className="text-red-400/80 text-xs">{error}</p>}
+            {message && <p className="text-green-400/80 text-xs">{message}</p>}
+
+            <button type="submit" disabled={loading}
+              className="mt-2 w-full bg-white text-black rounded-lg py-3 text-sm font-medium tracking-wide hover:bg-white/90 disabled:opacity-40 transition-all">
+              {loading ? "Sending…" : "Send reset link"}
+            </button>
+            <button type="button" onClick={() => { setMode("in"); setError(""); setMessage(""); }}
+              className="text-center text-white/30 hover:text-white/60 text-[11px] transition-colors">
+              Back to sign in
             </button>
           </form>
         )}
