@@ -996,15 +996,17 @@ function CommentCard({
 type ProjectStub = { id: string; name: string; status: string; departments: string[] };
 
 export default function ReviewClient({
-  project, versions, comments: initialComments, currentUser, initialDept, allProjects,
+  project, versions, comments: initialComments, currentUser, initialDept, initialVersionId, allProjects,
 }: {
   project: Project; versions: Version[]; comments: Comment[];
-  currentUser: CurrentUser; initialDept?: string | null;
+  currentUser: CurrentUser; initialDept?: string | null; initialVersionId?: string | null;
   allProjects?: ProjectStub[];
 }) {
-  const firstVersion = initialDept
-    ? (versions.find(v => v.department === initialDept) ?? versions[0] ?? null)
-    : (versions[0] ?? null);
+  const firstVersion =
+    (initialVersionId ? versions.find(v => v.id === initialVersionId) : undefined)
+    ?? (initialDept
+      ? (versions.find(v => v.department === initialDept) ?? versions[0] ?? null)
+      : (versions[0] ?? null));
 
   const [selectedVersion, setSelectedVersion] = useState<Version | null>(firstVersion);
   const [allVersions, setAllVersions]         = useState<Version[]>(versions);

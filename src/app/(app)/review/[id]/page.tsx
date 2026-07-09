@@ -7,10 +7,10 @@ export default async function ReviewPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ dept?: string }>;
+  searchParams: Promise<{ dept?: string; version?: string }>;
 }) {
   const { id } = await params;
-  const { dept } = await searchParams;
+  const { dept, version } = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -80,6 +80,7 @@ export default async function ReviewPage({
       comments={commentsEnriched}
       currentUser={{ id: user.id, full_name: profile?.full_name ?? null, email: user.email ?? "" }}
       initialDept={dept ?? null}
+      initialVersionId={version ?? null}
       allProjects={allProjects ?? []}
     />
   );

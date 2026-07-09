@@ -517,7 +517,9 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
               const vs = VERSION_STATUS_META[f.status as VersionStatus] ?? VERSION_STATUS_META["draft"];
               return (
                 <div key={f.id}
-                  className={`grid items-center px-3 py-3.5 group hover:bg-white/[0.02] rounded-xl transition-colors ${i < files.length - 1 ? "border-b border-white/[0.03]" : ""}`}
+                  onClick={() => { window.location.href = `/review/${project.id}?dept=${encodeURIComponent(activeDept)}&version=${f.id}`; }}
+                  title="Open in review room"
+                  className={`grid items-center px-3 py-3.5 group hover:bg-white/[0.02] rounded-xl transition-colors cursor-pointer ${i < files.length - 1 ? "border-b border-white/[0.03]" : ""}`}
                   style={{ gridTemplateColumns: "1fr 110px 70px 32px" }}>
                   {/* File name */}
                   <div className="min-w-0 flex items-center gap-2.5">
