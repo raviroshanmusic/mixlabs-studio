@@ -221,7 +221,7 @@ function ProjectSidebar({ project, versions, members, milestones, userRole }: {
   };
 
   return (
-    <div className="w-64 shrink-0 border-l border-white/[0.04] overflow-y-auto scrollbar-hide">
+    <div className="w-64 shrink-0 h-full border-l border-white/[0.04] overflow-y-auto scrollbar-hide">
       <div className="px-5 py-6 flex flex-col gap-5">
 
         {/* ── Your Role ── */}
@@ -1110,7 +1110,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             </div>
 
             {/* Right - sidebar, scrolls independently, hidden on mobile */}
-            <div className="hidden md:block">
+            <div className="hidden md:block h-full">
             <ProjectSidebar
               project={project}
               versions={versions}
