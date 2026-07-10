@@ -7,6 +7,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  // Only the project owner may invite. Explicit check (defense-in-depth alongside
+  // the RLS insert policy) that also stops non-owners from using this endpoint to
+  // probe whether an email has an account (enumeration).
+  const { data: owned } = await supabase
+    .from("projects").select("id").eq("id", id).eq("owner_id", user.id).maybeSingle();
+  if (!owned) return NextResponse.json({ error: "Only the project owner can add members" }, { status: 403 });
+
   const { email, role } = await request.json();
   if (!email?.trim()) return NextResponse.json({ error: "Email required" }, { status: 400 });
 
