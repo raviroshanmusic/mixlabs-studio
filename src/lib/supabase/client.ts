@@ -1,9 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr";
 
-// Prefer env vars; fall back to the project's public values so builds never break
-// if the vars are missing. The anon key is safe to expose (RLS protects data).
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://vjvhbukbqklgrllwiliv.supabase.co";
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqdmhidWticWtsZ3JsbHdpbGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMzE0MjgsImV4cCI6MjA5NjcwNzQyOH0.NlOUslZynlqSgwOSK6wMm_Yi9qeCRx6S3w2Kkaf9Jus";
+const SUPABASE_URL = "https://vjvhbukbqklgrllwiliv.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqdmhidWticWtsZ3JsbHdpbGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMzE0MjgsImV4cCI6MjA5NjcwNzQyOH0.NlOUslZynlqSgwOSK6wMm_Yi9qeCRx6S3w2Kkaf9Jus";
 
 export function createClient() {
   return createBrowserClient(SUPABASE_URL, SUPABASE_ANON_KEY);
