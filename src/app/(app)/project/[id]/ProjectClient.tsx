@@ -50,7 +50,7 @@ const VERSION_STATUS_META: Record<VersionStatus, { cls: string; label: string; d
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[]; owner_id?: string; logline?: string | null; synopsis?: string | null; brief?: Record<string, string> | null };
 type Version = { id: string; version_name: string; department: string; drive_url: string | null; status: string; created_at: string };
-type Member  = { id: string; role: string | null; user_id?: string; profiles: { id: string; full_name: string | null; email?: string | null } | null };
+type Member  = { id: string; role: string | null; user_id?: string | null; status?: string | null; profiles: { id: string; full_name: string | null; email?: string | null } | null };
 type UserRole = "owner" | "admin" | "editor" | "viewer";
 
 const ROLE_META: Record<UserRole, { icon: React.ReactNode; label: string; color: string; border: string; bg: string; desc: string }> = {
@@ -676,7 +676,9 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
         ) : (
           <div className="flex flex-col gap-1">
             {localMembers.map(m => {
-              const name = shortName(m.profiles?.full_name);
+              // No linked account yet = invited but hasn't signed up.
+              const isPending = m.status === "pending" || (!m.user_id && !m.profiles);
+              const name = isPending ? "Invited" : shortName(m.profiles?.full_name);
               const col  = avatarColor(m.profiles?.full_name || m.id);
               const r    = (m.role ?? "viewer") as keyof typeof roleColors;
               return (
@@ -688,6 +690,9 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
                     </div>
                     <div>
                       <p className="text-white/65 text-[13px] font-light">{name}</p>
+                      {isPending && (
+                        <p className="text-amber-300/60 text-[10px] font-light mt-0.5">Pending · invite sent</p>
+                      )}
                     </div>
                   </div>
                   <span className={`flex items-center gap-1.5 text-[9px] tracking-wide uppercase border px-2.5 py-1 rounded-full font-light ${roleColors[r] ?? roleColors["viewer"]}`}>

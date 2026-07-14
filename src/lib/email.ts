@@ -103,6 +103,48 @@ export async function notifyNewVersion(
   await Promise.allSettled(recipients.map(to => sendMail(to, subject, html)));
 }
 
+// ── Public: added to a project (invite) ──────────────────────────────────────────
+// Two flavours: the person already has an account (project is on their dashboard
+// now), or they don't yet (sign up with this email and it appears automatically).
+export async function notifyProjectInvite(
+  supabase: SupabaseClient,
+  opts: { projectId: string; email: string; inviterId: string; isNewUser: boolean },
+) {
+  const [{ data: project }, { data: inviter }] = await Promise.all([
+    supabase.from("projects").select("name").eq("id", opts.projectId).single(),
+    supabase.from("profiles").select("full_name").eq("id", opts.inviterId).single(),
+  ]);
+
+  const projectName = project?.name ?? "a project";
+  const who = inviter?.full_name ? escapeHtml(inviter.full_name) : "The MixLabs team";
+
+  const subject = opts.isNewUser
+    ? `You're invited to ${projectName} on MixLabs Workspace`
+    : `You've been added to ${projectName}`;
+
+  const html = opts.isNewUser
+    ? shell(
+        `You've been invited to ${escapeHtml(projectName)}`,
+        [
+          `${who} invited you to collaborate on <strong>${escapeHtml(projectName)}</strong> in MixLabs Workspace.`,
+          `Create an account using <strong>this email address</strong> and the project will appear on your dashboard automatically.`,
+        ],
+        "Create your account",
+        `${APP_URL}/login`,
+      )
+    : shell(
+        `You've been added to ${escapeHtml(projectName)}`,
+        [
+          `${who} added you to <strong>${escapeHtml(projectName)}</strong> in MixLabs Workspace.`,
+          `It's on your dashboard now.`,
+        ],
+        "Open project",
+        `${APP_URL}/project/${opts.projectId}`,
+      );
+
+  await sendMail(opts.email, subject, html);
+}
+
 // ── Public: new review comment ───────────────────────────────────────────────────
 // NOTE: currently NOT wired up. Per-comment emails were too noisy (one email per
 // member, per note — a 10-person project floods inboxes during a review). Kept

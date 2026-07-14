@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifyProjectInvite } from "@/lib/email";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,51 +20,48 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const normalizedEmail = email.trim().toLowerCase();
 
-  // Try RPC first (looks up auth.users by email)
+  // Already on this project? (covers pending invites too, which have no user_id)
+  const { data: existing } = await supabase
+    .from("project_members")
+    .select("id")
+    .eq("project_id", id)
+    .ilike("email", normalizedEmail)
+    .maybeSingle();
+  if (existing) return NextResponse.json({ error: "Member already added" }, { status: 409 });
+
+  // Resolve the invitee. They may not have an account yet — that's fine, we store
+  // a pending row and the signup trigger claims it when they register.
   let resolvedUserId: string | null = null;
   let resolvedFullName: string | null = null;
-  let resolvedEmail = normalizedEmail;
 
   const { data: rpcId } = await supabase.rpc("get_user_id_by_email", { email_input: normalizedEmail });
   if (rpcId) {
     resolvedUserId = rpcId;
-    // Try to get display name from profiles
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, email")
-      .eq("id", rpcId)
-      .single();
+      .from("profiles").select("full_name").eq("id", rpcId).maybeSingle();
     resolvedFullName = profile?.full_name ?? null;
-    resolvedEmail = profile?.email || normalizedEmail;
   } else {
-    // Fallback: search profiles by email
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .eq("email", normalizedEmail)
-      .single();
-    if (!profile) {
-      return NextResponse.json(
-        { error: "No user found with that email. They need to sign up first." },
-        { status: 404 }
-      );
+      .from("profiles").select("id, full_name").eq("email", normalizedEmail).maybeSingle();
+    if (profile) {
+      resolvedUserId = profile.id;
+      resolvedFullName = profile.full_name ?? null;
     }
-    resolvedUserId = profile.id;
-    resolvedFullName = profile.full_name ?? null;
-    resolvedEmail = profile.email || normalizedEmail;
   }
+
+  const isNewUser = !resolvedUserId;
 
   const { data: member, error } = await supabase
     .from("project_members")
     .insert({
       project_id: id,
-      user_id: resolvedUserId,
-      email: resolvedEmail,
+      user_id: resolvedUserId,               // null = pending until they sign up
+      email: normalizedEmail,
       full_name: resolvedFullName,
       role: role || "viewer",
       department: "all",
       permission: "view",
-      status: "active",
+      status: isNewUser ? "pending" : "active",
       invited_by: user.id,
     })
     .select("*")
@@ -74,10 +72,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  // Invite email (best-effort — never fails the request).
+  try {
+    await notifyProjectInvite(supabase, {
+      projectId: id, email: normalizedEmail, inviterId: user.id, isNewUser,
+    });
+  } catch (e) { console.error("notifyProjectInvite failed:", e); }
+
   return NextResponse.json({
     member: {
       ...member,
-      profiles: { id: resolvedUserId, full_name: resolvedFullName, email: resolvedEmail },
+      profiles: resolvedUserId
+        ? { id: resolvedUserId, full_name: resolvedFullName, email: normalizedEmail }
+        : null,
     },
+    pending: isNewUser,
   });
 }
