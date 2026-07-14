@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { notifyNewComment } from "@/lib/email";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -68,13 +67,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Notify the project team a note came in (best-effort — never blocks the comment).
-  try {
-    await notifyNewComment(supabase, {
-      projectId: id, actorId: user.id,
-      department, versionName, authorName, body: body.trim(),
-    });
-  } catch (e) { console.error("notifyNewComment failed:", e); }
+  // Per-comment email notifications are intentionally OFF: a busy review would
+  // send one email per member per note (10 members = 10 emails per comment).
+  // notifyNewComment() in @/lib/email still exists — re-wire it here, or better,
+  // batch it into a periodic digest, if/when that's wanted.
 
   return NextResponse.json(data);
 }

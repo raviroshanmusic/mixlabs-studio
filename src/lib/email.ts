@@ -104,6 +104,9 @@ export async function notifyNewVersion(
 }
 
 // ── Public: new review comment ───────────────────────────────────────────────────
+// NOTE: currently NOT wired up. Per-comment emails were too noisy (one email per
+// member, per note — a 10-person project floods inboxes during a review). Kept
+// here deliberately: re-wire in the comments route, or fold into a batched digest.
 export async function notifyNewComment(
   supabase: SupabaseClient,
   opts: { projectId: string; actorId: string; department: string; versionName: string; authorName: string; body: string },
