@@ -162,6 +162,15 @@ function exportNotes(comments: Comment[], project: Project, version: Version | n
 
 // ─── Toast System ─────────────────────────────────────────────────────────────
 
+// Highlight @mentions inside a comment body.
+function renderMentions(text: string) {
+  return text.split(/(@\w+)/g).map((part, i) =>
+    part.startsWith("@")
+      ? <span key={i} className="text-indigo-300/90 font-medium">{part}</span>
+      : <span key={i}>{part}</span>
+  );
+}
+
 function ToastStack({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none">
@@ -974,8 +983,8 @@ function CommentCard({
           </div>
 
           {/* Comment body */}
-          <p className={`text-sm leading-relaxed ${resolved ? "line-through text-white/35" : "text-white/75"}`}>
-            {comment.body}
+          <p className={`text-sm leading-relaxed whitespace-pre-wrap ${resolved ? "line-through text-white/35" : "text-white/75"}`}>
+            {renderMentions(comment.body)}
           </p>
 
           {/* Resolved badge */}
@@ -996,11 +1005,12 @@ function CommentCard({
 type ProjectStub = { id: string; name: string; status: string; departments: string[] };
 
 export default function ReviewClient({
-  project, versions, comments: initialComments, currentUser, initialDept, initialVersionId, allProjects,
+  project, versions, comments: initialComments, currentUser, initialDept, initialVersionId, allProjects, members = [],
 }: {
   project: Project; versions: Version[]; comments: Comment[];
   currentUser: CurrentUser; initialDept?: string | null; initialVersionId?: string | null;
   allProjects?: ProjectStub[];
+  members?: { id: string; full_name: string | null }[];
 }) {
   const firstVersion =
     (initialVersionId ? versions.find(v => v.id === initialVersionId) : undefined)
@@ -1013,6 +1023,8 @@ export default function ReviewClient({
   const [comments, setComments]               = useState<Comment[]>(initialComments);
   const [filterTab, setFilterTab]             = useState<FilterTab>("open");
   const [body, setBody]                       = useState("");
+  const [mention, setMention]                 = useState<{ query: string; left: number; top: number } | null>(null);
+  const [mentionedIds, setMentionedIds]       = useState<Set<string>>(new Set());
   const [timecodeInput, setTimecodeInput]     = useState("");
   const [submitting, setSubmitting]           = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -1096,21 +1108,78 @@ export default function ReviewClient({
   const resolvedCount = useMemo(() => allVisible.filter(c => c.status === "resolved").length, [allVisible]);
   const totalCount  = allVisible.length;
 
+  // ── @mentions ──
+  const mentionFirst = (n: string | null) => (n ?? "").trim().split(/\s+/)[0] || "someone";
+
+  function handleBodyChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const el = e.target;
+    setBody(el.value);
+    const caret = el.selectionStart ?? el.value.length;
+    const m = el.value.slice(0, caret).match(/(?:^|\s)@(\w*)$/);
+    if (m && members.length) {
+      const r = el.getBoundingClientRect();
+      setMention({ query: m[1].toLowerCase(), left: r.left, top: r.top });
+    } else {
+      setMention(null);
+    }
+  }
+
+  function insertMention(mem: { id: string; full_name: string | null }) {
+    const el = textareaRef.current;
+    const token = `@${mentionFirst(mem.full_name)} `;
+    const caret = el?.selectionStart ?? body.length;
+    const before = body.slice(0, caret).replace(/@(\w*)$/, "");
+    const after = body.slice(caret);
+    const next = before + token + after;
+    setBody(next);
+    setMentionedIds(prev => new Set(prev).add(mem.id));
+    setMention(null);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      el.focus();
+      const pos = (before + token).length;
+      el.setSelectionRange(pos, pos);
+    });
+  }
+
+  const mentionMatches = mention
+    ? members.filter(m => (m.full_name ?? "").toLowerCase().includes(mention.query)).slice(0, 6)
+    : [];
+
+  const mentionDropdown = mention && mentionMatches.length > 0 ? (
+    <div className="fixed z-[120] w-56 max-h-60 overflow-auto rounded-xl border border-white/12 bg-[#161616] shadow-2xl shadow-black/60 py-1"
+      style={{ left: mention.left, top: mention.top - 8, transform: "translateY(-100%)" }}>
+      {mentionMatches.map(m => (
+        <button key={m.id} type="button" onMouseDown={e => { e.preventDefault(); insertMention(m); }}
+          className="w-full text-left px-3 py-2 text-[13px] text-white/70 hover:bg-white/8 flex items-center gap-2 transition-colors">
+          <span className="w-6 h-6 rounded-full bg-white/8 border border-white/10 flex items-center justify-center text-[10px] text-white/60 shrink-0">
+            {(m.full_name ?? "?")[0]?.toUpperCase()}
+          </span>
+          {shortName(m.full_name)}
+        </button>
+      ))}
+    </div>
+  ) : null;
+
   // Submit
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!body.trim()) return;
     setSubmitting(true);
     const timecode = parseTimecode(timecodeInput);
+    const mentions = [...mentionedIds].filter(id => {
+      const mem = members.find(m => m.id === id);
+      return mem && body.includes(`@${mentionFirst(mem.full_name)}`);
+    });
     const res = await fetch(`/api/projects/${project.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body: body.trim(), timecode_sec: timecode, version_id: selectedVersion?.id ?? null }),
+      body: JSON.stringify({ body: body.trim(), timecode_sec: timecode, version_id: selectedVersion?.id ?? null, mentions }),
     });
     if (res.ok) {
       const nc = await res.json();
       setComments(prev => [...prev, { ...nc, profiles: { id: currentUser.id, full_name: currentUser.full_name, email: currentUser.email } }]);
-      setBody(""); setTimecodeInput("");
+      setBody(""); setTimecodeInput(""); setMentionedIds(new Set()); setMention(null);
       addToast("success", "Note added");
       setTimeout(() => commentsEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     } else {
@@ -1184,6 +1253,7 @@ export default function ReviewClient({
     <div className="md:hidden flex flex-col bg-[#080808] pb-28" style={{ color: "var(--text-1)" }}>
       <Sidebar active="review" userName={userName} userInitials={userInitials} />
       <ToastStack toasts={toasts} onRemove={removeToast} />
+      {mentionDropdown}
 
       {/* Sticky top bar */}
       <header className="sticky top-0 z-30 shrink-0 flex items-center gap-3 px-3 py-2.5 border-b border-white/[0.08] bg-[#0a0a0a]">
@@ -1337,7 +1407,7 @@ export default function ReviewClient({
                 ref={textareaRef}
                 placeholder="Leave a note…"
                 value={body}
-                onChange={e => setBody(e.target.value)}
+                onChange={handleBodyChange}
                 onKeyDown={handleKeyDown}
                 rows={3}
                 className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm text-white/75 placeholder-white/25 outline-none resize-none"
@@ -1367,6 +1437,7 @@ export default function ReviewClient({
 
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <ToastStack toasts={toasts} onRemove={removeToast} />
+      {mentionDropdown}
 
         {/* ── Top Bar ── */}
         {!cinemaMode && (
@@ -1594,7 +1665,7 @@ export default function ReviewClient({
                     <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
                       <div className="rounded-xl border border-white/10 bg-white/[0.04] focus-within:border-white/20 focus-within:bg-white/[0.05] transition-all">
                         <textarea ref={textareaRef} placeholder="Leave a note… (⌘↵ to send)" value={body}
-                          onChange={e => setBody(e.target.value)} onKeyDown={handleKeyDown} rows={3}
+                          onChange={handleBodyChange} onKeyDown={handleKeyDown} rows={3}
                           className="w-full bg-transparent px-3.5 pt-3 pb-1.5 text-sm text-white/75 placeholder-white/25 outline-none resize-none" />
                         <div className="px-2.5 pb-2">
                           <TimecodeRoller value={timecodeInput} onChange={setTimecodeInput} />

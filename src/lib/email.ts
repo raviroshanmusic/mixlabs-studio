@@ -145,6 +145,44 @@ export async function notifyProjectInvite(
   await sendMail(opts.email, subject, html);
 }
 
+// ── Public: someone was @mentioned in a note ─────────────────────────────────────
+// Targeted (not spammy): emails only the people actually mentioned, honouring their
+// notify_mention preference.
+export async function notifyMention(
+  supabase: SupabaseClient,
+  opts: { projectId: string; actorId: string; mentionedUserIds: string[]; versionName: string; department: string; body: string },
+) {
+  const ids = [...new Set(opts.mentionedUserIds)].filter(id => id && id !== opts.actorId);
+  if (ids.length === 0) return;
+
+  const [{ data: project }, { data: actor }, { data: profiles }] = await Promise.all([
+    supabase.from("projects").select("name").eq("id", opts.projectId).single(),
+    supabase.from("profiles").select("full_name").eq("id", opts.actorId).single(),
+    supabase.from("profiles").select("id, email, notify_mention").in("id", ids),
+  ]);
+
+  const projectName = project?.name ?? "your project";
+  const whoName = actor?.full_name || "Someone";
+  const who = escapeHtml(whoName);
+  const snippet = opts.body.length > 160 ? opts.body.slice(0, 160) + "…" : opts.body;
+  const subject = `${whoName} mentioned you on ${projectName}`;
+
+  const recipients = (profiles ?? []).filter(
+    (p) => (p as { notify_mention?: boolean }).notify_mention !== false && (p as { email?: string }).email,
+  ) as Array<{ email: string }>;
+
+  const html = shell(
+    `${who} mentioned you`,
+    [
+      `${who} mentioned you in a note on <strong>${escapeHtml(projectName)}</strong> (${escapeHtml(opts.versionName)}).`,
+      `“${escapeHtml(snippet)}”`,
+    ],
+    "Open review room",
+    `${APP_URL}/review/${opts.projectId}?dept=${encodeURIComponent(opts.department)}`,
+  );
+  await Promise.allSettled(recipients.map((p) => sendMail(p.email, subject, html)));
+}
+
 // ── Public: new review comment ───────────────────────────────────────────────────
 // NOTE: currently NOT wired up. Per-comment emails were too noisy (one email per
 // member, per note — a 10-person project floods inboxes during a review). Kept

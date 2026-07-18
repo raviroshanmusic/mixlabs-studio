@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { notifyMention } from "@/lib/email";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { body, timecode_sec, version_id } = await req.json();
+  const { body, timecode_sec, version_id, mentions } = await req.json();
   if (!body?.trim()) return NextResponse.json({ error: "Comment required" }, { status: 400 });
 
   // Get author display name
@@ -67,10 +68,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Per-comment email notifications are intentionally OFF: a busy review would
-  // send one email per member per note (10 members = 10 emails per comment).
-  // notifyNewComment() in @/lib/email still exists — re-wire it here, or better,
-  // batch it into a periodic digest, if/when that's wanted.
+  // Broadcast per-comment emails stay OFF (too noisy). But @mentions are targeted,
+  // so we DO email the specific people who were mentioned (best-effort).
+  if (Array.isArray(mentions) && mentions.length) {
+    try {
+      await notifyMention(supabase, {
+        projectId: id, actorId: user.id,
+        mentionedUserIds: mentions, versionName, department, body: body.trim(),
+      });
+    } catch (e) { console.error("notifyMention failed:", e); }
+  }
 
   return NextResponse.json(data);
 }

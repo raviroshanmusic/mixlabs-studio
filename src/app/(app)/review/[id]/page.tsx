@@ -73,6 +73,16 @@ export default async function ReviewPage({
     )
     .order("updated_at", { ascending: false });
 
+  // Members of THIS project (for @mentions) — names only, never emails.
+  const { data: thisMembers } = await supabase
+    .from("project_members")
+    .select("user_id")
+    .eq("project_id", id);
+  const mentionIds = [...new Set([project.owner_id, ...(thisMembers ?? []).map(m => m.user_id)].filter(Boolean))];
+  const { data: mentionProfiles } = mentionIds.length
+    ? await supabase.from("profiles").select("id, full_name").in("id", mentionIds)
+    : { data: [] };
+
   return (
     <ReviewClient
       project={{ ...project, departments: project.departments ?? [] }}
@@ -82,6 +92,7 @@ export default async function ReviewPage({
       initialDept={dept ?? null}
       initialVersionId={version ?? null}
       allProjects={allProjects ?? []}
+      members={(mentionProfiles ?? []).filter(m => m.id !== user.id)}
     />
   );
 }
