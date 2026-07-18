@@ -6,7 +6,7 @@ import {
   Settings, Users, FileText, Trash2, Check,
   PlayCircle, Calendar, TrendingUp, Activity, Package,
   ShieldCheck, Eye, Pencil, Crown, AlertCircle,
-  Clock, FolderOpen, RefreshCw, Dot, Upload, ScrollText, Boxes,
+  Clock, FolderOpen, RefreshCw, Dot, Upload, ScrollText, Boxes, Download,
 } from "lucide-react";
 import B2Upload from "@/components/ui/B2Upload";
 import Sidebar from "@/components/ui/Sidebar";
@@ -509,7 +509,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
           <div className="flex-1 md:overflow-y-auto scrollbar-hide">
             {/* Header row */}
             <div className="grid items-center px-3 pb-2.5 border-b border-white/[0.04]"
-              style={{ gridTemplateColumns: "1fr 110px 70px 32px" }}>
+              style={{ gridTemplateColumns: "1fr 110px 70px 64px" }}>
               {["File","Status","Added",""].map(h => (
                 <span key={h} className="text-[9px] tracking-[0.2em] uppercase text-white/15 font-light">{h}</span>
               ))}
@@ -521,7 +521,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                   onClick={() => { window.location.href = `/review/${project.id}?dept=${encodeURIComponent(activeDept)}&version=${f.id}`; }}
                   title="Open in review room"
                   className={`grid items-center px-3 py-3.5 group hover:bg-white/[0.02] rounded-xl transition-colors cursor-pointer ${i < files.length - 1 ? "border-b border-white/[0.03]" : ""}`}
-                  style={{ gridTemplateColumns: "1fr 110px 70px 32px" }}>
+                  style={{ gridTemplateColumns: "1fr 110px 70px 64px" }}>
                   {/* File name */}
                   <div className="min-w-0 flex items-center gap-2.5">
                     <div className="w-0.5 h-5 rounded-full shrink-0 transition-opacity" style={{ background: meta.hex + "55" }}/>
@@ -565,7 +565,14 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
                   <span className="text-white/20 text-[11px] font-light">
                     {new Date(f.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                   </span>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end items-center gap-1">
+                    {f.drive_url && (
+                      <a href={`/api/media?key=${encodeURIComponent(f.drive_url.startsWith("b2://") ? f.drive_url.slice(5) : f.drive_url)}&download=1`}
+                        onClick={e => e.stopPropagation()} title="Download"
+                        className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-white/20 hover:text-white/70 hover:bg-white/5 transition-all">
+                        <Download size={11}/>
+                      </a>
+                    )}
                     {canEdit && (
                       <button onClick={e => { e.stopPropagation(); handleDelete(f.id); }}
                         className="opacity-0 group-hover:opacity-100 w-6 h-6 flex items-center justify-center rounded-lg text-white/20 hover:text-rose-400 hover:bg-rose-500/10 transition-all">

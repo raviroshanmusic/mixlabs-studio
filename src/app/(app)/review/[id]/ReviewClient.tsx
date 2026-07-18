@@ -1431,9 +1431,15 @@ export default function ReviewClient({
                 className={`w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all ${refreshing ? "animate-spin" : ""}`}>
                 <RefreshCw size={13} />
               </button>
-              <button onClick={() => exportNotes(visibleComments, project, selectedVersion)}
+              {currentVer?.drive_url && (
+                <a href={`${mediaUrl(currentVer.drive_url)}&download=1`} title="Download video"
+                  className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
+                  <Download size={13} />
+                </a>
+              )}
+              <button onClick={() => exportNotes(visibleComments, project, selectedVersion)} title="Export notes (.txt)"
                 className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
-                <Download size={13} />
+                <FileText size={13} />
               </button>
               <button onClick={() => setCinemaMode(true)}
                 className="flex items-center gap-1.5 border border-white/10 hover:border-white/20 rounded-xl px-3 h-8 text-[10px] text-white/45 hover:text-white/70 hover:bg-white/5 transition-all font-medium">
