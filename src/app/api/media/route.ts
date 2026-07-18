@@ -45,11 +45,24 @@ export async function GET(req: NextRequest) {
         ? { ResponseContentDisposition: `attachment; filename="${name}"` }
         : {}),
     });
-    signedUrl = await getSignedUrl(b2, command, { expiresIn: 3600 });
+    // Bandwidth saver: pin the signing time to the top of the hour so the SAME
+    // key produces the SAME signed URL for that whole hour. The browser then
+    // caches both this redirect and the media itself, so re-opening a video (or
+    // scrubbing after a reload) replays from cache instead of re-pulling from B2.
+    const HOUR = 3600 * 1000;
+    const signingDate = new Date(Math.floor(Date.now() / HOUR) * HOUR);
+    signedUrl = await getSignedUrl(b2, command, { expiresIn: 7200, signingDate });
   } catch (err) {
     console.error("[media] sign error:", err);
     return new NextResponse("Failed to sign URL", { status: 500 });
   }
 
-  return NextResponse.redirect(signedUrl, 302);
+  return new NextResponse(null, {
+    status: 302,
+    headers: {
+      Location: signedUrl,
+      // Cache the redirect per-browser for the hour it stays valid.
+      "Cache-Control": "private, max-age=3300",
+    },
+  });
 }
