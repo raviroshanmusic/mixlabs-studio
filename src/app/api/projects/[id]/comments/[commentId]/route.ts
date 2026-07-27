@@ -15,7 +15,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  // Update without .single() so RLS block doesn't throw - we check count instead
+  // Update without .single() so an RLS block returns an empty set rather than
+  // throwing — zero rows means either the comment doesn't exist or the policy
+  // rejected it, and we deliberately don't distinguish the two.
   const { data, error } = await supabase
     .from("review_comments")
     .update({ status })
@@ -25,12 +27,8 @@ export async function PATCH(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // If no rows updated - likely RLS blocked it. Try as author fallback.
   if (!data || data.length === 0) {
-    return NextResponse.json(
-      { error: "Permission denied - you may not have access to update this comment. Ask the project owner to run the RLS fix in Supabase." },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
   }
 
   return NextResponse.json(data[0]);
