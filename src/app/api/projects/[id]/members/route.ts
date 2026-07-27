@@ -60,6 +60,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       full_name: resolvedFullName,
       role: role || "viewer",
       department: "all",
+      // VESTIGIAL. `role` above is the real access level (viewer/editor/admin) —
+      // it drives both the UI and, since the role-RLS migration, the database
+      // policies. `permission` is written here and nowhere else, never updated,
+      // and never read. It is only still set because the column may be NOT NULL.
+      // To retire it: confirm nullability, then drop the column and this line.
       permission: "view",
       status: isNewUser ? "pending" : "active",
       invited_by: user.id,

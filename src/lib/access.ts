@@ -1,6 +1,35 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 
+// Write access to a project's content (drafts, milestones, documents, deliveries).
+//
+// This calls the SAME SQL function the RLS policies use, rather than
+// reimplementing the rule in TypeScript — so the API layer and the database can
+// never drift apart. That drift is exactly what caused the "new row violates
+// row-level security policy" bug: the policy gated on project_members.permission
+// while the app stored the real value in project_members.role.
+//
+// RLS is still the actual enforcement boundary. This exists so a blocked user
+// gets a clean 403 instead of a raw Postgres error leaking schema details.
+//
+// Deliberately FAILS OPEN. If the RPC itself errors (e.g. PostgREST hasn't
+// reloaded its schema cache and can't see the function yet) we let the request
+// proceed to the insert, where RLS makes the real decision and rejects it if
+// access is genuinely missing. Failing closed here would turn a transient
+// cache miss into a total write outage for every user — strictly worse than
+// the error message this function exists to improve.
+export async function canEditProject(
+  supabase: SupabaseClient,
+  projectId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("can_edit_project", { pid: projectId });
+  if (error) {
+    console.error("can_edit_project check failed, deferring to RLS:", error.message);
+    return true;
+  }
+  return data === true;
+}
+
 // B2 lives outside Postgres RLS, so file-level authorization has to be enforced
 // here in the route handlers. Every B2 key belongs to one of two namespaces:
 //

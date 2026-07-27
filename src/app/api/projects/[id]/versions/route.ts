@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canEditProject } from "@/lib/access";
 import { notifyNewVersion } from "@/lib/email";
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,6 +12,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { title, department, drive_url } = await request.json();
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });
   if (!department?.trim()) return NextResponse.json({ error: "Department required" }, { status: 400 });
+
+  if (!(await canEditProject(supabase, id))) {
+    return NextResponse.json(
+      { error: "You need editor access on this project to add a draft." },
+      { status: 403 },
+    );
+  }
 
   const { data, error } = await supabase
     .from("project_versions")

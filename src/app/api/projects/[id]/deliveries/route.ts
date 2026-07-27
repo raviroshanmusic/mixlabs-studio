@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canEditProject } from "@/lib/access";
 
 export async function GET(
   _req: NextRequest,
@@ -34,6 +35,13 @@ export async function POST(
 
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 });
   if (!department)    return NextResponse.json({ error: "Department required" }, { status: 400 });
+
+  if (!(await canEditProject(supabase, id))) {
+    return NextResponse.json(
+      { error: "You need editor access on this project to add a delivery." },
+      { status: 403 },
+    );
+  }
 
   const { data, error } = await supabase
     .from("project_deliveries")

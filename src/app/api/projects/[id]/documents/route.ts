@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canEditProject } from "@/lib/access";
 
 // Reference / pre-production documents for a project. RLS gates owner-or-member
 // access at the DB layer, so we just authenticate and let the policy decide.
@@ -39,6 +40,13 @@ export async function POST(
   if (!title?.trim())    return NextResponse.json({ error: "Title required" }, { status: 400 });
   if (!file_key && !link_url) {
     return NextResponse.json({ error: "A file or a link is required" }, { status: 400 });
+  }
+
+  if (!(await canEditProject(supabase, id))) {
+    return NextResponse.json(
+      { error: "You need editor access on this project to add a document." },
+      { status: 403 },
+    );
   }
 
   const { data, error } = await supabase

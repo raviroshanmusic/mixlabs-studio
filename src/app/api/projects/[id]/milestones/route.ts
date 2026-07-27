@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canEditProject } from "@/lib/access";
 
 export async function GET(
   _req: NextRequest,
@@ -36,6 +37,13 @@ export async function POST(
   if (!start_date || !end_date) return NextResponse.json({ error: "Dates required" }, { status: 400 });
   if (new Date(end_date) < new Date(start_date)) {
     return NextResponse.json({ error: "End date must be after start date" }, { status: 400 });
+  }
+
+  if (!(await canEditProject(supabase, id))) {
+    return NextResponse.json(
+      { error: "You need editor access on this project to add a milestone." },
+      { status: 403 },
+    );
   }
 
   const progress = Math.max(0, Math.min(100, Math.round(Number(body.progress) || 0)));
