@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import MixLabsLogo from "@/components/ui/MixLabsLogo";
 
@@ -7,6 +8,7 @@ export default function ResetPasswordPage() {
   const [ready, setReady]     = useState(false);   // do we have a recovery session?
   const [password, setPassword] = useState("");
   const [confirm, setConfirm]   = useState("");
+  const [reveal, setReveal]     = useState(false);
   const [error, setError]       = useState("");
   const [saving, setSaving]     = useState(false);
   const [done, setDone]         = useState(false);
@@ -51,15 +53,24 @@ export default function ResetPasswordPage() {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            {/* One toggle covers both fields — they have to match, so revealing
+                them together is what actually helps you spot the typo. */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/30 font-medium">New password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="8+ chars" required autoComplete="new-password"
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors" />
+              <div className="relative">
+                <input type={reveal ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)}
+                  placeholder="8+ chars" required autoComplete="new-password"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 pr-11 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors" />
+                <button type="button" onClick={() => setReveal(r => !r)} tabIndex={-1}
+                  aria-label={reveal ? "Hide password" : "Show password"} aria-pressed={reveal}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-white/30 hover:text-white/70 transition-colors">
+                  {reveal ? <EyeOff size={15}/> : <Eye size={15}/>}
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] tracking-[0.2em] uppercase text-white/30 font-medium">Confirm password</label>
-              <input type="password" value={confirm} onChange={e => setConfirm(e.target.value)}
+              <input type={reveal ? "text" : "password"} value={confirm} onChange={e => setConfirm(e.target.value)}
                 placeholder="Repeat" required autoComplete="new-password"
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors" />
             </div>

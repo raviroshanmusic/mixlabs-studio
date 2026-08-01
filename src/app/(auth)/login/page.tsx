@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye, EyeOff } from "lucide-react";
 import MixLabsLogo from "@/components/ui/MixLabsLogo";
 
 // ─── Role options (mirrors MemberClient PROFESSIONS) ─────────────────────────
@@ -43,21 +43,43 @@ function Field({
   required?: boolean;
   autoComplete?: string;
 }) {
+  // Reveal toggle lives here rather than on each call site, so sign-in, sign-up
+  // and confirm-password all get it from one place.
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = type === "password";
+
   return (
     <div className="flex flex-col gap-1.5">
       <label className="text-[10px] tracking-[0.2em] uppercase text-white/30 font-medium">
         {label}
         {required && <span className="text-white/20 ml-1">*</span>}
       </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        required={required}
-        autoComplete={autoComplete}
-        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors"
-      />
+      <div className="relative">
+        <input
+          type={isPassword && revealed ? "text" : type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          required={required}
+          autoComplete={autoComplete}
+          className={`w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white placeholder-white/20 outline-none focus:border-white/20 transition-colors ${
+            isPassword ? "pr-11" : ""
+          }`}
+        />
+        {isPassword && (
+          // type="button" matters — inside a form, a bare <button> submits.
+          <button
+            type="button"
+            onClick={() => setRevealed((r) => !r)}
+            aria-label={revealed ? "Hide password" : "Show password"}
+            aria-pressed={revealed}
+            tabIndex={-1}
+            className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-white/30 hover:text-white/70 transition-colors"
+          >
+            {revealed ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
