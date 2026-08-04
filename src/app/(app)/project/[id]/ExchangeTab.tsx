@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Download, Trash2, FileCode, Film, AudioLines, FileBox, Boxes } from "lucide-react";
+import { Download, Trash2, FileCode, Film, AudioLines, FileBox, Boxes, FileArchive } from "lucide-react";
 import B2Upload from "@/components/ui/B2Upload";
 
 export type ExchangeFile = {
@@ -27,21 +27,28 @@ function formatBytes(n?: number | null): string {
 
 function kindIcon(kind?: string | null) {
   switch (kind) {
-    case "MOV":   return <Film size={15} />;
-    case "AUDIO": return <AudioLines size={15} />;
-    case "AAF":   return <Boxes size={15} />;
+    case "MOV":     return <Film size={15} />;
+    case "AUDIO":   return <AudioLines size={15} />;
+    case "AAF":     return <Boxes size={15} />;
+    case "ARCHIVE": return <FileArchive size={15} />;
     case "XML":
-    case "EDL":   return <FileCode size={15} />;
-    default:      return <FileBox size={15} />;
+    case "EDL":     return <FileCode size={15} />;
+    default:        return <FileBox size={15} />;
   }
 }
 
 // Editorial turnover / interchange formats plus reference media.
-const ACCEPT = ".aaf,.omf,.fcpxml,.xml,.otio,.drt,.edl,.ale,.cdl,.ccc,.mov,.mp4,.mkv,.webm,.wav,.aif,.aiff,.mp3,.flac,video/*,audio/*";
-const OK_EXT = new Set(["aaf","omf","fcpxml","xml","otio","drt","edl","ale","cdl","ccc","mov","mp4","mkv","webm","wav","aif","aiff","mp3","flac","m4a","aac"]);
+//
+// .zip matters as much as the rest: a turnover is rarely one file. An AAF
+// arrives with its audio media folder, an OMF with stems, a project with
+// its whole directory tree. Browsers can't upload a folder as a folder
+// through a normal file input, so zipping it is what editors actually do —
+// and this was rejecting exactly that.
+const ACCEPT = ".zip,.aaf,.omf,.fcpxml,.xml,.otio,.drt,.edl,.ale,.cdl,.ccc,.mov,.mp4,.mkv,.webm,.wav,.aif,.aiff,.mp3,.flac,video/*,audio/*";
+const OK_EXT = new Set(["zip","aaf","omf","fcpxml","xml","otio","drt","edl","ale","cdl","ccc","mov","mp4","mkv","webm","wav","aif","aiff","mp3","flac","m4a","aac"]);
 function validateExchange(file: File): string | null {
   const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
-  return OK_EXT.has(ext) ? null : "Unsupported file. Use AAF, XML/FCPXML, EDL, OTIO, MOV, WAV, etc.";
+  return OK_EXT.has(ext) ? null : "Unsupported file. Use ZIP, AAF, XML/FCPXML, EDL, OTIO, MOV, WAV, etc.";
 }
 
 export default function ExchangeTab({
@@ -82,6 +89,7 @@ export default function ExchangeTab({
         <h2 className="text-white/80 text-base font-light">Handoff</h2>
         <p className="text-white/30 text-xs font-light mt-1">
           Drop editorial turnover here — AAF, XML / FCPXML, EDL, OTIO, reference MOVs, audio stems.
+          Zip a folder to send a whole turnover in one go.
         </p>
       </div>
 
@@ -92,7 +100,7 @@ export default function ExchangeTab({
         onUploaded={handleUploaded}
         accept={ACCEPT}
         validate={validateExchange}
-        hint="AAF · XML / FCPXML · EDL · OTIO · MOV · WAV · any size"
+        hint="ZIP · AAF · XML / FCPXML · EDL · OTIO · MOV · WAV · any size"
         icon={<Boxes size={22} />}
       />
       {error && <p className="text-rose-400/80 text-xs -mt-2">{error}</p>}

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 function kindFromName(name: string): string {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  if (["zip"].includes(ext)) return "ARCHIVE";
   if (["aaf", "omf"].includes(ext)) return "AAF";
   if (["fcpxml", "xml", "otio", "drt"].includes(ext)) return "XML";
   if (["edl", "cdl", "ccc", "ale"].includes(ext)) return "EDL";
