@@ -6,6 +6,64 @@ import {
   MAX_PART_RETRIES, partCount, type UploadedPart,
 } from "@/lib/multipart";
 
+// ── Progress readout ─────────────────────────────────────────────────────────
+// A percentage alone is useless on a 16GB transfer: it barely moves, and it
+// can't tell you whether to wait or go and do something else. Speed and time
+// remaining are what a reviewer actually reads.
+
+type Stats = { loaded: number; total: number; bps: number; etaSec: number | null };
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  const u = ["KB", "MB", "GB", "TB"];
+  let i = -1, v = n;
+  do { v /= 1024; i++; } while (v >= 1024 && i < u.length - 1);
+  return `${v.toFixed(v >= 100 || i === 0 ? 0 : 1)} ${u[i]}`;
+}
+
+function formatSpeed(bps: number): string {
+  if (!bps || !Number.isFinite(bps)) return "—";
+  return `${formatBytes(bps)}/s`;
+}
+
+function formatEta(sec: number | null): string {
+  if (sec === null || !Number.isFinite(sec) || sec < 0) return "—";
+  if (sec < 60) return `${Math.ceil(sec)}s`;
+  const m = Math.floor(sec / 60);
+  if (m < 60) return `${m}m ${Math.round(sec % 60)}s`;
+  const h = Math.floor(m / 60);
+  return `${h}h ${m % 60}m`;
+}
+
+// Speed from a trailing window rather than a running average. A cumulative
+// average lags badly once a connection changes pace, and an instantaneous
+// reading jitters too much to read — a few seconds of history is legible and
+// still responsive.
+const RATE_WINDOW_MS = 5000;
+
+function makeRateTracker() {
+  let samples: { t: number; loaded: number }[] = [];
+  return (loaded: number, total: number): Stats => {
+    const now = Date.now();
+    samples.push({ t: now, loaded });
+    samples = samples.filter(s => now - s.t <= RATE_WINDOW_MS);
+
+    let bps = 0;
+    if (samples.length >= 2) {
+      const first = samples[0], last = samples[samples.length - 1];
+      const dt = (last.t - first.t) / 1000;
+      const db = last.loaded - first.loaded;
+      // A retry replays bytes already counted, so the delta can go negative.
+      // Reporting a negative speed (and a negative ETA) is worse than waiting
+      // for the window to refill.
+      if (dt > 0 && db > 0) bps = db / dt;
+    }
+
+    const remaining = Math.max(0, total - loaded);
+    return { loaded, total, bps, etaSec: bps > 0 ? remaining / bps : null };
+  };
+}
+
 type Props = {
   projectId: string;
   onUploaded: (fileKey: string, filename: string, fileSize: number) => void;
@@ -34,6 +92,7 @@ export default function B2Upload({
 }: Props) {
   const [dragging, setDragging]   = useState(false);
   const [progress, setProgress]   = useState<number | null>(null);
+  const [stats, setStats]         = useState<Stats | null>(null);
   const [error, setError]         = useState<string | null>(null);
   const [done, setDone]           = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,9 +137,11 @@ export default function B2Upload({
     // Bytes confirmed per part, so progress doesn't jump around as parts
     // upload concurrently and retries replay bytes already counted.
     const sent = new Array<number>(total).fill(0);
+    const rate = makeRateTracker();
     const bump = () => {
       const loaded = sent.reduce((a, b) => a + b, 0);
       setProgress(Math.min(99, Math.round((loaded / file.size) * 100)));
+      setStats(rate(loaded, file.size));
     };
 
     const parts: UploadedPart[] = [];
@@ -153,6 +214,7 @@ export default function B2Upload({
     setError(null);
     setDone(false);
     setProgress(0);
+    setStats(null);
 
     try {
       // 1. Reserve a key and, for small files, get a plain presigned PUT.
@@ -176,16 +238,22 @@ export default function B2Upload({
       if (file.size > MULTIPART_THRESHOLD) {
         await uploadMultipart(file, fileKey);
       } else {
+        const rate = makeRateTracker();
         await putWithProgress(uploadUrl, file, file.type || "application/octet-stream",
-          loaded => setProgress(Math.round((loaded / file.size) * 100)));
+          loaded => {
+            setProgress(Math.round((loaded / file.size) * 100));
+            setStats(rate(loaded, file.size));
+          });
       }
 
       setProgress(100);
+      setStats(null);
       setDone(true);
       onUploaded(fileKey, file.name, file.size);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
       setProgress(null);
+      setStats(null);
     }
   }
 
@@ -227,7 +295,19 @@ export default function B2Upload({
           <div className="w-full bg-white/8 rounded-full h-1.5 overflow-hidden">
             <div className="h-full bg-white/60 rounded-full transition-all duration-150" style={{ width: `${progress}%` }} />
           </div>
-          <p className="text-white/50 text-sm">{progress}% uploaded…</p>
+          <div className="w-full flex items-baseline justify-between gap-3 text-white/50 text-sm">
+            <span>{progress}% uploaded…</span>
+            {stats && stats.bps > 0 && (
+              <span className="font-mono text-[11px] text-white/35 tabular-nums">
+                {formatSpeed(stats.bps)} · {formatEta(stats.etaSec)} left
+              </span>
+            )}
+          </div>
+          {stats && (
+            <p className="w-full text-[10px] font-mono text-white/22 tabular-nums">
+              {formatBytes(stats.loaded)} of {formatBytes(stats.total)}
+            </p>
+          )}
         </>
       ) : (
         <>
