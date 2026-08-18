@@ -24,11 +24,11 @@ this business rather than boilerplate:
 
 Every `[SQUARE BRACKET]` is a decision, not a formatting artifact:
 
-- `[LEGAL ENTITY NAME]` — the registered company, not the brand
-- `[REGISTERED ADDRESS]`
-- `[PRIVACY EMAIL]` — a monitored address; `privacy@mixlabscreative.com` is fine
-- `[GOVERNING LAW]` / `[JURISDICTION]` — see the note in terms-of-service.md
-- `[EFFECTIVE DATE]`
+- `Mixlabs Creative Private Limited` — the registered company, not the brand
+- `M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India`
+- `info@mixlabscreative.com` — a monitored address; `privacy@mixlabscreative.com` is fine
+- `India` / `Ranchi, Jharkhand` — see the note in terms-of-service.md
+- `18 August 2026`
 
 ## Keeping them honest
 

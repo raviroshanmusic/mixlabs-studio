@@ -1,9 +1,9 @@
 # Privacy Policy
 
-**Effective [EFFECTIVE DATE]**
+**Effective 18 August 2026**
 
-MixLabs Studio is a post-production workspace operated by [LEGAL ENTITY NAME]
-("MixLabs", "we", "us"), registered at [REGISTERED ADDRESS], India.
+MixLabs Studio is a post-production workspace operated by Mixlabs Creative Private Limited
+("MixLabs", "we", "us"), registered at M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India.
 
 This policy explains what we hold, why, and what you can ask us to do about it.
 It is written to be read, not to be survived.
@@ -94,11 +94,12 @@ before subscribing — we would rather tell you no than surprise you later.
 
 ## 5. How long we keep it
 
-**Project content** stays until you delete it or close your account. When an
-account is closed we delete content within **30 days**, except where we're
-required to keep records for longer.
+**Project content** stays until you delete it, or until you ask us to close
+your account. There is no self-service account deletion yet — email us and we
+will action it. Once closure is requested we delete content within **30 days**,
+except where we're required to keep records for longer.
 
-**Account records** are deleted within 30 days of closure.
+**Account records** are deleted within 30 days of a closure request.
 
 **Billing records** are kept as long as tax law requires, typically eight years
 in India.
@@ -136,7 +137,7 @@ Whatever jurisdiction you're in, you can ask us to:
 - **Object to or restrict** processing
 - **Withdraw consent** where processing relies on it
 
-Email **[PRIVACY EMAIL]**. We respond within 30 days — and within 7 days for
+Email **info@mixlabscreative.com**. We respond within 30 days — and within 7 days for
 erasure requests where the DPDP Act applies. We will not charge you for this or
 treat you differently for asking.
 
@@ -172,6 +173,6 @@ means you accept the revised policy.
 
 ## 10. Contact
 
-[LEGAL ENTITY NAME]
-[REGISTERED ADDRESS]
-**[PRIVACY EMAIL]**
+Mixlabs Creative Private Limited
+M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India
+**info@mixlabscreative.com**

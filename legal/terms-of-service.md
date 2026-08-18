@@ -1,8 +1,8 @@
 # Terms of Service
 
-**Effective [EFFECTIVE DATE]**
+**Effective 18 August 2026**
 
-These terms govern your use of MixLabs Studio, operated by [LEGAL ENTITY NAME]
+These terms govern your use of MixLabs Studio, operated by Mixlabs Creative Private Limited
 ("MixLabs", "we", "us"). By creating an account or being added to a project, you
 agree to them.
 
@@ -21,7 +21,7 @@ We provide the software. **We do not acquire any interest in what you put in it.
 ## 2. Accounts
 
 You must be 18 or older. You're responsible for your account credentials and for
-activity under your account. Tell us promptly at [SUPPORT EMAIL] if you believe
+activity under your account. Tell us promptly at info@mixlabscreative.com if you believe
 it's been compromised.
 
 Project owners control who joins their projects and what each member can do.
@@ -94,11 +94,12 @@ than 30 days overdue may be suspended. We will not delete content for at least
 
 ## 6. Getting your data out
 
-You can download your content at any time while your account is active. Before
-closing an account, export what you need. On closure we delete content within 30
-days, as described in the Privacy Policy.
+You can download your content at any time while your account is active, file by
+file. There is no bulk export yet — if you need a whole project extracted, email
+us and we will help.
 
-If you need help extracting a large project, ask us.
+Before closing an account, take what you need. On closure we delete content
+within 30 days, as described in the Privacy Policy.
 
 ---
 
@@ -119,7 +120,7 @@ legal disclaimer: masters should exist somewhere you control.
 
 ## 8. Suspension and termination
 
-You may close your account at any time.
+You may close your account at any time by emailing us.
 
 We may suspend or close an account that breaches these terms, is used
 unlawfully, or is more than 30 days overdue. Except for serious breaches, we'll
@@ -160,20 +161,18 @@ before then; continuing to use MixLabs means you accept the revised terms.
 
 ## 11. Governing law
 
-These terms are governed by the laws of [GOVERNING LAW], and the courts of
-[JURISDICTION] have exclusive jurisdiction.
+These terms are governed by the laws of India, and the courts of
+Ranchi, Jharkhand have exclusive jurisdiction.
 
-> **Decision needed.** Indian law with Indian courts is simplest and cheapest for
-> you to enforce. But US customers — particularly studios — may push back, and
-> some will not sign terms requiring them to litigate in India. The usual
-> compromise is Indian law for self-serve plans and a negotiated agreement for
-> larger customers. Worth deciding with a lawyer before you publish, because
-> changing it later means re-accepting terms with every existing customer.
+This is the ordinary position for a company registered in India, and it is the
+cheapest forum for us to operate in. Larger customers sometimes require
+different terms; if that applies to you, contact us before subscribing and we
+can discuss a negotiated agreement rather than these standard terms.
 
 ---
 
 ## 12. Contact
 
-[LEGAL ENTITY NAME]
-[REGISTERED ADDRESS]
-**[SUPPORT EMAIL]**
+Mixlabs Creative Private Limited
+M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India
+**info@mixlabscreative.com**
