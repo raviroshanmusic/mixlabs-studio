@@ -1113,6 +1113,14 @@ export default function HomePage() {
           <LiveTimecode />
           <p className="text-white/12 text-[10px] tracking-widest uppercase font-light">Built for film. Made with care.</p>
         </div>
+
+        {/* CalOPPA requires a privacy policy to be conspicuously posted, which
+            in practice means reachable from the homepage. These links are that. */}
+        <div className="mt-8 pt-6 border-t border-white/[0.03] flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          <a href="/legal/privacy" className="text-white/22 hover:text-white/50 text-[10px] tracking-[0.2em] uppercase font-light transition-colors">Privacy</a>
+          <a href="/legal/terms" className="text-white/22 hover:text-white/50 text-[10px] tracking-[0.2em] uppercase font-light transition-colors">Terms</a>
+          <a href="/legal/subprocessors" className="text-white/22 hover:text-white/50 text-[10px] tracking-[0.2em] uppercase font-light transition-colors">Subprocessors</a>
+        </div>
       </footer>
     </div>
   );

@@ -396,6 +396,15 @@ export default function LoginPage() {
             Private workspace · Projects stay inside MixLabs
           </p>
         )}
+
+        {/* Reachable at the moment of sign-up, not buried on the marketing
+            site — this is where someone is actually agreeing to them. */}
+        <p className="mt-4 text-center text-white/18 text-[11px] leading-relaxed">
+          {mode === "up" && <>By creating an account you agree to our<br/></>}
+          <a href="/legal/terms" className="underline underline-offset-2 hover:text-white/45 transition-colors">Terms</a>
+          {" · "}
+          <a href="/legal/privacy" className="underline underline-offset-2 hover:text-white/45 transition-colors">Privacy</a>
+        </p>
       </div>
     </div>
   );
