@@ -2,8 +2,8 @@
 
 **Effective 18 August 2026**
 
-MixLabs Studio is a post-production workspace operated by Mixlabs Creative Private Limited
-("MixLabs", "we", "us"), registered at M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India.
+MixLabs Studio is a post-production workspace operated by Mixlabs Creative
+Private Limited ("MixLabs", "we", "us"), a company registered in India.
 
 This policy explains what we hold, why, and what you can ask us to do about it.
 It is written to be read, not to be survived.
@@ -173,6 +173,8 @@ means you accept the revised policy.
 
 ## 10. Contact
 
-Mixlabs Creative Private Limited
-M/26, Housing Colony, Bariatu, Ranchi, Jharkhand 834009, India
+Mixlabs Creative Private Limited, India
 **info@mixlabscreative.com**
+
+Our registered office address is available on request, and to any supervisory
+authority that asks for it.
