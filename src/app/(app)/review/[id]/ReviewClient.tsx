@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import Sidebar from "@/components/ui/Sidebar";
+import { usePolling } from "@/lib/usePolling";
 import {
   ArrowLeft, ChevronDown, ChevronUp, ChevronLeft,
   Send, MessageSquare, Clock,
@@ -1065,14 +1066,30 @@ export default function ReviewClient({
   }, [showProjectMenu]);
   const { toasts, add: addToast, remove: removeToast } = useToasts();
 
-  // Auto-poll
-  useEffect(() => {
-    const iv = setInterval(async () => {
-      const res = await fetch(`/api/projects/${project.id}/comments`);
-      if (res.ok) setComments(await res.json());
-    }, 45000);
-    return () => clearInterval(iv);
-  }, [project.id]);
+  // Auto-poll — only while the tab is visible, and only for what's new.
+  // Previously this pulled every comment on the project every 45 seconds
+  // whether or not anyone was looking, which was the app's biggest single
+  // source of Supabase egress.
+  usePolling(async () => {
+    const newest = comments.reduce<string | null>(
+      (max, c) => (!max || c.created_at > max ? c.created_at : max), null);
+
+    const url = newest
+      ? `/api/projects/${project.id}/comments?since=${encodeURIComponent(newest)}`
+      : `/api/projects/${project.id}/comments`;
+
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const rows: Comment[] = await res.json();
+    if (!rows.length) return;   // the common case on a quiet project
+
+    setComments(prev => {
+      // Merge rather than replace: an incremental read carries only new rows.
+      const seen = new Set(prev.map(c => c.id));
+      const fresh = rows.filter(r => !seen.has(r.id));
+      return fresh.length ? [...prev, ...fresh] : prev;
+    });
+  }, 45000);
 
   // Esc = exit cinema
   useEffect(() => {

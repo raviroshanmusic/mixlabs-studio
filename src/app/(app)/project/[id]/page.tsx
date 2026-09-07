@@ -29,16 +29,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     .select("*")
     .eq("project_id", id);
 
-  const members = await Promise.all(
-    (membersRaw ?? []).map(async (m) => {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("id, full_name")
-        .eq("id", m.user_id)
-        .single();
-      return { ...m, profiles: profile ?? null };
-    })
-  );
+  // One query for every profile rather than one per member. The old version
+  // fired a round trip per person on every load of this page.
+  const memberUserIds = [...new Set((membersRaw ?? []).map(m => m.user_id).filter(Boolean))];
+  const { data: profiles } = memberUserIds.length
+    ? await supabase.from("profiles").select("id, full_name").in("id", memberUserIds)
+    : { data: [] };
+
+  const profileById = new Map((profiles ?? []).map(p => [p.id, p]));
+  const members = (membersRaw ?? []).map(m => ({
+    ...m,
+    profiles: profileById.get(m.user_id) ?? null,
+  }));
 
   const { data: milestones } = await supabase
     .from("project_milestones")

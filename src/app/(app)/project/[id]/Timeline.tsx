@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { usePolling } from "@/lib/usePolling";
 import {
   Plus, ChevronLeft, ChevronRight, X, Check, Trash2,
   Calendar, ZoomIn, ZoomOut, RefreshCw, AlertCircle, Link2, GripVertical,
@@ -344,15 +345,12 @@ export default function Timeline({
     scrollRef.current.scrollLeft = Math.max(0, todayX - scrollRef.current.clientWidth / 2);
   }, [zoom, todayOffset, dayPx, sideW]);
 
-  // Auto-poll every 45s (paused mid-drag)
-  useEffect(() => {
-    const iv = setInterval(async () => {
-      if (dragRef.current) return;
-      const res = await fetch(`/api/projects/${project.id}/milestones`);
-      if (res.ok) setMilestones(await res.json());
-    }, 45000);
-    return () => clearInterval(iv);
-  }, [project.id]);
+  // Auto-poll (paused mid-drag, and while the tab is hidden)
+  usePolling(async () => {
+    if (dragRef.current) return;
+    const res = await fetch(`/api/projects/${project.id}/milestones`);
+    if (res.ok) setMilestones(await res.json());
+  }, 45000);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

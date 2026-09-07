@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePolling } from "@/lib/usePolling";
 import { Bell, MessageSquare, AtSign, FileVideo, Check } from "lucide-react";
 
 type Item = {
@@ -64,12 +65,14 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
     } catch { /* offline - keep last state */ }
   }, []);
 
-  // Initial + poll every 60s
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 60_000);
-    return () => clearInterval(t);
-  }, [load]);
+  // Load once on mount, then poll only while the tab is visible.
+  //
+  // This fires six queries per call and sits on every page, so at 60s in a
+  // forgotten background tab it was ~1,400 requests a day for a bell nobody
+  // was looking at. Two minutes is ample for a badge, and the hook fetches
+  // immediately when you return to the tab.
+  useEffect(() => { load(); }, [load]);
+  usePolling(load, 120_000);
 
   // Close on outside click / Escape
   useEffect(() => {
