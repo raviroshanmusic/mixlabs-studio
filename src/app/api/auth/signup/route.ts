@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { supabaseFetch, humanAuthError } from "@/lib/supabaseFetch";
 
 const SUPABASE_URL = "https://vjvhbukbqklgrllwiliv.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZqdmhidWticWtsZ3JsbHdpbGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMzE0MjgsImV4cCI6MjA5NjcwNzQyOH0.NlOUslZynlqSgwOSK6wMm_Yi9qeCRx6S3w2Kkaf9Jus";
+
+// Three attempts at 12s each, plus backoff, has to fit inside the budget.
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   const { firstName, lastName, email, password, profession, company } = await request.json();
@@ -16,6 +20,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ success: true });
 
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { fetch: supabaseFetch },
     cookies: {
       getAll() { return request.cookies.getAll(); },
       setAll(cookiesToSet) {
@@ -45,7 +50,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    return NextResponse.json({ error: humanAuthError(error.message) }, { status: 400 });
   }
 
   return NextResponse.json({
