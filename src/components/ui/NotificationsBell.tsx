@@ -53,16 +53,28 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
   const [items, setItems] = useState<Item[]>([]);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     try {
-      const r = await fetch("/api/notifications", { cache: "no-store" });
-      if (!r.ok) return;
+      // A deadline the browser owns. The feed costs six queries server-side, so
+      // when the path to Supabase degrades this request can sit open for a long
+      // time - and an await that never settles is what left the panel reading
+      // "Loading..." forever with no way out.
+      const r = await fetch("/api/notifications", {
+        cache: "no-store",
+        signal: AbortSignal.timeout(20_000),
+      });
+      if (!r.ok) { setFailed(true); return; }
       const j = await r.json();
       setItems(j.items ?? []);
       setUnread(j.unreadCount ?? 0);
-    } catch { /* offline - keep last state */ }
+      setFailed(false);
+    } catch {
+      // Keep whatever we last showed, but stop claiming it is current.
+      setFailed(true);
+    }
   }, []);
 
   // Load once on mount, then poll only while the tab is visible.
@@ -90,8 +102,9 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
     setOpen(v => !v);
     if (!open) {
       setLoading(items.length === 0);
-      await load();
-      setLoading(false);
+      // finally, not a trailing statement: load() rejecting must still clear the
+      // spinner, otherwise a failure is indistinguishable from a slow success.
+      try { await load(); } finally { setLoading(false); }
       // Mark read shortly after opening so the user registers the unread state first.
       if (unread > 0) {
         setTimeout(async () => {
@@ -154,6 +167,17 @@ export default function NotificationsBell({ expanded }: { expanded: boolean }) {
           <div className="overflow-y-auto flex-1">
             {loading ? (
               <div className="px-4 py-8 text-center text-[11px] text-white/30">Loading…</div>
+            ) : failed && items.length === 0 ? (
+              <div className="flex flex-col items-center justify-center px-4 py-10 gap-2 text-center">
+                <p className="text-[12px] text-white/40">Couldn&apos;t load notifications</p>
+                <p className="text-[10px] text-white/20">Something went wrong reaching the server.</p>
+                <button
+                  onClick={async () => { setLoading(true); try { await load(); } finally { setLoading(false); } }}
+                  className="mt-1 text-[10px] text-white/50 hover:text-white/80 underline underline-offset-2"
+                >
+                  Try again
+                </button>
+              </div>
             ) : items.length === 0 ? (
               <div className="flex flex-col items-center justify-center px-4 py-10 gap-2 text-center">
                 <Check size={20} className="text-white/20" strokeWidth={1.5} />
