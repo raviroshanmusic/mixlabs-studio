@@ -163,10 +163,11 @@ function DeliveryForm({
 
   async function handleDelete() {
     if (!onDelete) return;
-    if (!confirm(`Delete this delivery package?`)) return;
+    if (!confirm(`Permanently delete this delivery package and its unshared stored files?`)) return;
     setSaving(true);
-    await onDelete();
-    onClose();
+    try { await onDelete(); onClose(); }
+    catch (error) { setError(error instanceof Error ? error.message : "Deletion failed. Please retry."); }
+    finally { setSaving(false); }
   }
 
   const dMeta = DEPT_META[dept];
@@ -479,7 +480,8 @@ export default function DeliveryTab({
   }
 
   async function handleDelete(id: string) {
-    await fetch(`/api/projects/${project.id}/deliveries/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/projects/${project.id}/deliveries/${id}`, { method: "DELETE" });
+    if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Deletion failed"); }
     setDeliveries(prev => prev.filter(d => d.id !== id));
   }
 

@@ -1,5 +1,8 @@
+import { storageCleaner } from "@/lib/storage-cleanup";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+
+export const maxDuration = 300;
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -42,7 +45,16 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { error } = await supabase.from("projects").delete().eq("id", id).eq("owner_id", user.id);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  const project = await supabase.from("projects").select("id").eq("id", id).eq("owner_id", user.id).maybeSingle();
+  if (project.error) return NextResponse.json({ error: "Could not verify project ownership" }, { status: 503 });
+  if (!project.data) return NextResponse.json({ error: "Project not found or not owned by you" }, { status: 404 });
+  try {
+    await storageCleaner().project(id);
+  } catch (error) {
+    console.error("Project storage deletion failed", error);
+    return NextResponse.json({ error: "Project files could not be fully deleted from storage. Please retry; the project has been kept." }, { status: 502 });
+  }
+  const { data, error } = await supabase.from("projects").delete().eq("id", id).eq("owner_id", user.id).select("id");
+  if (error || data?.length !== 1) return NextResponse.json({ error: "Could not remove project record. Please retry." }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

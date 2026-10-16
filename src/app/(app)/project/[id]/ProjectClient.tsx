@@ -387,9 +387,12 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
   }
 
   async function handleDelete(fileId: string) {
-    if (!confirm("Delete this file? This cannot be undone.")) return;
-    setLocalFiles(prev => prev.filter(f => f.id !== fileId));
-    await fetch(`/api/projects/${project.id}/versions/${fileId}`, { method: "DELETE" });
+    if (!confirm("Permanently delete this file and its stored copies? This cannot be undone.")) return;
+    try {
+      const res = await fetch(`/api/projects/${project.id}/versions/${fileId}`, { method: "DELETE" });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Deletion failed"); }
+      setLocalFiles(prev => prev.filter(f => f.id !== fileId));
+    } catch (error) { alert(error instanceof Error ? error.message : "Deletion failed. Please retry."); }
   }
 
   async function handleStatusChange(fileId: string, newStatus: string) {
@@ -776,10 +779,14 @@ function SettingsTab({ project, onProjectUpdate, canManage }: {
   }
 
   async function handleDelete() {
-    if (!confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Permanently delete "${project.name}" and ALL its stored files? This cannot be undone.`)) return;
     setDeleting(true);
-    await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
-    window.location.href = "/dashboard";
+    try {
+      const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Deletion failed"); }
+      window.location.href = "/dashboard";
+    } catch (error) { alert(error instanceof Error ? error.message : "Deletion failed. Please retry."); }
+    finally { setDeleting(false); }
   }
 
   const deptsChanged = JSON.stringify(depts.slice().sort()) !== JSON.stringify((project.departments ?? []).slice().sort());

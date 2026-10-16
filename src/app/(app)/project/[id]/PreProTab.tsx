@@ -528,10 +528,14 @@ function DocRow({ doc, canEdit, onDelete, projectId }: {
     : doc.link_url ?? "#";
 
   async function remove() {
-    if (!confirm(`Remove "${doc.title}"?`)) return;
+    if (!confirm(`Permanently remove "${doc.title}" and its stored file?`)) return;
     setDeleting(true);
-    onDelete(doc.id);
-    await fetch(`/api/projects/${projectId}/documents/${doc.id}`, { method: "DELETE" });
+    try {
+      const res = await fetch(`/api/projects/${projectId}/documents/${doc.id}`, { method: "DELETE" });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Deletion failed"); }
+      onDelete(doc.id);
+    } catch (error) { alert(error instanceof Error ? error.message : "Deletion failed. Please retry."); }
+    finally { setDeleting(false); }
   }
 
   return (

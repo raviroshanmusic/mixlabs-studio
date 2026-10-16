@@ -75,11 +75,12 @@ export default function ExchangeTab({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Remove this file?")) return;
-    const prev = files;
-    setFiles(f => f.filter(x => x.id !== id));
-    const res = await fetch(`/api/projects/${projectId}/exchange/${id}`, { method: "DELETE" });
-    if (!res.ok) setFiles(prev); // revert on failure
+    if (!confirm("Permanently delete this file and its stored copies?")) return;
+    try {
+      const res = await fetch(`/api/projects/${projectId}/exchange/${id}`, { method: "DELETE" });
+      if (!res.ok) { const data = await res.json(); throw new Error(data.error || "Deletion failed"); }
+      setFiles(f => f.filter(x => x.id !== id));
+    } catch (error) { alert(error instanceof Error ? error.message : "Deletion failed. Please retry."); }
   }
 
   return (
