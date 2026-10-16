@@ -43,8 +43,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { body, timecode_sec, version_id, mentions } = await req.json();
-  if (!body?.trim()) return NextResponse.json({ error: "Comment required" }, { status: 400 });
+  const input = await req.json();
+  const { body, timecode_sec, mentions, parent_comment_id } = input;
+  let version_id = input.version_id;
+  if (typeof body !== "string" || !body.trim()) return NextResponse.json({ error: "Comment required" }, { status: 400 });
+
+  if (body.trim().length > 10000) return NextResponse.json({ error: "Comment is too long" }, { status: 400 });
+  const { data: project, error: accessError } = await supabase.from("projects").select("id").eq("id", id).maybeSingle();
+  if (accessError || !project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
+
+  let parent: { id: string; version_id: string | null; timecode: string | number | null; department: string; version_name: string } | null = null;
+  if (parent_comment_id != null) {
+    if (typeof parent_comment_id !== "string" || !/^[0-9a-f-]{36}$/i.test(parent_comment_id)) {
+      return NextResponse.json({ error: "Invalid parent comment" }, { status: 400 });
+    }
+    const result = await supabase.from("review_comments")
+      .select("id,version_id,timecode,department,version_name,parent_comment_id")
+      .eq("id", parent_comment_id).eq("project_id", id).maybeSingle();
+    if (result.error || !result.data) return NextResponse.json({ error: "Original note not found" }, { status: 404 });
+    if (result.data.parent_comment_id) return NextResponse.json({ error: "Reply to the original note" }, { status: 400 });
+    parent = result.data;
+    version_id = parent.version_id;
+  }
 
   // Get author display name
   const { data: profile } = await supabase
@@ -62,6 +82,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       .from("project_versions")
       .select("department, version_name")
       .eq("id", version_id)
+      .eq("project_id", id)
       .single();
     if (version) {
       department = version.department || "General";
@@ -74,12 +95,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .insert({
       project_id: id,
       version_id: version_id || null,
+      parent_comment_id: parent?.id ?? null,
       author_id: user.id,
       author_name: authorName,
       body: body.trim(),
-      timecode: timecode_sec ?? null,
-      department,
-      version_name: versionName,
+      timecode: parent ? parent.timecode : timecode_sec ?? null,
+      department: parent?.department ?? department,
+      version_name: parent?.version_name ?? versionName,
       status: "open",
     })
     .select("*")

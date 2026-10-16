@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { groupReplies, topLevelComments } from "@/lib/comment-threads";
 import Sidebar from "@/components/ui/Sidebar";
 import { usePolling } from "@/lib/usePolling";
 import {
@@ -20,6 +21,7 @@ type Version   = { id: string; version_name: string; department: string | null; 
 type Comment   = {
   id: string; body: string; timecode: number | null; version_id: string | null;
   created_at: string; author_id: string; author_name: string | null; status: string;
+  parent_comment_id?: string | null;
   priority?: string;
   profiles: { id: string; full_name: string | null; email?: string | null } | null;
 };
@@ -148,7 +150,7 @@ function exportNotes(comments: Comment[], project: Project, version: Version | n
     ...comments.map(c => {
       const tc = c.timecode != null ? `[${fmtTimecode(c.timecode)}] ` : "";
       const st = c.status === "resolved" ? " ✓" : "";
-      return `${tc}${shortName(c.profiles?.full_name || c.author_name)}${st}\n${c.body}\n`;
+      return `${c.parent_comment_id ? "  Reply — " : ""}${tc}${shortName(c.profiles?.full_name || c.author_name)}${st}\n${c.body}\n`;
     }),
   ].filter(Boolean).join("\n");
 
@@ -362,7 +364,7 @@ function TimecodeRail({ comments, onSeek }: { comments: Comment[]; onSeek: (s: n
   const [mouseX, setMouseX]   = useState(0);
   const railRef = useRef<HTMLDivElement>(null);
 
-  const timecoded = comments.filter(c => c.timecode != null);
+  const timecoded = comments.filter(c => !c.parent_comment_id && c.timecode != null);
   if (timecoded.length === 0) return null;
 
   const maxSec = Math.max(...timecoded.map(c => c.timecode!));
@@ -441,7 +443,7 @@ function VersionSidebar({
   const openCounts = useMemo(() => {
     const c: Record<string, number> = {};
     for (const cm of comments)
-      if (cm.version_id && cm.status === "open") c[cm.version_id] = (c[cm.version_id] ?? 0) + 1;
+      if (!cm.parent_comment_id && cm.version_id && cm.status === "open") c[cm.version_id] = (c[cm.version_id] ?? 0) + 1;
     return c;
   }, [comments]);
 
@@ -886,14 +888,30 @@ function ProgressBar({ total, resolved }: { total: number; resolved: number }) {
 // ─── Comment Card ─────────────────────────────────────────────────────────────
 
 function CommentCard({
-  comment, currentUserId, onTimecodeClick, onResolve, onDelete,
+  comment, currentUserId, onTimecodeClick, onResolve, onDelete, replies, onReply,
 }: {
   comment: Comment;
+  replies: Comment[];
+  onReply: (parentId: string, body: string) => Promise<void>;
   currentUserId: string;
   onTimecodeClick: (sec: number) => void;
   onResolve: (id: string, status: "open" | "resolved") => void;
   onDelete: (id: string) => void;
 }) {
+  const [replying, setReplying] = useState(false);
+  const [replyBody, setReplyBody] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+  const [replyError, setReplyError] = useState("");
+  async function submitReply(event: React.FormEvent) {
+    event.preventDefault();
+    if (!replyBody.trim() || sendingReply) return;
+    setSendingReply(true); setReplyError("");
+    try {
+      await onReply(comment.id, replyBody.trim());
+      setReplyBody(""); setReplying(false);
+    } catch (error) { setReplyError(error instanceof Error ? error.message : "Could not send reply"); }
+    finally { setSendingReply(false); }
+  }
   const [menu, setMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const name     = shortName(comment.profiles?.full_name || comment.author_name);
@@ -987,6 +1005,45 @@ function CommentCard({
           <p className={`text-sm leading-relaxed whitespace-pre-wrap ${resolved ? "line-through text-white/35" : "text-white/75"}`}>
             {renderMentions(comment.body)}
           </p>
+
+          <button type="button" onClick={() => { setReplying(true); setReplyError(""); }}
+            className="mt-2 text-xs text-white/50 hover:text-white/90 focus-visible:outline focus-visible:outline-amber-300 rounded">
+            Reply{replies.length > 0 ? ` · ${replies.length}` : ""}
+          </button>
+          {replies.length > 0 && (
+            <div className="mt-3 border-l border-white/10 pl-3 space-y-3" aria-label="Replies">
+              {replies.map(reply => (
+                <div key={reply.id} className="text-xs">
+                  <div className="flex items-center gap-2 text-white/50 mb-1">
+                    <span className="font-semibold text-white/75">{shortName(reply.profiles?.full_name || reply.author_name)}</span>
+                    <span>{timeAgo(reply.created_at)}</span>
+                    {reply.author_id === currentUserId && (
+                      <button type="button" onClick={() => onDelete(reply.id)} aria-label="Delete your reply"
+                        className="ml-auto text-white/35 hover:text-rose-300"><Trash2 size={12} /></button>
+                    )}
+                  </div>
+                  <p className="text-white/70 whitespace-pre-wrap leading-relaxed">{renderMentions(reply.body)}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {replying && (
+            <form onSubmit={submitReply} className="mt-3 space-y-2">
+              <label className="sr-only" htmlFor={`reply-${comment.id}`}>Reply to {name}</label>
+              <textarea id={`reply-${comment.id}`} autoFocus value={replyBody}
+                onChange={e => setReplyBody(e.target.value)} maxLength={10000} rows={2}
+                placeholder={`Reply to ${name}…`} disabled={sendingReply}
+                className="w-full rounded-lg border border-white/15 bg-white/5 p-2 text-sm text-white/85 focus:outline-none focus:border-amber-300/50" />
+              {replyError && <p role="alert" className="text-xs text-rose-300">{replyError}</p>}
+              <div className="flex justify-end gap-3 text-xs">
+                <button type="button" disabled={sendingReply} onClick={() => setReplying(false)} className="text-white/50">Cancel</button>
+                <button type="submit" disabled={sendingReply || !replyBody.trim()}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-white/90 disabled:opacity-40">
+                  {sendingReply ? "Sending…" : "Send reply"}
+                </button>
+              </div>
+            </form>
+          )}
 
           {/* Resolved badge */}
           {resolved && (
@@ -1105,11 +1162,14 @@ export default function ReviewClient({
     setRefreshing(false);
   }, [project.id, addToast]);
 
+  const repliesByParent = useMemo(() => groupReplies(comments), [comments]);
+  const rootComments = useMemo(() => topLevelComments(comments), [comments]);
+
   // Filtered comments
   const visibleComments = useMemo(() => {
     let cs = selectedVersion
-      ? comments.filter(c => !c.version_id || c.version_id === selectedVersion.id)
-      : comments;
+      ? rootComments.filter(c => !c.version_id || c.version_id === selectedVersion.id)
+      : rootComments;
     if (filterTab === "open")     cs = cs.filter(c => c.status !== "resolved");
     if (filterTab === "resolved") cs = cs.filter(c => c.status === "resolved");
     return [...cs].sort((a, b) => {
@@ -1118,9 +1178,9 @@ export default function ReviewClient({
       if (b.timecode != null) return 1;
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
     });
-  }, [comments, selectedVersion, filterTab]);
+  }, [rootComments, selectedVersion, filterTab]);
 
-  const allVisible  = useMemo(() => selectedVersion ? comments.filter(c => !c.version_id || c.version_id === selectedVersion.id) : comments, [comments, selectedVersion]);
+  const allVisible  = useMemo(() => selectedVersion ? rootComments.filter(c => !c.version_id || c.version_id === selectedVersion.id) : rootComments, [rootComments, selectedVersion]);
   const openCount   = useMemo(() => allVisible.filter(c => c.status !== "resolved").length, [allVisible]);
   const resolvedCount = useMemo(() => allVisible.filter(c => c.status === "resolved").length, [allVisible]);
   const totalCount  = allVisible.length;
@@ -1205,6 +1265,19 @@ export default function ReviewClient({
     setSubmitting(false);
   }
 
+  async function handleReply(parentId: string, replyBody: string) {
+    const res = await fetch(`/api/projects/${project.id}/comments`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: replyBody, parent_comment_id: parentId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not send reply. Please retry.");
+    setComments(prev => prev.some(c => c.id === data.id) ? prev : [...prev, {
+      ...data, profiles: { id: currentUser.id, full_name: currentUser.full_name },
+    }]);
+    addToast("success", "Reply added");
+  }
+
   // Resolve / reopen
   async function handleResolve(commentId: string, status: "open" | "resolved") {
     // Optimistic
@@ -1226,10 +1299,14 @@ export default function ReviewClient({
 
   // Delete
   async function handleDelete(commentId: string) {
-    setComments(prev => prev.filter(c => c.id !== commentId));
-    const res = await fetch(`/api/projects/${project.id}/comments/${commentId}`, { method: "DELETE" });
-    if (res.ok) addToast("info", "Note deleted");
-    else addToast("error", "Could not delete note");
+    try {
+      const res = await fetch(`/api/projects/${project.id}/comments/${commentId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Could not delete note");
+      // The database preserves replies as standalone notes if their parent is removed.
+      setComments(prev => prev.filter(c => c.id !== commentId).map(c =>
+        c.parent_comment_id === commentId ? { ...c, parent_comment_id: null } : c));
+      addToast("info", "Note deleted");
+    } catch { addToast("error", "Could not delete note"); }
   }
 
   // Version status
@@ -1403,6 +1480,7 @@ export default function ReviewClient({
           ) : (
             visibleComments.map(c => (
               <CommentCard key={c.id} comment={c} currentUserId={currentUser.id}
+                replies={repliesByParent[c.id] ?? []} onReply={handleReply}
                 onTimecodeClick={handleTimecodeClick} onResolve={handleResolve} onDelete={handleDelete} />
             ))
           )}
@@ -1525,7 +1603,7 @@ export default function ReviewClient({
                   <Download size={13} />
                 </a>
               )}
-              <button onClick={() => exportNotes(visibleComments, project, selectedVersion)} title="Export notes (.txt)"
+              <button onClick={() => exportNotes(visibleComments.flatMap(c => [c, ...(repliesByParent[c.id] ?? [])]), project, selectedVersion)} title="Export notes (.txt)"
                 className="w-8 h-8 rounded-xl border border-white/10 flex items-center justify-center text-white/35 hover:text-white/70 hover:bg-white/5 transition-all">
                 <FileText size={13} />
               </button>
@@ -1663,6 +1741,7 @@ export default function ReviewClient({
                       <div>
                         {visibleComments.map(c => (
                           <CommentCard key={c.id} comment={c} currentUserId={currentUser.id}
+                replies={repliesByParent[c.id] ?? []} onReply={handleReply}
                             onTimecodeClick={handleTimecodeClick} onResolve={handleResolve} onDelete={handleDelete} />
                         ))}
                         <div ref={commentsEndRef} className="h-3" />

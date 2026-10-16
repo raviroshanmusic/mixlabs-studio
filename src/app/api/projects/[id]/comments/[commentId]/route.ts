@@ -43,13 +43,15 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("review_comments")
     .delete()
     .eq("id", commentId)
     .eq("project_id", id)
-    .eq("author_id", user.id);
+    .eq("author_id", user.id)
+    .select("id");
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data?.length) return NextResponse.json({ error: "Comment not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }
