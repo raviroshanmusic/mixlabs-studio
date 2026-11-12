@@ -595,7 +595,7 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
 
 // ─── Team Tab ─────────────────────────────────────────────────────────────────
 
-function TeamTab({ project, members, canManage }: { project: Project; members: Member[]; canManage: boolean }) {
+function TeamTab({ project, members }: { project: Project; members: Member[] }) {
   const [localMembers, setLocalMembers] = useState<Member[]>(members);
   const [email, setEmail] = useState("");
   const [role, setRole]   = useState("viewer");
@@ -613,14 +613,19 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true); setError("");
-    const res = await fetch(`/api/projects/${project.id}/members`, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), role }),
-    });
-    const data = await res.json();
-    if (!res.ok) setError(data.error || "Failed");
-    else { if (data.member) setLocalMembers(p => [...p, data.member]); setEmail(""); setAdding(false); }
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/members`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), role }),
+      });
+      const data = await res.json();
+      if (!res.ok) setError(data.error || "Failed");
+      else { if (data.member) setLocalMembers(p => [...p, data.member]); setEmail(""); setAdding(false); }
+    } catch {
+      setError("Could not send the invite. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -628,14 +633,12 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
       <div className="flex items-center justify-between mb-5 shrink-0">
         <div>
           <p className="text-white/55 text-sm font-light">{localMembers.length} {localMembers.length === 1 ? "member" : "members"}</p>
-          <p className="text-white/18 text-xs font-light mt-0.5">Role-based access control</p>
+          <p className="text-white/18 text-xs font-light mt-0.5">Every project member can invite teammates</p>
         </div>
-        {canManage && (
-          <button onClick={() => setAdding(p => !p)}
+        <button onClick={() => setAdding(p => !p)}
             className="flex items-center gap-1.5 text-[10px] text-white/40 hover:text-white/70 border border-white/10 hover:border-white/22 px-3.5 py-2 rounded-xl transition-all font-light">
             <Plus size={11}/> Invite
-          </button>
-        )}
+        </button>
       </div>
 
       {/* Role reference */}
@@ -654,7 +657,7 @@ function TeamTab({ project, members, canManage }: { project: Project; members: M
         })}
       </div>
 
-      {adding && canManage && (
+      {adding && (
         <form onSubmit={handleInvite} className="mb-4 p-4 rounded-2xl border border-white/8 bg-white/[0.02] flex flex-col gap-3 shrink-0">
           <input autoFocus type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} required
             className="bg-transparent border-b border-white/8 pb-2 text-sm text-white/75 placeholder-white/15 outline-none focus:border-white/18 w-full font-light"/>
@@ -1127,7 +1130,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
               {activeTab === "prepro"   && <PreProTab project={project} initialDocuments={documents} canEdit={canEdit} onProjectUpdate={p => setProject(prev => ({...prev,...p}))}/>}
               {activeTab === "exchange" && <ExchangeTab projectId={project.id} initialFiles={exchange} currentUserId={currentUserId} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
-              {activeTab === "team"     && <TeamTab project={project} members={members} canManage={canManage}/>}
+              {activeTab === "team"     && <TeamTab project={project} members={members}/>}
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}
             </div>
 

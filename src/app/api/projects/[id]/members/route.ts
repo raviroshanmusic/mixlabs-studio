@@ -8,15 +8,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  // Only the project owner may invite. Explicit check (defense-in-depth alongside
-  // the RLS insert policy) that also stops non-owners from using this endpoint to
-  // probe whether an email has an account (enumeration).
-  const { data: owned } = await supabase
-    .from("projects").select("id").eq("id", id).eq("owner_id", user.id).maybeSingle();
-  if (!owned) return NextResponse.json({ error: "Only the project owner can add members" }, { status: 403 });
+  // Check membership before resolving invitee accounts. The database uses the
+  // same helper for INSERT, so viewers and editors can invite within their project.
+  const { data: canInvite, error: accessError } = await supabase.rpc("can_invite_project", { pid: id });
+  if (accessError) return NextResponse.json({ error: "Could not verify project access" }, { status: 500 });
+  if (!canInvite) return NextResponse.json({ error: "Only project members can add teammates" }, { status: 403 });
 
-  const { email, role } = await request.json();
-  if (!email?.trim()) return NextResponse.json({ error: "Email required" }, { status: 400 });
+  const payload = await request.json().catch(() => null);
+  if (!payload || typeof payload.email !== "string" || !payload.email.trim()) {
+    return NextResponse.json({ error: "Email required" }, { status: 400 });
+  }
+  const { email } = payload;
+  const role = payload.role ?? "viewer";
+  if (!["viewer", "editor", "admin"].includes(role)) {
+    return NextResponse.json({ error: "Invalid member role" }, { status: 400 });
+  }
 
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -61,7 +67,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       // `role` is the access level (viewer/editor/admin). It drives the UI and,
       // since supabase-migration-role-rls.sql, the RLS policies too. The old
       // `permission` column is no longer written here — it now has a DB default.
-      role: role || "viewer",
+      role,
       department: "all",
       status: isNewUser ? "pending" : "active",
       invited_by: user.id,
