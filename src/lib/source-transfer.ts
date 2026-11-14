@@ -253,6 +253,8 @@ export async function writeQueue(
       for (const job of jobs)
         if (old.get(job.id) !== job)
           tx.objectStore("queues").put(job, key + ":" + job.id);
+      const remaining = new Set(jobs.map(j => j.id));
+      for (const job of previous) if (!remaining.has(job.id)) tx.objectStore("queues").delete(key + ":" + job.id);
       tx.oncomplete = () => resolve();
       tx.onerror = () =>
         reject(

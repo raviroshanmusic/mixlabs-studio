@@ -562,7 +562,8 @@ export default function SourceMedia({
               </p>
             </div>
             <div className="flex gap-2">
-              <button
+              <button className={button} onClick={() => commit(old => old.filter(j => !['done','cancelled'].includes(j.status))).catch(e => setError(e.message))}>Clear finished</button>
+            <button
                 className={button}
                 onClick={() => {
                   setPaused(true);
