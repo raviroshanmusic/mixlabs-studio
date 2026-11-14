@@ -1,5 +1,6 @@
 "use client";
-import { useState, useMemo, useRef } from "react";
+import SourceMedia from './SourceMedia';
+import { useState, useMemo, useRef, useEffect } from "react";
 import {
   ArrowLeft, Plus, ChevronDown, ChevronRight,
   Music, Palette, Scissors, Wand2, Zap, Volume2,
@@ -982,6 +983,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
 }) {
   const [project, setProject] = useState(initialProject);
   const [status, setStatus]   = useState(initialProject.status);
+  const [sourceOpened, setSourceOpened] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("files");
   const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
@@ -1010,9 +1012,10 @@ export default function ProjectClient({ project: initialProject, versions, membe
     });
   }
 
+  useEffect(() => { if (activeTab === "prepro") setSourceOpened(true); }, [activeTab]);
   const TABS: { id: Tab; label: string; icon: React.ReactNode; count?: number; accent?: string }[] = [
     { id: "files",    label: "Drafts",   icon: <FileText size={12}/>, count: versions.length },
-    { id: "prepro",   label: "Pre-Pro",  icon: <ScrollText size={12}/>, count: documents.length },
+    { id: "prepro",   label: "Source Media",  icon: <FolderOpen size={12}/> },
     { id: "exchange", label: "Handoff", icon: <Boxes size={12}/>, count: exchange.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
     { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
@@ -1118,16 +1121,16 @@ export default function ProjectClient({ project: initialProject, versions, membe
         </div>
 
         {/* ══ Scrollable Body ══ */}
-        {isTimeline ? (
+        {isTimeline && (
           <div className="flex-1 overflow-y-auto md:overflow-hidden px-4 md:px-9 py-4 md:py-6">
             <Timeline project={project} initialMilestones={milestones} versions={versions} canEdit={canEdit}/>
           </div>
-        ) : (
-          <div className="flex-1 flex overflow-hidden">
+        )}
+          <div className={isTimeline ? "hidden" : "flex-1 flex overflow-hidden"}>
             {/* Left - main tab content, scrolls independently */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-4 md:py-6 pb-28 md:pb-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
-              {activeTab === "prepro"   && <PreProTab project={project} initialDocuments={documents} canEdit={canEdit} onProjectUpdate={p => setProject(prev => ({...prev,...p}))}/>}
+              {sourceOpened && <div className={activeTab === "prepro" ? "" : "hidden"}><SourceMedia projectId={project.id} canEdit={canEdit} legacy={<PreProTab project={project} initialDocuments={documents} canEdit={canEdit} onProjectUpdate={p => setProject(prev => ({...prev,...p}))}/>}/></div>}
               {activeTab === "exchange" && <ExchangeTab projectId={project.id} initialFiles={exchange} currentUserId={currentUserId} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
               {activeTab === "team"     && <TeamTab project={project} members={members}/>}
@@ -1145,7 +1148,6 @@ export default function ProjectClient({ project: initialProject, versions, membe
             />
             </div>
           </div>
-        )}
 
       </div>
     </div>

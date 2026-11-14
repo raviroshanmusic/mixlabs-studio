@@ -1,3 +1,4 @@
+import { sourceName } from '@/lib/source-media';
 import { NextRequest, NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 
-  const name = (key.split("/").pop() ?? "file").replace(/"/g, "");
+  const name = (key.includes("/source/") ? sourceName(key) : key.split("/").pop() ?? "file").replace(/["\r\n]/g, "");
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   const forceDownload =
     req.nextUrl.searchParams.get("download") === "1" || !INLINE_EXT.has(ext);
@@ -42,7 +43,7 @@ export async function GET(req: NextRequest) {
       Bucket: B2_BUCKET,
       Key: key,
       ...(forceDownload
-        ? { ResponseContentDisposition: `attachment; filename="${name}"` }
+        ? { ResponseContentDisposition: `attachment; filename*=UTF-8''${encodeURIComponent(name)}` }
         : {}),
     });
     // Bandwidth saver: pin the signing time to the top of the hour so the SAME
