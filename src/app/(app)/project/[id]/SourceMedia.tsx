@@ -33,11 +33,9 @@ const button =
 export default function SourceMedia({
   projectId,
   canEdit,
-  legacy,
 }: {
   projectId: string;
   canEdit: boolean;
-  legacy: React.ReactNode;
 }) {
   const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
   const [queueLimit, setQueueLimit] = useState(100);
@@ -56,8 +54,7 @@ export default function SourceMedia({
     [live, setLive] = useState({ loaded: 0, bps: 0, eta: 0 }),
     [picking, setPicking] = useState(false),
     [newFolder, setNewFolder] = useState(""),
-    [showFolder, setShowFolder] = useState(false),
-    [showLegacy, setShowLegacy] = useState(false);
+    [showFolder, setShowFolder] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null),
     folderInput = useRef<HTMLInputElement>(null),
     reconnect = useRef<string | null>(null),
@@ -683,15 +680,7 @@ export default function SourceMedia({
           </p>
         </section>
       )}
-      <details
-        className="border-t border-white/5 pt-4"
-        onToggle={(e) => setShowLegacy(e.currentTarget.open)}
-      >
-        <summary className="text-xs text-white/30 cursor-pointer">
-          Existing project brief & reference documents
-        </summary>
-        {showLegacy && <div className="mt-5">{legacy}</div>}
-      </details>
+
     </div>
   );
 }

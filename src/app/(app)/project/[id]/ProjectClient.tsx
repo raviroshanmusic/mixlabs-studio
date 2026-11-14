@@ -13,7 +13,7 @@ import B2Upload from "@/components/ui/B2Upload";
 import Sidebar from "@/components/ui/Sidebar";
 import Timeline, { Milestone } from "./Timeline";
 import DeliveryTab, { Delivery } from "./Delivery";
-import PreProTab, { ProjectDoc } from "./PreProTab";
+import type { ProjectDoc } from "./PreProTab";
 import ExchangeTab, { ExchangeFile } from "./ExchangeTab";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -1130,7 +1130,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             {/* Left - main tab content, scrolls independently */}
             <div className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-9 py-4 md:py-6 pb-28 md:pb-6">
               {activeTab === "files"    && <FilesTab project={project} versions={versions} canEdit={canEdit}/>}
-              {sourceOpened && <div className={activeTab === "prepro" ? "" : "hidden"}><SourceMedia projectId={project.id} canEdit={canEdit} legacy={<PreProTab project={project} initialDocuments={documents} canEdit={canEdit} onProjectUpdate={p => setProject(prev => ({...prev,...p}))}/>}/></div>}
+              {sourceOpened && <div className={activeTab === "prepro" ? "" : "hidden"}><SourceMedia projectId={project.id} canEdit={canEdit}/></div>}
               {activeTab === "exchange" && <ExchangeTab projectId={project.id} initialFiles={exchange} currentUserId={currentUserId} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
               {activeTab === "team"     && <TeamTab project={project} members={members}/>}
