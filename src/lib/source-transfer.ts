@@ -51,6 +51,9 @@ export function newTransfer(
     status: "waiting",
   };
 }
+export function matchingTransfer(jobs: Transfer[], hash: string, reconnecting: string | null) {
+  return jobs.find(j => j.fingerprint === hash && !["done", "cancelled"].includes(j.status) && (!reconnecting || reconnecting === "all" || j.id === reconnecting));
+}
 export function restoreTransfers(raw: string | null): Transfer[] {
   if (!raw) return [];
   const items = JSON.parse(raw);

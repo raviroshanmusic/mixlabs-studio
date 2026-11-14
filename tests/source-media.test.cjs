@@ -151,3 +151,12 @@ test("viewers cannot delete source files", async () => {
     403,
   );
 });
+
+test("reconnection matches only unfinished originals and respects a single selected transfer", () => {
+ const {matchingTransfer}=require('../src/lib/source-transfer.ts');
+ const jobs=[{id:'done',fingerprint:'same',status:'done'},{id:'paused',fingerprint:'same',status:'paused'},{id:'other',fingerprint:'other',status:'paused'}];
+ assert.equal(matchingTransfer(jobs,'same','all').id,'paused');
+ assert.equal(matchingTransfer(jobs,'other','paused'),undefined);
+ assert.equal(matchingTransfer(jobs,'wrong','all'),undefined);
+ assert.equal(matchingTransfer([{id:'done',fingerprint:'same',status:'done'}],'same','all'),undefined);
+});

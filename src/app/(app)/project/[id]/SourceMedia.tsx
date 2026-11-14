@@ -21,6 +21,7 @@ import {
   readQueue,
   writeQueue,
   runTransfer,
+  matchingTransfer,
   type Transfer,
 } from "@/lib/source-transfer";
 import { downloadSourceFolder } from "@/lib/source-download";
@@ -58,6 +59,7 @@ export default function SourceMedia({
     [showLegacy, setShowLegacy] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null),
     folderInput = useRef<HTMLInputElement>(null),
+    reconnect = useRef<string | null>(null),
     selected = useRef(new Map<string, globalThis.File>()),
     jobsRef = useRef<Transfer[]>([]),
     running = useRef<{ id: string; controller: AbortController } | null>(null),
@@ -212,18 +214,17 @@ export default function SourceMedia({
     try {
       const additions: Transfer[] = [];
       const attached: string[] = [];
+      const reconnecting = reconnect.current;
       for (const file of Array.from(list)) {
         const relative = sourcePath(file.webkitRelativePath || file.name);
         const hash = await fingerprint(file, relative);
-        const previous = jobsRef.current.find(
-          (j) =>
-            j.fingerprint === hash && !["done", "cancelled"].includes(j.status),
-        );
+        const previous = matchingTransfer(jobsRef.current, hash, reconnecting);
         if (previous) {
           selected.current.set(previous.id, file);
           attached.push(previous.id);
           continue;
         }
+        if (reconnecting) continue;
         const parent = relative.includes("/")
           ? relative.slice(0, relative.lastIndexOf("/"))
           : "";
@@ -234,6 +235,7 @@ export default function SourceMedia({
         selected.current.set(item.id, file);
         additions.push(item);
       }
+      if (reconnecting && !attached.length) throw new Error("That selection did not match the paused transfer. Select the same original folder (with the same name and structure) or original file. No new uploads were added.");
       await commit((old) => [
         ...old.map((j) =>
           attached.includes(j.id)
@@ -246,6 +248,7 @@ export default function SourceMedia({
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not queue files");
     } finally {
+      reconnect.current = null;
       setPicking(false);
       if (fileInput.current) fileInput.current.value = "";
       if (folderInput.current) folderInput.current.value = "";
@@ -268,15 +271,25 @@ export default function SourceMedia({
       setError((e as Error).message);
     }
   }
-  async function resume(id: string) {
-    if (!selected.current.has(id)) {
-      setError(
-        "Reselect the original files or folder using Upload files / Upload folder. Completed chunks will be reused.",
-      );
+  function reconnectOriginals(id = "all") {
+    const pending = jobsRef.current.filter(j => !["done", "cancelled", "uploading"].includes(j.status) && (id === "all" || j.id === id));
+    if (!pending.length) return;
+    reconnect.current = id;
+    setError("");
+    // Trigger the picker directly from the click, before any asynchronous work.
+    if (pending.some(j => j.relative.includes("/"))) folderInput.current?.click();
+    else fileInput.current?.click();
+  }
+  async function resume(id = "all") {
+    const pending = jobsRef.current.filter(j => !["done", "cancelled", "uploading"].includes(j.status) && (id === "all" || j.id === id));
+    if (pending.some(j => !selected.current.has(j.id))) {
+      reconnectOriginals(id);
       return;
     }
-    await patch(id, { status: "waiting", error: undefined });
-    setPaused(false);
+    try {
+      await commit(old => old.map(j => pending.some(p => p.id === j.id) ? {...j, status: "waiting", error: undefined} : j));
+      setPaused(false);
+    } catch (e) { setError((e as Error).message); }
   }
   async function cancel(job: Transfer) {
     if (
@@ -381,7 +394,7 @@ export default function SourceMedia({
           <button
             className={button}
             disabled={!ready || picking}
-            onClick={() => fileInput.current?.click()}
+            onClick={() => { reconnect.current = null; fileInput.current?.click(); }}
           >
             <Upload size={14} />
             Upload files
@@ -389,7 +402,7 @@ export default function SourceMedia({
           <button
             className={button + " bg-white/10"}
             disabled={!ready || picking}
-            onClick={() => folderInput.current?.click()}
+            onClick={() => { reconnect.current = null; folderInput.current?.click(); }}
           >
             <Folder size={14} />
             {picking ? "Preparing…" : "Upload folder"}
@@ -575,23 +588,14 @@ export default function SourceMedia({
               </button>
               <button
                 className={button}
-                onClick={async () => {
-                  await commit((old) =>
-                    old.map((j) =>
-                      ["paused", "failed"].includes(j.status) &&
-                      selected.current.has(j.id)
-                        ? { ...j, status: "waiting", error: undefined }
-                        : j,
-                    ),
-                  );
-                  setPaused(false);
-                }}
+                onClick={() => resume()}
               >
                 <Play size={12} />
                 Resume
               </button>
             </div>
           </div>
+          {jobs.some(j => !["done", "cancelled", "uploading"].includes(j.status) && !selected.current.has(j.id)) && <div className="rounded-xl border border-amber-200/15 bg-amber-200/5 p-3 text-xs text-amber-100/65"><p>Your transfers are saved. After refreshing, select the original folder or files to reconnect them. This resumes matching paused files only; it does not add the rest of the folder again.</p><button className={button + " mt-3"} onClick={() => reconnectOriginals()}>Select originals to resume</button></div>}
           <div className="h-1 rounded bg-white/10 overflow-hidden">
             <div
               className="h-full bg-emerald-300/60"
@@ -625,7 +629,7 @@ export default function SourceMedia({
                     {j.status === "done"
                       ? "Verified complete"
                       : j.status === "paused"
-                        ? "Paused — reselect originals if needed"
+                        ? selected.current.has(j.id) ? "Paused — ready to resume" : "Paused — select originals to reconnect"
                         : j.status}
                     {j.status === "uploading"
                       ? ` · ${Math.min(100, Math.floor((live.loaded / Math.max(1, j.size)) * 100))}%`
@@ -668,7 +672,7 @@ export default function SourceMedia({
             </button>
           )}
           <p className="text-[11px] text-white/25">
-            Transfers stay on this browser profile. Reselect originals after a
+            Only completed chunks are saved; a paused chunk smaller than 100 MB may restart. Transfers stay on this browser profile. Reselect originals after a
             restart. Completed files are checked against the expected byte size
             before appearing above.
           </p>
