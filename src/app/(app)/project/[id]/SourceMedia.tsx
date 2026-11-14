@@ -24,6 +24,15 @@ import {
   matchingTransfer,
   type Transfer,
 } from "@/lib/source-transfer";
+import {
+  canRememberSource,
+  chooseSource,
+  readSourceAccess,
+  saveSourceAccess,
+  requestSourcePermissions,
+  type SavedSourceAccess,
+  type SourceSelection,
+} from "@/lib/source-access";
 import { downloadSourceFolder } from "@/lib/source-download";
 import { bytes, sourcePath } from "@/lib/source-media";
 type Entry = { key: string; name: string; size: number };
@@ -58,6 +67,7 @@ export default function SourceMedia({
   const fileInput = useRef<HTMLInputElement>(null),
     folderInput = useRef<HTMLInputElement>(null),
     reconnect = useRef<string | null>(null),
+    remembered = useRef(new Map<string, SavedSourceAccess>()),
     selected = useRef(new Map<string, globalThis.File>()),
     jobsRef = useRef<Transfer[]>([]),
     running = useRef<{ id: string; controller: AbortController } | null>(null),
@@ -105,9 +115,10 @@ export default function SourceMedia({
     setReady(false);
     const key = projectId + ":" + userId;
     scope.current = key;
-    readQueue(key)
-      .then((items) => {
+    Promise.all([readQueue(key), readSourceAccess(key)])
+      .then(([items, access]) => {
         if (!cancelled) {
+          remembered.current = access;
           jobsRef.current = items;
           setJobs(items);
           setReady(true);
@@ -126,7 +137,17 @@ export default function SourceMedia({
     const key = scope.current;
     const task = writes.current
       .catch(() => {})
-      .then(() => writeQueue(key, next, previous));
+      .then(async () => {
+        await writeQueue(key, next, previous);
+        const remaining = new Map(next.map((j) => [j.id, j]));
+        for (const job of previous) {
+          const after = remaining.get(job.id);
+          if (!after || (["done", "cancelled"].includes(after.status) && after.status !== job.status)) {
+            remembered.current.delete(job.id);
+            await saveSourceAccess(key, job.id, null).catch(() => {});
+          }
+        }
+      });
     writes.current = task;
     return task;
   }, []);
@@ -205,19 +226,54 @@ export default function SourceMedia({
       }
     })();
   }, [jobs, paused, ready, projectId, patch, load]);
-  async function pick(list: FileList | null) {
-    if (!list?.length || !ready) return;
+  async function chooseOriginals(
+    kind: "folder" | "files",
+    id: string | null = null,
+  ) {
+    reconnect.current = id;
+    if (!canRememberSource(kind)) {
+      (kind === "folder" ? folderInput : fileInput).current?.click();
+      return;
+    }
+    setPicking(true);
+    setError("");
+    try {
+      const entries = await chooseSource(kind);
+      await pick(null, entries);
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setError((e as Error).message);
+    } finally {
+      setPicking(false);
+      reconnect.current = null;
+    }
+  }
+  async function pick(list: FileList | null, entries?: SourceSelection[]) {
+    const choices =
+      entries ??
+      Array.from(list ?? []).map(
+        (file) =>
+          ({
+            file,
+            relative: file.webkitRelativePath || file.name,
+          }) as SourceSelection,
+      );
+    if (!choices.length || !ready) return;
     setPicking(true);
     setError("");
     try {
       const additions: Transfer[] = [];
       const attached: string[] = [];
       const reconnecting = reconnect.current;
-      for (const file of Array.from(list)) {
-        const relative = sourcePath(file.webkitRelativePath || file.name);
+      for (const entry of choices) {
+        const { file } = entry;
+        const relative = sourcePath(entry.relative);
         const hash = await fingerprint(file, relative);
         const previous = matchingTransfer(jobsRef.current, hash, reconnecting);
         if (previous) {
+          if (entry.access) {
+            await saveSourceAccess(scope.current, previous.id, entry.access);
+            remembered.current.set(previous.id, entry.access);
+          }
           selected.current.set(previous.id, file);
           attached.push(previous.id);
           continue;
@@ -230,10 +286,17 @@ export default function SourceMedia({
           [path, parent].filter(Boolean).join("/"),
         );
         const item = newTransfer(file, relative, destination, hash);
+        if (entry.access) {
+          await saveSourceAccess(scope.current, item.id, entry.access);
+          remembered.current.set(item.id, entry.access);
+        }
         selected.current.set(item.id, file);
         additions.push(item);
       }
-      if (reconnecting && !attached.length) throw new Error("That selection did not match the paused transfer. Select the same original folder (with the same name and structure) or original file. No new uploads were added.");
+      if (reconnecting && !attached.length)
+        throw new Error(
+          "That selection did not match the paused transfer. Select the same original folder (with the same name and structure) or original file. No new uploads were added.",
+        );
       await commit((old) => [
         ...old.map((j) =>
           attached.includes(j.id)
@@ -270,24 +333,66 @@ export default function SourceMedia({
     }
   }
   function reconnectOriginals(id = "all") {
-    const pending = jobsRef.current.filter(j => !["done", "cancelled", "uploading"].includes(j.status) && (id === "all" || j.id === id));
+    const pending = jobsRef.current.filter(
+      (j) =>
+        !["done", "cancelled", "uploading"].includes(j.status) &&
+        (id === "all" || j.id === id),
+    );
     if (!pending.length) return;
-    reconnect.current = id;
-    setError("");
-    // Trigger the picker directly from the click, before any asynchronous work.
-    if (pending.some(j => j.relative.includes("/"))) folderInput.current?.click();
-    else fileInput.current?.click();
+    chooseOriginals(
+      pending.some((j) => j.relative.includes("/")) ? "folder" : "files",
+      id,
+    );
   }
   async function resume(id = "all") {
-    const pending = jobsRef.current.filter(j => !["done", "cancelled", "uploading"].includes(j.status) && (id === "all" || j.id === id));
-    if (pending.some(j => !selected.current.has(j.id))) {
+    const pending = jobsRef.current.filter(
+      (j) =>
+        !["done", "cancelled", "uploading"].includes(j.status) &&
+        (id === "all" || j.id === id),
+    );
+    const missing = pending.filter((j) => !selected.current.has(j.id));
+    if (missing.some((j) => !remembered.current.has(j.id))) {
       reconnectOriginals(id);
       return;
     }
+    // Permission requests happen in the click gesture, with handles preloaded
+    // from IndexedDB. No folder picker is needed for remembered originals.
+    const permissions = requestSourcePermissions(
+      missing.map((j) => remembered.current.get(j.id)!),
+    );
+    setPicking(true);
+    setError("");
     try {
-      await commit(old => old.map(j => pending.some(p => p.id === j.id) ? {...j, status: "waiting", error: undefined} : j));
+      if ((await permissions).some((p) => p !== "granted"))
+        throw new Error(
+          "Allow read access to the original files to resume. You can also select the originals again.",
+        );
+      const recovered: [string, globalThis.File][] = [];
+      for (const job of missing) {
+        const file = await remembered.current.get(job.id)!.file.getFile();
+        if ((await fingerprint(file, job.relative)) !== job.fingerprint)
+          throw new Error(
+            `The original file changed: ${job.name}. Select the unchanged original to resume.`,
+          );
+        recovered.push([job.id, file]);
+      }
+      for (const [key, file] of recovered) selected.current.set(key, file);
+      await commit((old) =>
+        old.map((j) =>
+          pending.some((p) => p.id === j.id)
+            ? { ...j, status: "waiting", error: undefined }
+            : j,
+        ),
+      );
       setPaused(false);
-    } catch (e) { setError((e as Error).message); }
+    } catch (e) {
+      setError(
+        (e as Error).message ||
+          "Original files are unavailable. Reconnect the original drive or select the originals again.",
+      );
+    } finally {
+      setPicking(false);
+    }
   }
   async function cancel(job: Transfer) {
     if (
@@ -351,18 +456,43 @@ export default function SourceMedia({
     }
   }
   async function deleteFolder(folder: Directory) {
-    const inside = (j: Transfer) => j.path === folder.path || j.path.startsWith(folder.path + "/");
-    const current = jobsRef.current.find(j => j.id === running.current?.id && inside(j));
-    if (current) { setError("Pause the upload into this folder before deleting it, then try again."); return; }
-    if (!confirm(`Permanently delete "${folder.name}" and everything inside it? All stored copies and unfinished uploads in this folder will be removed from Backblaze. This cannot be undone.`)) return;
-    setDeletingFolder(folder.path); setPaused(true); setError("");
+    const inside = (j: Transfer) =>
+      j.path === folder.path || j.path.startsWith(folder.path + "/");
+    const current = jobsRef.current.find(
+      (j) => j.id === running.current?.id && inside(j),
+    );
+    if (current) {
+      setError(
+        "Pause the upload into this folder before deleting it, then try again.",
+      );
+      return;
+    }
+    if (
+      !confirm(
+        `Permanently delete "${folder.name}" and everything inside it? All stored copies and unfinished uploads in this folder will be removed from Backblaze. This cannot be undone.`,
+      )
+    )
+      return;
+    setDeletingFolder(folder.path);
+    setPaused(true);
+    setError("");
     try {
-      await api(projectId, {action: "delete-folder", path: folder.path});
-      await commit(old => old.map(j => inside(j) ? {...j, status: "cancelled", loaded: 0, error: undefined} : j));
-      for (const j of jobsRef.current) if (inside(j)) selected.current.delete(j.id);
+      await api(projectId, { action: "delete-folder", path: folder.path });
+      await commit((old) =>
+        old.map((j) =>
+          inside(j)
+            ? { ...j, status: "cancelled", loaded: 0, error: undefined }
+            : j,
+        ),
+      );
+      for (const j of jobsRef.current)
+        if (inside(j)) selected.current.delete(j.id);
       await load();
-    } catch (e) { setError((e as Error).message); }
-    finally { setDeletingFolder(null); }
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setDeletingFolder(null);
+    }
   }
   async function remove(file: Entry) {
     if (!confirm(`Permanently delete ${file.name} and all stored copies?`))
@@ -398,7 +528,7 @@ export default function SourceMedia({
           <button
             className={button}
             disabled={!ready || picking}
-            onClick={() => { reconnect.current = null; fileInput.current?.click(); }}
+            onClick={() => chooseOriginals("files")}
           >
             <Upload size={14} />
             Upload files
@@ -406,7 +536,7 @@ export default function SourceMedia({
           <button
             className={button + " bg-white/10"}
             disabled={!ready || picking}
-            onClick={() => { reconnect.current = null; folderInput.current?.click(); }}
+            onClick={() => chooseOriginals("folder")}
           >
             <Folder size={14} />
             {picking ? "Preparing…" : "Upload folder"}
@@ -499,12 +629,43 @@ export default function SourceMedia({
           {cursor ? "· more available" : ""}
         </div>
         {folders.map((f) => (
-          <div key={f.path} className="flex items-center gap-2 px-4 py-3 border-t border-white/5 hover:bg-white/5 text-sm">
-            <button onClick={() => setPath(f.path)} className="flex items-center gap-3 flex-1 min-w-0 text-left" aria-label={`Open folder ${f.name}`}>
-              <Folder size={18} className="text-amber-200/60 shrink-0"/><span className="flex-1 truncate">{f.name}</span><ChevronRight size={14}/>
+          <div
+            key={f.path}
+            className="flex items-center gap-2 px-4 py-3 border-t border-white/5 hover:bg-white/5 text-sm"
+          >
+            <button
+              onClick={() => setPath(f.path)}
+              className="flex items-center gap-3 flex-1 min-w-0 text-left"
+              aria-label={`Open folder ${f.name}`}
+            >
+              <Folder size={18} className="text-amber-200/60 shrink-0" />
+              <span className="flex-1 truncate">{f.name}</span>
+              <ChevronRight size={14} />
             </button>
-            <button className={button} disabled={downloading || !!deletingFolder} onClick={() => downloadFolder(f.path)} aria-label={`Download folder ${f.name}`} title="Download folder"><Download size={14}/><span className="hidden sm:inline">Download</span></button>
-            {canEdit && <button className={button + " hover:text-rose-300"} disabled={!!deletingFolder || downloading} onClick={() => deleteFolder(f)} aria-label={`Delete folder ${f.name}`} title="Permanently delete folder"><Trash2 size={14}/><span className="hidden sm:inline">{deletingFolder === f.path ? "Deleting…" : "Delete"}</span></button>}
+            <button
+              className={button}
+              disabled={downloading || !!deletingFolder}
+              onClick={() => downloadFolder(f.path)}
+              aria-label={`Download folder ${f.name}`}
+              title="Download folder"
+            >
+              <Download size={14} />
+              <span className="hidden sm:inline">Download</span>
+            </button>
+            {canEdit && (
+              <button
+                className={button + " hover:text-rose-300"}
+                disabled={!!deletingFolder || downloading}
+                onClick={() => deleteFolder(f)}
+                aria-label={`Delete folder ${f.name}`}
+                title="Permanently delete folder"
+              >
+                <Trash2 size={14} />
+                <span className="hidden sm:inline">
+                  {deletingFolder === f.path ? "Deleting…" : "Delete"}
+                </span>
+              </button>
+            )}
           </div>
         ))}
         {files.map((f) => (
@@ -571,8 +732,19 @@ export default function SourceMedia({
               </p>
             </div>
             <div className="flex gap-2">
-              <button className={button} onClick={() => commit(old => old.filter(j => !['done','cancelled'].includes(j.status))).catch(e => setError(e.message))}>Clear finished</button>
-            <button
+              <button
+                className={button}
+                onClick={() =>
+                  commit((old) =>
+                    old.filter(
+                      (j) => !["done", "cancelled"].includes(j.status),
+                    ),
+                  ).catch((e) => setError(e.message))
+                }
+              >
+                Clear finished
+              </button>
+              <button
                 className={button}
                 onClick={() => {
                   setPaused(true);
@@ -584,6 +756,7 @@ export default function SourceMedia({
               </button>
               <button
                 className={button}
+                disabled={picking}
                 onClick={() => resume()}
               >
                 <Play size={12} />
@@ -591,7 +764,25 @@ export default function SourceMedia({
               </button>
             </div>
           </div>
-          {jobs.some(j => !["done", "cancelled", "uploading"].includes(j.status) && !selected.current.has(j.id)) && <div className="rounded-xl border border-amber-200/15 bg-amber-200/5 p-3 text-xs text-amber-100/65"><p>Your transfers are saved. After refreshing, select the original folder or files to reconnect them. This resumes matching paused files only; it does not add the rest of the folder again.</p><button className={button + " mt-3"} onClick={() => reconnectOriginals()}>Select originals to resume</button></div>}
+          {jobs.some(
+            (j) =>
+              !["done", "cancelled", "uploading"].includes(j.status) &&
+              !selected.current.has(j.id),
+          ) && (
+            <div className="rounded-xl border border-amber-200/15 bg-amber-200/5 p-3 text-xs text-amber-100/65">
+              <p>
+                Your transfers are saved. Click Resume to use remembered
+                originals. Older transfers or unavailable files may need a
+                one-time selection.
+              </p>
+              <button
+                className={button + " mt-3"}
+                onClick={() => reconnectOriginals()}
+              >
+                Select originals again
+              </button>
+            </div>
+          )}
           <div className="h-1 rounded bg-white/10 overflow-hidden">
             <div
               className="h-full bg-emerald-300/60"
@@ -625,7 +816,11 @@ export default function SourceMedia({
                     {j.status === "done"
                       ? "Verified complete"
                       : j.status === "paused"
-                        ? selected.current.has(j.id) ? "Paused — ready to resume" : "Paused — select originals to reconnect"
+                        ? selected.current.has(j.id)
+                          ? "Paused — ready to resume"
+                          : remembered.current.has(j.id)
+                            ? "Paused — originals remembered"
+                            : "Paused — select originals once"
                         : j.status}
                     {j.status === "uploading"
                       ? ` · ${Math.min(100, Math.floor((live.loaded / Math.max(1, j.size)) * 100))}%`
@@ -641,7 +836,7 @@ export default function SourceMedia({
                       <button
                         aria-label={`Resume ${j.name}`}
                         className="p-2"
-                        disabled={j.status === "uploading"}
+                        disabled={j.status === "uploading" || picking}
                         onClick={() => resume(j.id)}
                       >
                         <Play size={14} />
@@ -668,13 +863,14 @@ export default function SourceMedia({
             </button>
           )}
           <p className="text-[11px] text-white/25">
-            Only completed chunks are saved; a paused chunk smaller than 100 MB may restart. Transfers stay on this browser profile. Reselect originals after a
-            restart. Completed files are checked against the expected byte size
-            before appearing above.
+            Only completed chunks are saved; a paused chunk smaller than 100 MB
+            may restart. Transfers and remembered file access stay on this
+            browser profile. Resume may ask you to allow read access again.
+            Completed files are checked against the expected byte size before
+            appearing above.
           </p>
         </section>
       )}
-
     </div>
   );
 }
