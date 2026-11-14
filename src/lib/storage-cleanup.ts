@@ -1,3 +1,4 @@
+import { sourcePath } from "./source-media";
 import {
   AbortMultipartUploadCommand, DeleteObjectsCommand,
   ListMultipartUploadsCommand, ListObjectVersionsCommand,
@@ -84,18 +85,7 @@ export function storageCleaner(client = b2, bucket = B2_BUCKET) {
     }
   }
 
-  return {
-    async keys(keys: string[]) {
-      for (const key of new Set(keys)) {
-        const versions = (await list(key)).filter(item => item.Key === key);
-        await remove(versions);
-        if ((await list(key)).some(item => item.Key === key)) {
-          throw new Error("File versions remain in storage; retry deletion");
-        }
-      }
-    },
-    async project(id: string) {
-      const prefix = projectPrefix(id);
+  async function cleanPrefix(prefix: string) {
       // Abort unfinished uploads too: their parts also consume paid storage.
       let KeyMarker: string | undefined;
       let UploadIdMarker: string | undefined;
@@ -116,6 +106,26 @@ export function storageCleaner(client = b2, bucket = B2_BUCKET) {
       for (const upload of uploads) await client.send(new AbortMultipartUploadCommand({ Bucket: bucket, ...upload }));
       await remove(await list(prefix));
       if ((await list(prefix)).length) throw new Error("Files remain in storage; retry project deletion");
+  }
+
+  return {
+    async keys(keys: string[]) {
+      for (const key of new Set(keys)) {
+        const versions = (await list(key)).filter(item => item.Key === key);
+        await remove(versions);
+        if ((await list(key)).some(item => item.Key === key)) {
+          throw new Error("File versions remain in storage; retry deletion");
+        }
+      }
+    },
+    async project(id: string) {
+      const prefix = projectPrefix(id);
+      await cleanPrefix(prefix);
+    },
+    async sourceFolder(id: string, folder: string) {
+      const path = sourcePath(folder);
+      if (!path) throw new Error("Select a source folder");
+      await cleanPrefix(projectPrefix(id) + "source/" + path + "/");
     },
   };
 }

@@ -39,6 +39,7 @@ export default function SourceMedia({
   canEdit: boolean;
   legacy: React.ReactNode;
 }) {
+  const [deletingFolder, setDeletingFolder] = useState<string | null>(null);
   const [queueLimit, setQueueLimit] = useState(100);
   const [downloading, setDownloading] = useState(false),
     [downloadStatus, setDownloadStatus] = useState("");
@@ -341,16 +342,30 @@ export default function SourceMedia({
       setError((e as Error).message);
     }
   }
-  async function downloadFolder() {
+  async function downloadFolder(folder: string) {
     setDownloading(true);
     setError("");
     try {
-      await downloadSourceFolder(projectId, path, setDownloadStatus);
+      await downloadSourceFolder(projectId, folder, setDownloadStatus);
     } catch (e) {
       setError((e as Error).message);
     } finally {
       setDownloading(false);
     }
+  }
+  async function deleteFolder(folder: Directory) {
+    const inside = (j: Transfer) => j.path === folder.path || j.path.startsWith(folder.path + "/");
+    const current = jobsRef.current.find(j => j.id === running.current?.id && inside(j));
+    if (current) { setError("Pause the upload into this folder before deleting it, then try again."); return; }
+    if (!confirm(`Permanently delete "${folder.name}" and everything inside it? All stored copies and unfinished uploads in this folder will be removed from Backblaze. This cannot be undone.`)) return;
+    setDeletingFolder(folder.path); setPaused(true); setError("");
+    try {
+      await api(projectId, {action: "delete-folder", path: folder.path});
+      await commit(old => old.map(j => inside(j) ? {...j, status: "cancelled", loaded: 0, error: undefined} : j));
+      for (const j of jobsRef.current) if (inside(j)) selected.current.delete(j.id);
+      await load();
+    } catch (e) { setError((e as Error).message); }
+    finally { setDeletingFolder(null); }
   }
   async function remove(file: Entry) {
     if (!confirm(`Permanently delete ${file.name} and all stored copies?`))
@@ -379,14 +394,6 @@ export default function SourceMedia({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            className={button}
-            disabled={downloading}
-            onClick={downloadFolder}
-          >
-            <Download size={14} />
-            {downloading ? "Downloading…" : "Download folder"}
-          </button>
           <button className={button} onClick={() => setShowFolder((v) => !v)}>
             <FolderPlus size={14} />
             New folder
@@ -501,15 +508,13 @@ export default function SourceMedia({
           {cursor ? "· more available" : ""}
         </div>
         {folders.map((f) => (
-          <button
-            key={f.path}
-            onClick={() => setPath(f.path)}
-            className="w-full flex items-center gap-3 px-4 py-3 border-t border-white/5 hover:bg-white/5 text-sm text-left"
-          >
-            <Folder size={18} className="text-amber-200/60" />
-            <span className="flex-1 truncate">{f.name}</span>
-            <ChevronRight size={14} />
-          </button>
+          <div key={f.path} className="flex items-center gap-2 px-4 py-3 border-t border-white/5 hover:bg-white/5 text-sm">
+            <button onClick={() => setPath(f.path)} className="flex items-center gap-3 flex-1 min-w-0 text-left" aria-label={`Open folder ${f.name}`}>
+              <Folder size={18} className="text-amber-200/60 shrink-0"/><span className="flex-1 truncate">{f.name}</span><ChevronRight size={14}/>
+            </button>
+            <button className={button} disabled={downloading || !!deletingFolder} onClick={() => downloadFolder(f.path)} aria-label={`Download folder ${f.name}`} title="Download folder"><Download size={14}/><span className="hidden sm:inline">Download</span></button>
+            {canEdit && <button className={button + " hover:text-rose-300"} disabled={!!deletingFolder || downloading} onClick={() => deleteFolder(f)} aria-label={`Delete folder ${f.name}`} title="Permanently delete folder"><Trash2 size={14}/><span className="hidden sm:inline">{deletingFolder === f.path ? "Deleting…" : "Delete"}</span></button>}
+          </div>
         ))}
         {files.map((f) => (
           <div

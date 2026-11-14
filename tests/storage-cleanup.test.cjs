@@ -102,3 +102,16 @@ test('project owners work even before the optional editor RPC is installed',asyn
  try{assert.equal((await deleteFileRecord(db,id,'project_versions','target','user')).status,200);}
  finally{b2.send=old;}
 });
+test('source folder deletion removes nested versions and unfinished uploads only within the exact folder', async()=>{
+ const folder=prefix+'source/Day 1/';
+ const nested=folder+'Camera A/card.mov';
+ const client=fake([{Uploads:[{Key:nested,UploadId:'unfinished'}]}, {}, {Versions:[{Key:nested,VersionId:'old'},{Key:nested,VersionId:'new'},{Key:folder,VersionId:'marker'}],DeleteMarkers:[{Key:nested,VersionId:'hidden'}]}, {}, {}]);
+ await storageCleaner(client,'bucket').sourceFolder(id,'Day 1');
+ for(const call of client.calls) if(call.input.Prefix) assert.equal(call.input.Prefix,folder);
+ assert.equal(client.calls[1].input.Key,nested);
+ assert.deepEqual(client.calls[3].input.Delete.Objects.map(o=>o.VersionId),['old','new','marker','hidden']);
+ assert.ok(!folder.startsWith(prefix+'source/Day 10/'));
+});
+test('source folder deletion cannot target the source root or traverse outside it',async()=>{
+ const client=fake([]);for(const folder of ['', '../other', 'Day/../../other']) await assert.rejects(storageCleaner(client,'bucket').sourceFolder(id,folder));assert.equal(client.calls.length,0);
+});

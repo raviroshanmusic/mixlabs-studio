@@ -134,6 +134,14 @@ export async function POST(
   try {
     const body = await req.json();
     const prefix = projectPrefix(id) + "source/";
+    if (body.action === "delete-folder") {
+      const {data: canEdit, error} = await a.db.rpc("can_edit_project", {pid: id});
+      if (error || !canEdit) return NextResponse.json({error: "Only project editors or owners can delete source folders"}, {status: 403});
+      const folder = sourcePath(body.path);
+      if (!folder) throw new Error("Select a source folder");
+      await storageCleaner().sourceFolder(id, folder);
+      return NextResponse.json({ok: true});
+    }
     if (body.action === "folder") {
       const path = sourcePath(body.path);
       if (!path) throw new Error("Folder name required");

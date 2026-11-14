@@ -160,3 +160,6 @@ test("reconnection matches only unfinished originals and respects a single selec
  assert.equal(matchingTransfer(jobs,'wrong','all'),undefined);
  assert.equal(matchingTransfer([{id:'done',fingerprint:'same',status:'done'}],'same','all'),undefined);
 });
+test('viewers cannot delete source folders',async()=>{
+ const result=await POST({json:async()=>({action:'delete-folder',path:'Day 1'})},params);assert.equal(result.status,403);
+});
