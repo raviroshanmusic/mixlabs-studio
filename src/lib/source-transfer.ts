@@ -51,8 +51,17 @@ export function newTransfer(
     status: "waiting",
   };
 }
-export function matchingTransfer(jobs: Transfer[], hash: string, reconnecting: string | null) {
-  return jobs.find(j => j.fingerprint === hash && !["done", "cancelled"].includes(j.status) && (!reconnecting || reconnecting === "all" || j.id === reconnecting));
+export function matchingTransfer(
+  jobs: Transfer[],
+  hash: string,
+  reconnecting: string | null,
+) {
+  return jobs.find(
+    (j) =>
+      j.fingerprint === hash &&
+      !["done", "cancelled"].includes(j.status) &&
+      (!reconnecting || reconnecting === "all" || j.id === reconnecting),
+  );
 }
 export function restoreTransfers(raw: string | null): Transfer[] {
   if (!raw) return [];
@@ -64,21 +73,84 @@ export function restoreTransfers(raw: string | null): Transfer[] {
     error: undefined,
   }));
 }
+const retryStatuses = new Set([408, 425, 429, 500, 502, 503, 504]);
+const transferActions = new Set([
+  "start",
+  "status",
+  "sign",
+  "complete",
+  "cancel",
+]);
+function waitForRetry(ms: number, signal?: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Paused", "AbortError"));
+      return;
+    }
+    const cancel = () => {
+      clearTimeout(timer);
+      reject(new DOMException("Paused", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", cancel);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", cancel, { once: true });
+  });
+}
 export async function api(
   project: string,
   body: Record<string, unknown>,
   signal?: AbortSignal,
 ) {
-  const r = await fetch(`/api/projects/${project}/source`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    signal,
-  });
-  const data = await r.json();
-  if (!r.ok) throw new Error(data.error || "Transfer request failed");
-  return data;
+  const attempts = transferActions.has(String(body.action)) ? 4 : 1;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (signal?.aborted) throw new DOMException("Paused", "AbortError");
+    const controller = new AbortController();
+    const cancel = () => controller.abort();
+    signal?.addEventListener("abort", cancel, { once: true });
+    const timer = setTimeout(() => controller.abort(), 120_000);
+    let retry = false;
+    try {
+      const r = await fetch(`/api/projects/${project}/source`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      // A gateway can return HTML rather than JSON during a connection failure.
+      const data = await r.json().catch(() => null);
+      if (r.ok && data) return data;
+      if (r.status === 401 || r.status === 403)
+        throw new Error(
+          "Your session expired or project access changed. Sign in again, then press Resume.",
+        );
+      if ((r.ok && !data) || retryStatuses.has(r.status)) retry = true;
+      else
+        throw new Error(
+          data?.error ||
+            "The server could not process this transfer. Progress has been kept; press Resume to retry.",
+        );
+    } catch (error) {
+      if (signal?.aborted) throw new DOMException("Paused", "AbortError");
+      if (error instanceof TypeError || (error as Error).name === "AbortError")
+        retry = true;
+      else throw error;
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", cancel);
+    }
+    if (retry && attempt + 1 < attempts) {
+      await waitForRetry(1500 * 2 ** attempt, signal);
+      continue;
+    }
+    throw new Error(
+      "Connection interrupted while contacting the upload service. Your transfer is saved. Check your internet connection, then press Resume; do not add the file again.",
+    );
+  }
+  throw new Error("Transfer request failed");
 }
+
 function put(
   url: string,
   blob: Blob,
@@ -133,7 +205,7 @@ export async function runTransfer(
       name: t.name,
       size: t.size,
       fingerprint: t.fingerprint,
-    });
+    }, signal);
     token = started.token;
     partSize = started.partSize;
     await save({ token, partSize });
@@ -256,8 +328,10 @@ export async function writeQueue(
       for (const job of jobs)
         if (old.get(job.id) !== job)
           tx.objectStore("queues").put(job, key + ":" + job.id);
-      const remaining = new Set(jobs.map(j => j.id));
-      for (const job of previous) if (!remaining.has(job.id)) tx.objectStore("queues").delete(key + ":" + job.id);
+      const remaining = new Set(jobs.map((j) => j.id));
+      for (const job of previous)
+        if (!remaining.has(job.id))
+          tx.objectStore("queues").delete(key + ":" + job.id);
       tx.oncomplete = () => resolve();
       tx.onerror = () =>
         reject(
