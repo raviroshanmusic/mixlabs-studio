@@ -428,12 +428,6 @@ export default function SourceMedia({
           />
         </div>
       </div>
-      <div className="rounded-xl border border-white/8 bg-white/[.025] p-3 text-xs text-white/40 leading-relaxed">
-        Upload a shoot day or camera card folder to keep its structure and
-        original filenames. Keep this browser open and your computer awake
-        during transfers. After reopening, select the same files or folder to
-        resume. Unfinished chunks remain stored until resumed or cancelled.
-      </div>
       {downloadStatus && (
         <p role="status" className="text-xs text-emerald-200/60">
           {downloadStatus}
