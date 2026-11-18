@@ -1,0 +1,10 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript'),Module=require('node:module');
+require.extensions['.ts']=(m,f)=>m._compile(ts.transpileModule(fs.readFileSync(f,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,f);
+let user={id:'actor'},result={data:true,error:null},calls=[];const load=Module._load;
+Module._load=function(name,...args){if(name==='@/lib/supabase/server')return {createClient:async()=>({auth:{getUser:async()=>({data:{user}})},rpc:async(name,args)=>{calls.push({name,args});return result;}})};return load.call(this,name,...args);};
+const {DELETE}=require('../src/app/api/projects/[id]/members/[memberId]/route.ts');Module._load=load;
+const remove=()=>DELETE({}, {params:Promise.resolve({id:'project',memberId:'member'})});
+test('removal is scoped to both project and membership and uses authenticated RPC',async()=>{calls=[];result={data:true,error:null};assert.equal((await remove()).status,200);assert.deepEqual(calls,[{name:'remove_project_member',args:{pid:'project',mid:'member'}}]);});
+test('anonymous users never call removal',async()=>{user=null;calls=[];assert.equal((await remove()).status,401);assert.equal(calls.length,0);user={id:'actor'};});
+test('viewer, editor, outsider, and revoked admin denials remain forbidden',async()=>{result={data:null,error:{code:'42501'}};assert.equal((await remove()).status,403);});
+test('project owner protection and missing membership give actionable errors',async()=>{result={data:null,error:{code:'23514'}};assert.equal((await remove()).status,409);result={data:false,error:null};assert.equal((await remove()).status,404);});

@@ -51,7 +51,7 @@ const VERSION_STATUS_META: Record<VersionStatus, { cls: string; label: string; d
 
 type Project = { id: string; name: string; client: string | null; status: string; departments: string[]; owner_id?: string; logline?: string | null; synopsis?: string | null; brief?: Record<string, string> | null };
 type Version = { id: string; version_name: string; department: string; drive_url: string | null; status: string; created_at: string };
-type Member  = { id: string; role: string | null; user_id?: string | null; status?: string | null; profiles: { id: string; full_name: string | null; email?: string | null } | null };
+type Member  = { email?: string | null; id: string; role: string | null; user_id?: string | null; status?: string | null; profiles: { id: string; full_name: string | null; email?: string | null } | null };
 type UserRole = "owner" | "admin" | "editor" | "viewer";
 
 const ROLE_META: Record<UserRole, { icon: React.ReactNode; label: string; color: string; border: string; bg: string; desc: string }> = {
@@ -596,7 +596,9 @@ function FilesTab({ project, versions, canEdit }: { project: Project; versions: 
 
 // ─── Team Tab ─────────────────────────────────────────────────────────────────
 
-function TeamTab({ project, members }: { project: Project; members: Member[] }) {
+function TeamTab({ project, members, canManage, currentUserId, onMembersChange }: { project: Project; members: Member[]; canManage: boolean; currentUserId: string; onMembersChange: (members: Member[]) => void }) {
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState("");
   const [localMembers, setLocalMembers] = useState<Member[]>(members);
   const [email, setEmail] = useState("");
   const [role, setRole]   = useState("viewer");
@@ -621,12 +623,26 @@ function TeamTab({ project, members }: { project: Project; members: Member[] }) 
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || "Failed");
-      else { if (data.member) setLocalMembers(p => [...p, data.member]); setEmail(""); setAdding(false); }
+      else { if (data.member) { const next = [...localMembers, data.member]; setLocalMembers(next); onMembersChange(next); } setEmail(""); setAdding(false); }
     } catch {
       setError("Could not send the invite. Please try again.");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function removeMember(member: Member) {
+    if (!confirm("Remove this person from this project? They will lose access to this project. Their account, other projects, and existing files and comments will be kept.")) return;
+    setRemoving(member.id); setRemoveError("");
+    try {
+      const res = await fetch(`/api/projects/${project.id}/members/${member.id}`, {method: "DELETE"});
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not remove member");
+      const next = localMembers.filter(m => m.id !== member.id && !(member.user_id && m.user_id === member.user_id) && !(member.email && m.email?.toLowerCase() === member.email.toLowerCase()));
+      setLocalMembers(next); onMembersChange(next);
+      if (member.user_id === currentUserId) window.location.assign("/project");
+    } catch (e) { setRemoveError(e instanceof Error ? e.message : "Could not remove member. Please try again."); }
+    finally { setRemoving(null); }
   }
 
   return (
@@ -681,6 +697,7 @@ function TeamTab({ project, members }: { project: Project; members: Member[] }) 
         </form>
       )}
 
+      {removeError && <p role="alert" className="text-red-400/80 text-xs mb-3">{removeError}</p>}
       <div className="flex-1 overflow-y-auto scrollbar-hide">
         {localMembers.length === 0 && !adding ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3 border border-dashed border-white/[0.05] rounded-2xl">
@@ -709,10 +726,13 @@ function TeamTab({ project, members }: { project: Project; members: Member[] }) 
                       )}
                     </div>
                   </div>
+                  <div className="flex items-center gap-3">
                   <span className={`flex items-center gap-1.5 text-[9px] tracking-wide uppercase border px-2.5 py-1 rounded-full font-light ${roleColors[r] ?? roleColors["viewer"]}`}>
                     {ROLE_META[r as UserRole]?.icon}
                     {r}
                   </span>
+                  {canManage && m.user_id !== project.owner_id && <button type="button" onClick={() => removeMember(m)} disabled={!!removing} aria-label={`Remove ${name} from project`} className="inline-flex items-center gap-1.5 text-xs text-white/35 hover:text-rose-300 disabled:opacity-30 px-2 py-1 rounded-lg border border-white/10"><Trash2 size={12}/>{removing === m.id ? "Removing…" : "Remove"}</button>}
+                  </div>
                 </div>
               );
             })}
@@ -981,6 +1001,7 @@ type Tab = "files" | "prepro" | "exchange" | "timeline" | "delivery" | "team" | 
 export default function ProjectClient({ project: initialProject, versions, members, milestones, deliveries: initialDeliveries, documents, exchange, currentUserId }: {
   project: Project; versions: Version[]; members: Member[]; milestones: Milestone[]; deliveries: Delivery[]; documents: ProjectDoc[]; exchange: ExchangeFile[]; currentUserId: string;
 }) {
+  const [teamMembers, setTeamMembers] = useState(members);
   const [project, setProject] = useState(initialProject);
   const [status, setStatus]   = useState(initialProject.status);
   const [sourceOpened, setSourceOpened] = useState(false);
@@ -988,18 +1009,18 @@ export default function ProjectClient({ project: initialProject, versions, membe
   const [deliveries] = useState<Delivery[]>(initialDeliveries);
 
 
-  const currentMember = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
+  const currentMember = teamMembers.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
   const currentName = currentMember?.profiles?.full_name || "";
   const currentInitials = currentName.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "U";
 
   const userRole = useMemo<UserRole>(() => {
     if (project.owner_id === currentUserId) return "owner";
-    const me = members.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
+    const me = teamMembers.find(m => (m as any).user_id === currentUserId || m.profiles?.id === currentUserId);
     const r = me?.role ?? "viewer";
     if (r === "admin")  return "admin";
     if (r === "editor") return "editor";
     return "viewer";
-  }, [project.owner_id, currentUserId, members]);
+  }, [project.owner_id, currentUserId, teamMembers]);
 
   const canEdit   = userRole !== "viewer";
   const canManage = userRole === "owner" || userRole === "admin";
@@ -1019,7 +1040,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
     { id: "exchange", label: "Handoff", icon: <Boxes size={12}/>, count: exchange.length },
     { id: "timeline", label: "Timeline", icon: <Calendar size={12}/>, count: milestones.length },
     { id: "delivery", label: "Delivery", icon: <Package size={12}/>,  count: deliveries.length, accent: deliveries.some(d=>d.status==="confirmed") ? "#10b981" : deliveries.some(d=>d.status==="sent") ? "#f59e0b" : undefined },
-    { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: members.length },
+    { id: "team",     label: "Team",     icon: <Users size={12}/>,    count: teamMembers.length },
     { id: "settings", label: "Settings", icon: <Settings size={12}/> },
   ];
 
@@ -1081,7 +1102,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
               {[
                 { icon: <FileText size={13}/>,   label: "Drafts",      value: versions.length,   sub: `${project.departments.length} dept${project.departments.length !== 1?"s":""}` },
                 { icon: <Activity size={13}/>,    label: "Milestones",  value: milestones.length > 0 ? `${milestones.filter(m=>m.status==="completed").length}/${milestones.length}` : "-", sub: "done" },
-                { icon: <Users size={13}/>,       label: "Team",        value: members.length,    sub: members.length === 1 ? "member" : "members" },
+                { icon: <Users size={13}/>,       label: "Team",        value: teamMembers.length,    sub: teamMembers.length === 1 ? "member" : "members" },
                 { icon: <TrendingUp size={13}/>,  label: "Progress",    value: milestones.length > 0 ? `${Math.round(milestones.filter(m=>m.status==="completed").length/milestones.length*100)}%` : "-", sub: "" },
               ].map(s => (
                 <div key={s.label} className="flex items-center gap-2.5 px-3.5 py-3 rounded-xl border border-white/[0.05] bg-white/[0.015] hover:bg-white/[0.025] transition-colors group">
@@ -1133,7 +1154,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
               {sourceOpened && <div className={activeTab === "prepro" ? "" : "hidden"}><SourceMedia projectId={project.id} canEdit={canEdit}/></div>}
               {activeTab === "exchange" && <ExchangeTab projectId={project.id} initialFiles={exchange} currentUserId={currentUserId} canEdit={canEdit}/>}
               {activeTab === "delivery" && <DeliveryTab project={project} initialDeliveries={deliveries} canEdit={canEdit}/>}
-              {activeTab === "team"     && <TeamTab project={project} members={members}/>}
+              {activeTab === "team"     && <TeamTab project={project} members={teamMembers} canManage={canManage} currentUserId={currentUserId} onMembersChange={setTeamMembers}/>}
               {activeTab === "settings" && <SettingsTab project={project} onProjectUpdate={p => setProject(prev => ({...prev,...p}))} canManage={canManage}/>}
             </div>
 
@@ -1142,7 +1163,7 @@ export default function ProjectClient({ project: initialProject, versions, membe
             <ProjectSidebar
               project={project}
               versions={versions}
-              members={members}
+              members={teamMembers}
               milestones={milestones}
               userRole={userRole}
             />
