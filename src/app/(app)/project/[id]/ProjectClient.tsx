@@ -632,7 +632,8 @@ function TeamTab({ project, members, canManage, currentUserId, onMembersChange }
   }
 
   async function removeMember(member: Member) {
-    if (!confirm("Remove this person from this project? They will lose access to this project. Their account, other projects, and existing files and comments will be kept.")) return;
+    const label = member.status === "pending" || !member.user_id ? member.email || "this invited person" : shortName(member.profiles?.full_name);
+    if (!confirm(`Remove ${label} from this project? They will lose access to this project. Their account, other projects, and existing files and comments will be kept.`)) return;
     setRemoving(member.id); setRemoveError("");
     try {
       const res = await fetch(`/api/projects/${project.id}/members/${member.id}`, {method: "DELETE"});
@@ -709,7 +710,7 @@ function TeamTab({ project, members, canManage, currentUserId, onMembersChange }
             {localMembers.map(m => {
               // No linked account yet = invited but hasn't signed up.
               const isPending = m.status === "pending" || (!m.user_id && !m.profiles);
-              const name = isPending ? "Invited" : shortName(m.profiles?.full_name);
+              const name = isPending ? (canManage ? m.email || "Invited" : "Invited") : shortName(m.profiles?.full_name);
               const col  = avatarColor(m.profiles?.full_name || m.id);
               const r    = (m.role ?? "viewer") as keyof typeof roleColors;
               return (
